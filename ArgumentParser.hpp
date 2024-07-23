@@ -4,6 +4,7 @@
 /**
  * TODO:
  * - Handle duplicate arguments, e.g. user passes '-v --verbose' or '-f --foo -f'
+ * - Handle required arguments: If they are not passed by the user, issue an error and exit
  */
 
 #include <cstddef>
@@ -49,6 +50,13 @@ concept CmdHasAlias = requires
 template <typename T>
 concept CmdArgument = CmdOption<T> || CmdFlag<T>;
 
+
+template <CmdArgument Arg>
+constexpr std::size_t identifier_length();
+
+template <CmdArgument Arg, CmdArgument... Rest>
+static constexpr std::size_t max_identifier_length();
+
 template <CmdArgument... Args>
 class ArgumentParser
 {
@@ -75,12 +83,6 @@ public:
     [[nodiscard]] std::optional<typename Option::ValueType> get_option();
 
 private:
-    template <CmdArgument Arg>
-    static constexpr std::size_t identifier_length();
-
-    template <CmdArgument Arg, CmdArgument... Rest>
-    static constexpr std::size_t max_identifier_length();
-
     template <CmdArgument Arg, CmdArgument... Rest>
     static constexpr void append_args_to_usage(std::stringstream &);
 
@@ -190,25 +192,9 @@ ArgumentParser<Args...>::get_option()
     return result;
 }
 
-template <CmdArgument... Args>
-template <CmdArgument Arg>
-constexpr std::size_t
-ArgumentParser<Args...>::identifier_length()
-{
-    std::size_t length = Arg::identifier.length();
-    if constexpr (CmdHasAlias<Arg>)
-    {
-        constexpr std::size_t alias_length = Arg::alias.length();
-        length += alias_length + 2; // + 2 to account for ", " between identifier and alias
-    }
-
-    return length;
-}
-
-template <CmdArgument... Args>
 template <CmdArgument Arg, CmdArgument... Rest>
 constexpr std::size_t
-ArgumentParser<Args...>::max_identifier_length()
+max_identifier_length()
 {
     std::size_t max_length = identifier_length<Arg>();
 
@@ -282,6 +268,20 @@ ArgumentParser<Args...>::append_option_descriptions_to_usage(std::stringstream &
     {
         append_option_descriptions_to_usage<Rest...>(ss);
     }
+}
+
+template <CmdArgument Arg>
+constexpr std::size_t
+identifier_length()
+{
+    std::size_t length = Arg::identifier.length();
+    if constexpr (CmdHasAlias<Arg>)
+    {
+        constexpr std::size_t alias_length = Arg::alias.length();
+        length += alias_length + 2; // + 2 to account for ", " between identifier and alias
+    }
+
+    return length;
 }
 
 #endif
