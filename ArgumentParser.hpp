@@ -65,9 +65,9 @@ class ArgumentParser
     ArgumentParser &operator=(const ArgumentParser &)  = delete;
     ArgumentParser &operator=(const ArgumentParser &&) = delete;
 
-    [[nodiscard]] std::filesystem::path program() const;
-
     [[nodiscard]] std::string usage() const;
+
+    [[nodiscard]] std::filesystem::path program() const;
 
     template <CmdFlag Flag>
     [[nodiscard]] bool has_flag() const;
@@ -88,25 +88,15 @@ class ArgumentParser
     template <CmdArgument Arg, CmdArgument... Rest>
     static constexpr void append_args_to_usage(std::stringstream &);
 
+    template <CmdArgument Arg, CmdArgument... Rest>
+    static constexpr void append_option_descriptions_to_usage(std::stringstream &);
+
     std::string_view                                  program_;
     std::vector<std::string_view>                     arguments_;
     std::unordered_map<std::string_view, std::size_t> argument_index_map_;
 
     static constexpr std::size_t max_identifier_length_{ max_identifier_length<Args...>() };
 };
-
-template <CmdArgument... Args>
-std::string
-ArgumentParser<Args...>::usage() const
-{
-    std::stringstream ss;
-    ss << "Usage: " << program_ << " [OPTIONS]\n";
-    ss << "Options:\n";
-
-    append_args_to_usage<Args...>(ss);
-
-    return ss.str();
-}
 
 template <CmdArgument... Args>
 ArgumentParser<Args...>::ArgumentParser(int argc, char **argv)
@@ -121,6 +111,21 @@ ArgumentParser<Args...>::ArgumentParser(int argc, char **argv)
         arguments_[i]             = sv;
         argument_index_map_[sv]   = i;
     }
+}
+
+template <CmdArgument... Args>
+std::string
+ArgumentParser<Args...>::usage() const
+{
+    std::stringstream ss;
+    ss << "Usage: " << program_;
+    append_args_to_usage<Args...>(ss);
+    ss << '\n';
+
+    ss << "Options:\n";
+    append_option_descriptions_to_usage<Args...>(ss);
+
+    return ss.str();
 }
 
 template <CmdArgument... Args>
@@ -225,6 +230,37 @@ template <CmdArgument Arg, CmdArgument... Rest>
 constexpr void
 ArgumentParser<Args...>::append_args_to_usage(std::stringstream &ss)
 {
+    ss << ' ';
+
+    constexpr bool required = Arg::required;
+    if constexpr (!required)
+    {
+        ss << '[';
+    }
+
+    ss << Arg::identifier;
+
+    if constexpr (CmdOption<Arg>)
+    {
+        ss << ' ' << Arg::value_hint;
+    }
+
+    if constexpr (!required)
+    {
+        ss << ']';
+    }
+
+    if constexpr (sizeof...(Rest) > 0)
+    {
+        append_args_to_usage<Rest...>(ss);
+    }
+}
+
+template <CmdArgument... Args>
+template <CmdArgument Arg, CmdArgument... Rest>
+constexpr void
+ArgumentParser<Args...>::append_option_descriptions_to_usage(std::stringstream &ss)
+{
     constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_length<Arg>() + 4;
 
     ss << std::setw(2) << "" << Arg::identifier;
@@ -233,11 +269,23 @@ ArgumentParser<Args...>::append_args_to_usage(std::stringstream &ss)
         ss << ", " << Arg::alias;
     }
 
-    ss << std::setw(calculated_padding) << "" << Arg::description << '\n';
+    ss << std::setw(calculated_padding) << "";
+
+    constexpr std::string_view required_str = "REQUIRED";
+    if constexpr (Arg::required)
+    {
+        ss << required_str;
+    }
+    else
+    {
+        ss << std::setw(required_str.length()) << "";
+    }
+
+    ss << "  " << Arg::description << '\n';
 
     if constexpr (sizeof...(Rest) > 0)
     {
-        append_args_to_usage<Rest...>(ss);
+        append_option_descriptions_to_usage<Rest...>(ss);
     }
 }
 

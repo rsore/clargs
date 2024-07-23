@@ -23,9 +23,9 @@ struct FileOption
 {
     static constexpr std::string_view identifier{ "--file" };
     static constexpr std::string_view alias{ "-f" };
-    static constexpr std::string_view description{ "Enable verbose printing" };
+    static constexpr std::string_view description{ "Specify input file" };
     static constexpr std::string_view value_hint{ "FILE" };
-    static constexpr bool             required{ false };
+    static constexpr bool             required{ true };
     using ValueType = std::string;
 };
 
@@ -41,7 +41,7 @@ struct DirectoryOption
 int
 main(const int argc, char **argv)
 {
-    ArgumentParser<HelloFlag, VerboseFlag, FileOption> argument_parser(argc, argv);
+    ArgumentParser<HelloFlag, VerboseFlag, FileOption, DirectoryOption> argument_parser(argc, argv);
 
     std::cout << "Program is '" << argument_parser.program() << "'" << std::endl;
 
