@@ -1,8 +1,15 @@
 #include <iostream>
 #include <string_view>
-#include <tuple>
 
 #include "ArgumentParser.hpp"
+
+struct HelpFlag
+{
+    static constexpr std::string_view identifier{ "--help" };
+    static constexpr std::string_view alias{ "-h" };
+    static constexpr std::string_view description{ "Display help menu" };
+    static constexpr bool             required{ false };
+};
 
 struct HelloFlag
 {
@@ -14,7 +21,7 @@ struct HelloFlag
 struct VerboseFlag
 {
     static constexpr std::string_view identifier{ "--verbose" };
-    static constexpr std::string_view alias{"-v"};
+    static constexpr std::string_view alias{ "-v" };
     static constexpr std::string_view description{ "Enable verbose printing" };
     static constexpr bool             required{ false };
 };
@@ -41,7 +48,13 @@ struct DirectoryOption
 int
 main(const int argc, char **argv)
 {
-    ArgumentParser<HelloFlag, VerboseFlag, FileOption, DirectoryOption> argument_parser(argc, argv);
+    ArgumentParser<HelpFlag, HelloFlag, VerboseFlag, FileOption, DirectoryOption> argument_parser(argc, argv);
+
+    if (argument_parser.has_flag<HelpFlag>())
+    {
+        std::cout << argument_parser.usage() << std::endl;
+        return EXIT_SUCCESS;
+    }
 
     std::cout << "Program is '" << argument_parser.program() << "'" << std::endl;
 
@@ -50,8 +63,7 @@ main(const int argc, char **argv)
     std::cout << "Has file:      " << std::boolalpha << argument_parser.has_option<FileOption>() << std::endl;
     std::cout << "Has directory: " << std::boolalpha << argument_parser.has_option<DirectoryOption>() << std::endl;
 
-    const auto fileOption = argument_parser.get_option<FileOption>();
-    if (fileOption.has_value())
+    if (const auto fileOption = argument_parser.get_option<FileOption>(); fileOption.has_value())
     {
         std::cout << "File: " << fileOption.value() << std::endl;
     }
@@ -59,8 +71,7 @@ main(const int argc, char **argv)
     {
         std::cout << "File option is not defined" << std::endl;
     }
-    const auto directoryOption = argument_parser.get_option<DirectoryOption>();
-    if (directoryOption.has_value())
+    if (const auto directoryOption = argument_parser.get_option<DirectoryOption>(); directoryOption.has_value())
     {
         std::cout << "Directory: " << directoryOption.value() << std::endl;
     }
@@ -69,7 +80,5 @@ main(const int argc, char **argv)
         std::cout << "Directory option is not defined" << std::endl;
     }
 
-    std::cout << argument_parser.usage() << std::endl;
-
-    return 0;
+    return EXIT_SUCCESS;
 }
