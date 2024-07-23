@@ -4,10 +4,6 @@
 /**
  * TODO:
  * - Handle duplicate arguments, e.g. user passes '-v --verbose' or '-f --foo -f'
- * - Generate usage string. All flags and options should be listed, along with their aliases if applicable, description
- * and value type
- * - Look into possibility of avoiding heap allocations. We know the max amount of arguments at compile-time, so we
- * should be able to stack-allocate.
  */
 
 #include <cassert>
@@ -71,6 +67,8 @@ class ArgumentParser
 
     [[nodiscard]] std::filesystem::path program() const;
 
+    [[nodiscard]] std::string usage() const;
+
     template <CmdFlag Flag>
     [[nodiscard]] bool has_flag() const;
 
@@ -80,25 +78,49 @@ class ArgumentParser
     template <CmdOption Option>
     [[nodiscard]] std::optional<typename Option::ValueType> get_option();
 
-    void debug_print() const;
-
   private:
+    template <CmdArgument Arg>
+    static consteval std::size_t identifier_length();
+
     template <CmdArgument Arg, CmdArgument... Rest>
-    void parse_arguments(int &, char **&);
+    static constexpr std::size_t max_identifier_length();
 
-    std::string_view                                      program_;
-    std::unordered_set<std::type_index>                   flags_;
-    std::unordered_map<std::type_index, std::string_view> options_;
+    template <CmdArgument Arg, CmdArgument... Rest>
+    static constexpr void append_args_to_usage(std::stringstream &);
 
-    std::uint32_t debug_string_comparisons_{};
+    std::string_view                                  program_;
+    std::vector<std::string_view>                     arguments_;
+    std::unordered_map<std::string_view, std::size_t> argument_index_map_;
+
+    static constexpr std::size_t max_identifier_length_{ max_identifier_length<Args...>() };
 };
+
+template <CmdArgument... Args>
+std::string
+ArgumentParser<Args...>::usage() const
+{
+    std::stringstream ss;
+    ss << "Usage: " << program_ << " [OPTIONS]\n";
+    ss << "Options:\n";
+
+    append_args_to_usage<Args...>(ss);
+
+    return ss.str();
+}
 
 template <CmdArgument... Args>
 ArgumentParser<Args...>::ArgumentParser(int argc, char **argv)
     : program_(*argv++)
 {
     argc -= 1;
-    parse_arguments<Args...>(argc, argv);
+
+    arguments_.resize(argc);
+    for (std::size_t i{}; i < static_cast<std::size_t>(argc); ++i)
+    {
+        const std::string_view sv = argv[i];
+        arguments_[i]             = sv;
+        argument_index_map_[sv]   = i;
+    }
 }
 
 template <CmdArgument... Args>
@@ -113,7 +135,12 @@ template <CmdFlag Flag>
 inline bool
 ArgumentParser<Args...>::has_flag() const
 {
-    return flags_.contains(std::type_index(typeid(Flag)));
+    bool result = argument_index_map_.find(Flag::identifier) != argument_index_map_.end();
+    if constexpr (CmdHasAlias<Flag>)
+    {
+        result = result || argument_index_map_.find(Flag::alias) != argument_index_map_.end();
+    }
+    return result;
 }
 
 template <CmdArgument... Args>
@@ -121,7 +148,12 @@ template <CmdOption Option>
 inline bool
 ArgumentParser<Args...>::has_option() const
 {
-    return options_.contains(std::type_index(typeid(Option)));
+    bool result = argument_index_map_.find(Option::identifier) != argument_index_map_.end();
+    if constexpr (CmdHasAlias<Option>)
+    {
+        result = result || argument_index_map_.find(Option::alias) != argument_index_map_.end();
+    }
+    return result;
 }
 
 template <CmdArgument... Args>
@@ -129,84 +161,83 @@ template <CmdOption Option>
 inline std::optional<typename Option::ValueType>
 ArgumentParser<Args...>::get_option()
 {
-    std::string_view sv;
-    try
+    auto it = argument_index_map_.find(Option::identifier);
+    if (it == argument_index_map_.end())
     {
-        sv = options_.at(std::type_index(typeid(Option)));
+        if constexpr (CmdHasAlias<Option>)
+        {
+            it = argument_index_map_.find(Option::alias);
+        }
+        if (it == argument_index_map_.end())
+        {
+            return std::nullopt;
+        }
     }
-    catch (std::out_of_range &)
+
+    const std::size_t index = it->second;
+    // TODO: Is this correct? It looks like it would break when the last argument is a flag.
+    if (index + 1 >= arguments_.size())
     {
         return std::nullopt;
     }
 
+    const auto                &sv = arguments_[index + 1];
     typename Option::ValueType result;
     std::stringstream          ss;
+
     ss << sv;
     ss >> result;
-
     return result;
 }
 
 template <CmdArgument... Args>
-void
-ArgumentParser<Args...>::debug_print() const
+template <CmdArgument Arg>
+consteval std::size_t
+          ArgumentParser<Args...>::identifier_length()
 {
-    std::cout << "----- DEBUG_PRINT -----" << std::endl;
-    std::cout << "Total string comparisons: " << debug_string_comparisons_ << std::endl;
+    std::size_t length = Arg::identifier.length();
+    if constexpr (CmdHasAlias<Arg>)
+    {
+        constexpr std::size_t alias_length = Arg::alias.length();
+        length += alias_length + 2; // + 2 to account for ", " between identifier and alias
+    }
 
-    std::cout << "Flags" << std::endl;
-    for (const auto &flag : flags_)
-    {
-        std::cout << "  " << flag.name() << " (" << flag.hash_code() << ")" << std::endl;
-    }
-    std::cout << "Options" << std::endl;
-    for (const auto &[key, value] : options_)
-    {
-        std::cout << "  " << key.name() << " (" << key.hash_code() << ")" << " = " << value << std::endl;
-    }
+    return length;
 }
 
 template <CmdArgument... Args>
 template <CmdArgument Arg, CmdArgument... Rest>
-void
-ArgumentParser<Args...>::parse_arguments(int &argc, char **&argv)
+constexpr std::size_t
+ArgumentParser<Args...>::max_identifier_length()
 {
-    static_assert(CmdFlag<Arg> || CmdOption<Arg>);
-
-    for (int i{}; i < argc; ++i)
-    {
-        debug_string_comparisons_ += 1;
-
-        bool match = argv[i] == Arg::identifier;
-        if constexpr (CmdHasAlias<Arg>)
-        {
-            debug_string_comparisons_ += 1;
-            match = match || (argv[i] == Arg::alias);
-        }
-
-        if (!match)
-        {
-            continue;
-        }
-
-        if constexpr (CmdOption<Arg>)
-        {
-            if (i < argc - 1)
-            {
-                options_[std::type_index(typeid(Arg))] = argv[i + 1];
-            }
-        }
-        else if constexpr (CmdFlag<Arg>)
-        {
-            flags_.insert(std::type_index(typeid(Arg)));
-        }
-
-        break;
-    }
+    std::size_t max_length = identifier_length<Arg>();
 
     if constexpr (sizeof...(Rest) > 0)
     {
-        parse_arguments<Rest...>(argc, argv);
+        max_length = std::max(max_length, max_identifier_length<Rest...>());
+    }
+
+    return max_length;
+}
+
+template <CmdArgument... Args>
+template <CmdArgument Arg, CmdArgument... Rest>
+constexpr void
+ArgumentParser<Args...>::append_args_to_usage(std::stringstream &ss)
+{
+    constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_length<Arg>() + 4;
+
+    ss << std::setw(2) << "" << Arg::identifier;
+    if constexpr (CmdHasAlias<Arg>)
+    {
+        ss << ", " << Arg::alias;
+    }
+
+    ss << std::setw(calculated_padding) << "" << Arg::description << '\n';
+
+    if constexpr (sizeof...(Rest) > 0)
+    {
+        append_args_to_usage<Rest...>(ss);
     }
 }
 
