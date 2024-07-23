@@ -6,15 +6,11 @@
  * - Handle duplicate arguments, e.g. user passes '-v --verbose' or '-f --foo -f'
  */
 
-#include <cassert>
-#include <cstdint>
+#include <cstddef>
 #include <filesystem>
 #include <iomanip>
-#include <iostream>
 #include <sstream>
-#include <typeindex>
 #include <unordered_map>
-#include <unordered_set>
 
 template <typename T>
 concept CmdArgumentBase = requires
@@ -56,13 +52,13 @@ concept CmdArgument = CmdOption<T> || CmdFlag<T>;
 template <CmdArgument... Args>
 class ArgumentParser
 {
-  public:
+public:
     ArgumentParser(int argc, char **argv);
 
-    ArgumentParser(const ArgumentParser &)  = delete;
+    ArgumentParser(const ArgumentParser &) = delete;
     ArgumentParser(const ArgumentParser &&) = delete;
 
-    ArgumentParser &operator=(const ArgumentParser &)  = delete;
+    ArgumentParser &operator=(const ArgumentParser &) = delete;
     ArgumentParser &operator=(const ArgumentParser &&) = delete;
 
     [[nodiscard]] std::string usage() const;
@@ -78,9 +74,9 @@ class ArgumentParser
     template <CmdOption Option>
     [[nodiscard]] std::optional<typename Option::ValueType> get_option();
 
-  private:
+private:
     template <CmdArgument Arg>
-    static consteval std::size_t identifier_length();
+    static constexpr std::size_t identifier_length();
 
     template <CmdArgument Arg, CmdArgument... Rest>
     static constexpr std::size_t max_identifier_length();
@@ -137,33 +133,33 @@ ArgumentParser<Args...>::program() const
 
 template <CmdArgument... Args>
 template <CmdFlag Flag>
-inline bool
+bool
 ArgumentParser<Args...>::has_flag() const
 {
-    bool result = argument_index_map_.find(Flag::identifier) != argument_index_map_.end();
+    bool result = argument_index_map_.contains(Flag::identifier);
     if constexpr (CmdHasAlias<Flag>)
     {
-        result = result || argument_index_map_.find(Flag::alias) != argument_index_map_.end();
+        result = result || argument_index_map_.contains(Flag::alias);
     }
     return result;
 }
 
 template <CmdArgument... Args>
 template <CmdOption Option>
-inline bool
+bool
 ArgumentParser<Args...>::has_option() const
 {
-    bool result = argument_index_map_.find(Option::identifier) != argument_index_map_.end();
+    bool result = argument_index_map_.contains(Option::identifier);
     if constexpr (CmdHasAlias<Option>)
     {
-        result = result || argument_index_map_.find(Option::alias) != argument_index_map_.end();
+        result = result || argument_index_map_.contains(Option::alias);
     }
     return result;
 }
 
 template <CmdArgument... Args>
 template <CmdOption Option>
-inline std::optional<typename Option::ValueType>
+std::optional<typename Option::ValueType>
 ArgumentParser<Args...>::get_option()
 {
     auto it = argument_index_map_.find(Option::identifier);
@@ -180,13 +176,12 @@ ArgumentParser<Args...>::get_option()
     }
 
     const std::size_t index = it->second;
-    // TODO: Is this correct? It looks like it would break when the last argument is a flag.
     if (index + 1 >= arguments_.size())
     {
         return std::nullopt;
     }
 
-    const auto                &sv = arguments_[index + 1];
+    const auto &               sv = arguments_[index + 1];
     typename Option::ValueType result;
     std::stringstream          ss;
 
@@ -197,8 +192,8 @@ ArgumentParser<Args...>::get_option()
 
 template <CmdArgument... Args>
 template <CmdArgument Arg>
-consteval std::size_t
-          ArgumentParser<Args...>::identifier_length()
+constexpr std::size_t
+ArgumentParser<Args...>::identifier_length()
 {
     std::size_t length = Arg::identifier.length();
     if constexpr (CmdHasAlias<Arg>)
