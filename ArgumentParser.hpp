@@ -1,6 +1,15 @@
 #ifndef ARGUMENTPARSER_HPP
 #define ARGUMENTPARSER_HPP
 
+/**
+ * TODO:
+ * - Handle duplicate arguments, e.g. user passes '-v --verbose' or '-f --foo -f'
+ * - Generate usage string. All flags and options should be listed, along with their aliases if applicable, description
+ * and value type
+ * - Look into possibility of avoiding heap allocations. We know the max amount of arguments at compile-time, so we
+ * should be able to stack-allocate.
+ */
+
 #include <cassert>
 #include <cstdint>
 #include <filesystem>
@@ -15,6 +24,9 @@ template <typename T>
 concept CmdArgumentBase = requires
 {
     {
+        T::identifier
+    } -> std::convertible_to<std::string_view>;
+    {
         T::description
     } -> std::convertible_to<std::string_view>;
     {
@@ -23,23 +35,23 @@ concept CmdArgumentBase = requires
 };
 
 template <typename T>
-concept CmdFlag = CmdArgumentBase<T> && requires
-{
-    {
-        T::flag
-    } -> std::convertible_to<std::string_view>;
-};
+concept CmdFlag = CmdArgumentBase<T>;
 
 template <typename T>
 concept CmdOption = CmdArgumentBase<T> && requires
 {
     {
-        T::option
-    } -> std::convertible_to<std::string_view>;
-    {
         T::value_hint
     } -> std::convertible_to<std::string_view>;
     typename T::ValueType;
+};
+
+template <typename T>
+concept CmdHasAlias = requires
+{
+    {
+        T::alias
+    } -> std::convertible_to<std::string_view>;
 };
 
 template <typename T>
@@ -48,31 +60,29 @@ concept CmdArgument = CmdOption<T> || CmdFlag<T>;
 template <CmdArgument... Args>
 class ArgumentParser
 {
-public:
+  public:
     ArgumentParser(int argc, char **argv);
 
-    ArgumentParser(const ArgumentParser &) = delete;
-
+    ArgumentParser(const ArgumentParser &)  = delete;
     ArgumentParser(const ArgumentParser &&) = delete;
 
-    ArgumentParser &operator=(const ArgumentParser &) = delete;
-
+    ArgumentParser &operator=(const ArgumentParser &)  = delete;
     ArgumentParser &operator=(const ArgumentParser &&) = delete;
 
     [[nodiscard]] std::filesystem::path program() const;
 
     template <CmdFlag Flag>
-    [[nodiscard]] constexpr bool has_flag() const;
+    [[nodiscard]] bool has_flag() const;
 
     template <CmdOption Option>
-    [[nodiscard]] constexpr bool has_option() const;
+    [[nodiscard]] bool has_option() const;
 
     template <CmdOption Option>
-    [[nodiscard]] constexpr typename Option::ValueType get_option();
+    [[nodiscard]] std::optional<typename Option::ValueType> get_option();
 
     void debug_print() const;
 
-private:
+  private:
     template <CmdArgument Arg, CmdArgument... Rest>
     void parse_arguments(int &, char **&);
 
@@ -83,7 +93,7 @@ private:
     std::uint32_t debug_string_comparisons_{};
 };
 
-template <CmdArgument ... Args>
+template <CmdArgument... Args>
 ArgumentParser<Args...>::ArgumentParser(int argc, char **argv)
     : program_(*argv++)
 {
@@ -91,46 +101,53 @@ ArgumentParser<Args...>::ArgumentParser(int argc, char **argv)
     parse_arguments<Args...>(argc, argv);
 }
 
-template <CmdArgument ... Args>
+template <CmdArgument... Args>
 std::filesystem::path
 ArgumentParser<Args...>::program() const
 {
     return program_;
 }
 
-template <CmdArgument ... Args>
+template <CmdArgument... Args>
 template <CmdFlag Flag>
-constexpr bool
+inline bool
 ArgumentParser<Args...>::has_flag() const
 {
     return flags_.contains(std::type_index(typeid(Flag)));
 }
 
-template <CmdArgument ... Args>
+template <CmdArgument... Args>
 template <CmdOption Option>
-constexpr bool
+inline bool
 ArgumentParser<Args...>::has_option() const
 {
     return options_.contains(std::type_index(typeid(Option)));
 }
 
-template <CmdArgument ... Args>
+template <CmdArgument... Args>
 template <CmdOption Option>
-constexpr typename Option::ValueType
+inline std::optional<typename Option::ValueType>
 ArgumentParser<Args...>::get_option()
 {
-    assert(has_option<Option>());
+    std::string_view sv;
+    try
+    {
+        sv = options_.at(std::type_index(typeid(Option)));
+    }
+    catch (std::out_of_range &)
+    {
+        return std::nullopt;
+    }
 
-    const auto                 str_value = options_[std::type_index(typeid(Option))];
     typename Option::ValueType result;
     std::stringstream          ss;
-    ss << str_value;
+    ss << sv;
     ss >> result;
 
     return result;
 }
 
-template <CmdArgument ... Args>
+template <CmdArgument... Args>
 void
 ArgumentParser<Args...>::debug_print() const
 {
@@ -140,54 +157,51 @@ ArgumentParser<Args...>::debug_print() const
     std::cout << "Flags" << std::endl;
     for (const auto &flag : flags_)
     {
-        std::cout << "  " << flag.name() << std::endl;
+        std::cout << "  " << flag.name() << " (" << flag.hash_code() << ")" << std::endl;
     }
     std::cout << "Options" << std::endl;
     for (const auto &[key, value] : options_)
     {
-        std::cout << "  " << key.name() << " = " << value << std::endl;
+        std::cout << "  " << key.name() << " (" << key.hash_code() << ")" << " = " << value << std::endl;
     }
 }
 
-template <CmdArgument ... Args>
-template <CmdArgument Arg, CmdArgument ... Rest>
+template <CmdArgument... Args>
+template <CmdArgument Arg, CmdArgument... Rest>
 void
 ArgumentParser<Args...>::parse_arguments(int &argc, char **&argv)
 {
     static_assert(CmdFlag<Arg> || CmdOption<Arg>);
 
-    const auto look_for_arg = [&](const std::string_view str)
+    for (int i{}; i < argc; ++i)
     {
-        for (int i{}; i < argc; ++i)
+        debug_string_comparisons_ += 1;
+
+        bool match = argv[i] == Arg::identifier;
+        if constexpr (CmdHasAlias<Arg>)
         {
             debug_string_comparisons_ += 1;
-            if (!strcmp(argv[i], str.data()) == 0)
-            {
-                continue;
-            }
-            if constexpr (CmdFlag<Arg>)
-            {
-                flags_.insert(std::type_index(typeid(Arg)));
-            }
-            else if constexpr (CmdOption<Arg>)
-            {
-                if (i < argc - 1)
-                {
-                    const char *value                      = argv[i + 1];
-                    options_[std::type_index(typeid(Arg))] = value;
-                }
-            }
-            return;
+            match = match || (argv[i] == Arg::alias);
         }
-    };
 
-    if constexpr (CmdFlag<Arg>)
-    {
-        look_for_arg(Arg::flag);
-    }
-    else if constexpr (CmdOption<Arg>)
-    {
-        look_for_arg(Arg::option);
+        if (!match)
+        {
+            continue;
+        }
+
+        if constexpr (CmdOption<Arg>)
+        {
+            if (i < argc - 1)
+            {
+                options_[std::type_index(typeid(Arg))] = argv[i + 1];
+            }
+        }
+        else if constexpr (CmdFlag<Arg>)
+        {
+            flags_.insert(std::type_index(typeid(Arg)));
+        }
+
+        break;
     }
 
     if constexpr (sizeof...(Rest) > 0)
