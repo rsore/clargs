@@ -22,6 +22,7 @@ struct VerboseFlag
 struct FileOption
 {
     static constexpr std::string_view identifier{ "--file" };
+    static constexpr std::string_view alias{ "-f" };
     static constexpr std::string_view description{ "Enable verbose printing" };
     static constexpr std::string_view value_hint{ "FILE" };
     static constexpr bool             required{ false };
@@ -43,7 +44,6 @@ main(const int argc, char **argv)
     ArgumentParser<HelloFlag, VerboseFlag, FileOption> argument_parser(argc, argv);
 
     std::cout << "Program is '" << argument_parser.program() << "'" << std::endl;
-    argument_parser.debug_print();
 
     std::cout << "Has verbose:   " << std::boolalpha << argument_parser.has_flag<VerboseFlag>() << std::endl;
     std::cout << "Has hello:     " << std::boolalpha << argument_parser.has_flag<HelloFlag>() << std::endl;
@@ -68,6 +68,8 @@ main(const int argc, char **argv)
     {
         std::cout << "Directory option is not defined" << std::endl;
     }
+
+    std::cout << argument_parser.usage() << std::endl;
 
     return 0;
 }
