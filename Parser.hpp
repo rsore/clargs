@@ -12,6 +12,8 @@
 #include <iomanip>
 #include <sstream>
 #include <unordered_map>
+#include <optional>
+#include <vector>
 
 namespace CLArgs
 {
