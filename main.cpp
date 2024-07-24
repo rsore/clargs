@@ -48,7 +48,8 @@ struct DirectoryOption
 int
 main(const int argc, char **argv)
 {
-    ArgumentParser<HelpFlag, HelloFlag, VerboseFlag, FileOption, DirectoryOption> argument_parser(argc, argv);
+    using ArgumentParser = SimpleParse::ArgumentParser<HelpFlag, HelloFlag, VerboseFlag, FileOption, DirectoryOption>;
+    ArgumentParser argument_parser(argc, argv);
 
     if (argument_parser.has_flag<HelpFlag>())
     {

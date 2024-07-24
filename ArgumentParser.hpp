@@ -13,91 +13,96 @@
 #include <sstream>
 #include <unordered_map>
 
-template <typename T>
-concept CmdArgumentBase = requires
+namespace SimpleParse
 {
+    template <typename T>
+    concept CmdArgumentBase = requires
     {
-        T::identifier
-    } -> std::convertible_to<std::string_view>;
+        {
+            T::identifier
+        } -> std::convertible_to<std::string_view>;
+        {
+            T::description
+        } -> std::convertible_to<std::string_view>;
+        {
+            T::required
+        } -> std::convertible_to<bool>;
+    };
+
+    template <typename T>
+    concept CmdFlag = CmdArgumentBase<T>;
+
+    template <typename T>
+    concept CmdOption = CmdArgumentBase<T> && requires
     {
-        T::description
-    } -> std::convertible_to<std::string_view>;
+        {
+            T::value_hint
+        } -> std::convertible_to<std::string_view>;
+        typename T::ValueType;
+    };
+
+    template <typename T>
+    concept CmdHasAlias = requires
     {
-        T::required
-    } -> std::convertible_to<bool>;
-};
+        {
+            T::alias
+        } -> std::convertible_to<std::string_view>;
+    };
 
-template <typename T>
-concept CmdFlag = CmdArgumentBase<T>;
-
-template <typename T>
-concept CmdOption = CmdArgumentBase<T> && requires
-{
-    {
-        T::value_hint
-    } -> std::convertible_to<std::string_view>;
-    typename T::ValueType;
-};
-
-template <typename T>
-concept CmdHasAlias = requires
-{
-    {
-        T::alias
-    } -> std::convertible_to<std::string_view>;
-};
-
-template <typename T>
-concept CmdArgument = CmdOption<T> || CmdFlag<T>;
+    template <typename T>
+    concept CmdArgument = CmdOption<T> || CmdFlag<T>;
 
 
-template <CmdArgument Arg>
-constexpr std::size_t identifier_length();
-
-template <CmdArgument Arg, CmdArgument... Rest>
-static constexpr std::size_t max_identifier_length();
-
-template <CmdArgument... Args>
-class ArgumentParser
-{
-public:
-    ArgumentParser(int argc, char **argv);
-
-    ArgumentParser(const ArgumentParser &) = delete;
-    ArgumentParser(const ArgumentParser &&) = delete;
-
-    ArgumentParser &operator=(const ArgumentParser &) = delete;
-    ArgumentParser &operator=(const ArgumentParser &&) = delete;
-
-    [[nodiscard]] std::string usage() const;
-
-    [[nodiscard]] std::filesystem::path program() const;
-
-    template <CmdFlag Flag>
-    [[nodiscard]] bool has_flag() const;
-
-    template <CmdOption Option>
-    [[nodiscard]] bool has_option() const;
-
-    template <CmdOption Option>
-    [[nodiscard]] std::optional<typename Option::ValueType> get_option();
-
-private:
-    template <CmdArgument Arg, CmdArgument... Rest>
-    static constexpr void append_args_to_usage(std::stringstream &);
+    template <CmdArgument Arg>
+    constexpr std::size_t identifier_length();
 
     template <CmdArgument Arg, CmdArgument... Rest>
-    static constexpr void append_option_descriptions_to_usage(std::stringstream &);
+    static constexpr std::size_t max_identifier_length();
 
-    std::string_view                                  program_;
-    std::vector<std::string_view>                     arguments_;
-    std::unordered_map<std::string_view, std::size_t> argument_index_map_;
+    template <CmdArgument... Args>
+    class ArgumentParser
+    {
+    public:
+        ArgumentParser(int argc, char **argv);
 
-    static constexpr std::size_t max_identifier_length_{ max_identifier_length<Args...>() };
-};
+        ArgumentParser(const ArgumentParser &) = delete;
 
-template <CmdArgument... Args>
-ArgumentParser<Args...>::ArgumentParser(int argc, char **argv)
+        ArgumentParser(const ArgumentParser &&) = delete;
+
+        ArgumentParser &operator=(const ArgumentParser &) = delete;
+
+        ArgumentParser &operator=(const ArgumentParser &&) = delete;
+
+        [[nodiscard]] std::string usage() const;
+
+        [[nodiscard]] std::filesystem::path program() const;
+
+        template <CmdFlag Flag>
+        [[nodiscard]] bool has_flag() const;
+
+        template <CmdOption Option>
+        [[nodiscard]] bool has_option() const;
+
+        template <CmdOption Option>
+        [[nodiscard]] std::optional<typename Option::ValueType> get_option();
+
+    private:
+        template <CmdArgument Arg, CmdArgument... Rest>
+        static constexpr void append_args_to_usage(std::stringstream &);
+
+        template <CmdArgument Arg, CmdArgument... Rest>
+        static constexpr void append_option_descriptions_to_usage(std::stringstream &);
+
+        std::string_view                                  program_;
+        std::vector<std::string_view>                     arguments_;
+        std::unordered_map<std::string_view, std::size_t> argument_index_map_;
+
+        static constexpr std::size_t max_identifier_length_{ max_identifier_length<Args...>() };
+    };
+}
+
+template <SimpleParse::CmdArgument... Args>
+SimpleParse::ArgumentParser<Args...>::ArgumentParser(int argc, char **argv)
     : program_(*argv++)
 {
     argc -= 1;
@@ -111,9 +116,9 @@ ArgumentParser<Args...>::ArgumentParser(int argc, char **argv)
     }
 }
 
-template <CmdArgument... Args>
+template <SimpleParse::CmdArgument... Args>
 std::string
-ArgumentParser<Args...>::usage() const
+SimpleParse::ArgumentParser<Args...>::usage() const
 {
     std::stringstream ss;
     ss << "Usage: " << program_;
@@ -126,17 +131,17 @@ ArgumentParser<Args...>::usage() const
     return ss.str();
 }
 
-template <CmdArgument... Args>
+template <SimpleParse::CmdArgument... Args>
 std::filesystem::path
-ArgumentParser<Args...>::program() const
+SimpleParse::ArgumentParser<Args...>::program() const
 {
     return program_;
 }
 
-template <CmdArgument... Args>
-template <CmdFlag Flag>
+template <SimpleParse::CmdArgument... Args>
+template <SimpleParse::CmdFlag Flag>
 bool
-ArgumentParser<Args...>::has_flag() const
+SimpleParse::ArgumentParser<Args...>::has_flag() const
 {
     bool result = argument_index_map_.contains(Flag::identifier);
     if constexpr (CmdHasAlias<Flag>)
@@ -146,10 +151,10 @@ ArgumentParser<Args...>::has_flag() const
     return result;
 }
 
-template <CmdArgument... Args>
-template <CmdOption Option>
+template <SimpleParse::CmdArgument... Args>
+template <SimpleParse::CmdOption Option>
 bool
-ArgumentParser<Args...>::has_option() const
+SimpleParse::ArgumentParser<Args...>::has_option() const
 {
     bool result = argument_index_map_.contains(Option::identifier);
     if constexpr (CmdHasAlias<Option>)
@@ -159,10 +164,10 @@ ArgumentParser<Args...>::has_option() const
     return result;
 }
 
-template <CmdArgument... Args>
-template <CmdOption Option>
+template <SimpleParse::CmdArgument... Args>
+template <SimpleParse::CmdOption Option>
 std::optional<typename Option::ValueType>
-ArgumentParser<Args...>::get_option()
+SimpleParse::ArgumentParser<Args...>::get_option()
 {
     auto it = argument_index_map_.find(Option::identifier);
     if (it == argument_index_map_.end())
@@ -192,24 +197,10 @@ ArgumentParser<Args...>::get_option()
     return result;
 }
 
-template <CmdArgument Arg, CmdArgument... Rest>
-constexpr std::size_t
-max_identifier_length()
-{
-    std::size_t max_length = identifier_length<Arg>();
-
-    if constexpr (sizeof...(Rest) > 0)
-    {
-        max_length = std::max(max_length, max_identifier_length<Rest...>());
-    }
-
-    return max_length;
-}
-
-template <CmdArgument... Args>
-template <CmdArgument Arg, CmdArgument... Rest>
+template <SimpleParse::CmdArgument... Args>
+template <SimpleParse::CmdArgument Arg, SimpleParse::CmdArgument... Rest>
 constexpr void
-ArgumentParser<Args...>::append_args_to_usage(std::stringstream &ss)
+SimpleParse::ArgumentParser<Args...>::append_args_to_usage(std::stringstream &ss)
 {
     ss << ' ';
 
@@ -237,10 +228,10 @@ ArgumentParser<Args...>::append_args_to_usage(std::stringstream &ss)
     }
 }
 
-template <CmdArgument... Args>
-template <CmdArgument Arg, CmdArgument... Rest>
+template <SimpleParse::CmdArgument... Args>
+template <SimpleParse::CmdArgument Arg, SimpleParse::CmdArgument... Rest>
 constexpr void
-ArgumentParser<Args...>::append_option_descriptions_to_usage(std::stringstream &ss)
+SimpleParse::ArgumentParser<Args...>::append_option_descriptions_to_usage(std::stringstream &ss)
 {
     constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_length<Arg>() + 4;
 
@@ -270,9 +261,9 @@ ArgumentParser<Args...>::append_option_descriptions_to_usage(std::stringstream &
     }
 }
 
-template <CmdArgument Arg>
+template <SimpleParse::CmdArgument Arg>
 constexpr std::size_t
-identifier_length()
+SimpleParse::identifier_length()
 {
     std::size_t length = Arg::identifier.length();
     if constexpr (CmdHasAlias<Arg>)
@@ -282,6 +273,20 @@ identifier_length()
     }
 
     return length;
+}
+
+template <SimpleParse::CmdArgument Arg, SimpleParse::CmdArgument... Rest>
+constexpr std::size_t
+SimpleParse::max_identifier_length()
+{
+    std::size_t max_length = identifier_length<Arg>();
+
+    if constexpr (sizeof...(Rest) > 0)
+    {
+        max_length = std::max(max_length, max_identifier_length<Rest...>());
+    }
+
+    return max_length;
 }
 
 #endif
