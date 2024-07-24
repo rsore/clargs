@@ -14,7 +14,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "$<1:${CMAKE_BINARY_DIR}/lib>")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "$<1:${CMAKE_BINARY_DIR}/lib>")
 
 add_executable(ArgumentParser main.cpp
-        ArgumentParser.hpp)
+        Parser.hpp)
 
 target_compile_options(ArgumentParser PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
