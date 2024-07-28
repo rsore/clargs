@@ -5,6 +5,7 @@
  * TODO:
  * - Handle duplicate arguments, e.g. user passes '-v --verbose' or '-f --foo -f'
  * - Handle required arguments: If they are not passed by the user, issue an error and exit
+ * - Handle option groups with validators (For example mutually exclusive options)
  */
 
 #include <cassert>
@@ -33,7 +34,7 @@ namespace CLArgs
     };
 
     template <typename T>
-    concept CmdHasValue = CmdOption<T> && requires
+    concept CmdHasValue = requires
     {
         {
             T::value_hint
