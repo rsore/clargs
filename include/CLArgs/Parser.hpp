@@ -178,7 +178,7 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>::iterator 
                 ss << "Expected value for option '" << arg << '\'';
                 throw std::invalid_argument(ss.str());
             }
-            options_[type_index] = std::make_any<Option::ValueType>(from_sv<Option::ValueType>(*value_iter));
+            options_[type_index] = std::make_any<typename Option::ValueType>(from_sv<typename Option::ValueType>(*value_iter));
             arguments_.erase(iter, value_iter + 1);
         }
         else
@@ -272,7 +272,7 @@ CLArgs::Parser<Options...>::get_option_value() const noexcept
 
     try
     {
-        const auto result = std::any_cast<Option::ValueType>(it->second);
+        const auto result = std::any_cast<typename Option::ValueType>(it->second);
         return result;
     }
     catch (std::bad_any_cast &)
@@ -280,7 +280,7 @@ CLArgs::Parser<Options...>::get_option_value() const noexcept
         std::stringstream ss;
         ss << "Error performing any_cast in CLargs::Parser::get_option_value() with" << '\n';
         ss << "  Option: \"" << typeid(Option).name() << "\"\n";
-        ss << "  ValueType: \"" << typeid(Option::ValueType).name() << "\"\n";
+        ss << "  ValueType: \"" << typeid(typename Option::ValueType).name() << "\"\n";
         ss << "Returning nullopt as fallback";
         std::cerr << ss.str() << std::endl;
         return std::nullopt;
