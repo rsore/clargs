@@ -18,7 +18,7 @@
 namespace CLArgs
 {
     template <typename T>
-    concept CmdArgumentBase = requires
+    concept CmdOption = requires
     {
         {
             T::identifier
@@ -32,10 +32,7 @@ namespace CLArgs
     };
 
     template <typename T>
-    concept CmdFlag = CmdArgumentBase<T>;
-
-    template <typename T>
-    concept CmdOption = CmdArgumentBase<T> && requires
+    concept CmdHasValue = CmdOption<T> && requires
     {
         {
             T::value_hint
@@ -51,17 +48,13 @@ namespace CLArgs
         } -> std::convertible_to<std::string_view>;
     };
 
-    template <typename T>
-    concept CmdArgument = CmdOption<T> || CmdFlag<T>;
-
-
-    template <CmdArgument Arg>
+    template <CmdOption Arg>
     constexpr std::size_t identifier_length();
 
-    template <CmdArgument Arg, CmdArgument... Rest>
+    template <CmdOption Arg, CmdOption... Rest>
     static constexpr std::size_t max_identifier_length();
 
-    template <CmdArgument... Args>
+    template <CmdOption... Args>
     class Parser
     {
     public:
@@ -79,20 +72,20 @@ namespace CLArgs
 
         [[nodiscard]] std::filesystem::path program() const;
 
-        template <CmdFlag Flag>
+        template <CmdOption Flag>
         [[nodiscard]] bool has_flag() const;
 
-        template <CmdOption Option>
+        template <CmdHasValue Option>
         [[nodiscard]] bool has_option() const;
 
-        template <CmdOption Option>
+        template <CmdHasValue Option>
         [[nodiscard]] std::optional<typename Option::ValueType> get_option();
 
     private:
-        template <CmdArgument Arg, CmdArgument... Rest>
+        template <CmdOption Arg, CmdOption... Rest>
         static constexpr void append_args_to_usage(std::stringstream &);
 
-        template <CmdArgument Arg, CmdArgument... Rest>
+        template <CmdOption Arg, CmdOption... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
 
         std::string_view                                  program_;
@@ -103,7 +96,7 @@ namespace CLArgs
     };
 }
 
-template <CLArgs::CmdArgument... Args>
+template <CLArgs::CmdOption... Args>
 CLArgs::Parser<Args...>::Parser(int argc, char **argv)
     : program_(*argv++)
 {
@@ -118,7 +111,7 @@ CLArgs::Parser<Args...>::Parser(int argc, char **argv)
     }
 }
 
-template <CLArgs::CmdArgument... Args>
+template <CLArgs::CmdOption... Args>
 std::string
 CLArgs::Parser<Args...>::usage() const
 {
@@ -133,15 +126,15 @@ CLArgs::Parser<Args...>::usage() const
     return ss.str();
 }
 
-template <CLArgs::CmdArgument... Args>
+template <CLArgs::CmdOption... Args>
 std::filesystem::path
 CLArgs::Parser<Args...>::program() const
 {
     return program_;
 }
 
-template <CLArgs::CmdArgument... Args>
-template <CLArgs::CmdFlag Flag>
+template <CLArgs::CmdOption... Args>
+template <CLArgs::CmdOption Flag>
 bool
 CLArgs::Parser<Args...>::has_flag() const
 {
@@ -153,8 +146,8 @@ CLArgs::Parser<Args...>::has_flag() const
     return result;
 }
 
-template <CLArgs::CmdArgument... Args>
-template <CLArgs::CmdOption Option>
+template <CLArgs::CmdOption... Args>
+template <CLArgs::CmdHasValue Option>
 bool
 CLArgs::Parser<Args...>::has_option() const
 {
@@ -166,8 +159,8 @@ CLArgs::Parser<Args...>::has_option() const
     return result;
 }
 
-template <CLArgs::CmdArgument... Args>
-template <CLArgs::CmdOption Option>
+template <CLArgs::CmdOption... Args>
+template <CLArgs::CmdHasValue Option>
 std::optional<typename Option::ValueType>
 CLArgs::Parser<Args...>::get_option()
 {
@@ -199,8 +192,8 @@ CLArgs::Parser<Args...>::get_option()
     return result;
 }
 
-template <CLArgs::CmdArgument... Args>
-template <CLArgs::CmdArgument Arg, CLArgs::CmdArgument... Rest>
+template <CLArgs::CmdOption... Args>
+template <CLArgs::CmdOption Arg, CLArgs::CmdOption... Rest>
 constexpr void
 CLArgs::Parser<Args...>::append_args_to_usage(std::stringstream &ss)
 {
@@ -214,7 +207,7 @@ CLArgs::Parser<Args...>::append_args_to_usage(std::stringstream &ss)
 
     ss << Arg::identifier;
 
-    if constexpr (CmdOption<Arg>)
+    if constexpr (CmdHasValue<Arg>)
     {
         ss << ' ' << Arg::value_hint;
     }
@@ -230,8 +223,8 @@ CLArgs::Parser<Args...>::append_args_to_usage(std::stringstream &ss)
     }
 }
 
-template <CLArgs::CmdArgument... Args>
-template <CLArgs::CmdArgument Arg, CLArgs::CmdArgument... Rest>
+template <CLArgs::CmdOption... Args>
+template <CLArgs::CmdOption Arg, CLArgs::CmdOption... Rest>
 constexpr void
 CLArgs::Parser<Args...>::append_option_descriptions_to_usage(std::stringstream &ss)
 {
@@ -263,7 +256,7 @@ CLArgs::Parser<Args...>::append_option_descriptions_to_usage(std::stringstream &
     }
 }
 
-template <CLArgs::CmdArgument Arg>
+template <CLArgs::CmdOption Arg>
 constexpr std::size_t
 CLArgs::identifier_length()
 {
@@ -277,7 +270,7 @@ CLArgs::identifier_length()
     return length;
 }
 
-template <CLArgs::CmdArgument Arg, CLArgs::CmdArgument... Rest>
+template <CLArgs::CmdOption Arg, CLArgs::CmdOption... Rest>
 constexpr std::size_t
 CLArgs::max_identifier_length()
 {
