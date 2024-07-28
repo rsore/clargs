@@ -247,7 +247,7 @@ template <CLArgs::CmdOption... Options>
 std::filesystem::path
 CLArgs::Parser<Options...>::program() const noexcept
 {
-    assert(valid_);
+    assert(valid_ && "parse() method must be called without exceptions before calling program()");
 
     return program_;
 }
@@ -257,7 +257,7 @@ template <CLArgs::CmdOption Option>
 bool
 CLArgs::Parser<Options...>::has_option() const noexcept requires IsPartOf<Option, Options...>
 {
-    assert(valid_);
+    assert(valid_ && "parse() method must be called without exceptions before calling has_option()");
 
     return options_.contains(std::type_index(typeid(Option)));
 }
@@ -268,7 +268,7 @@ std::optional<typename Option::ValueType>
 CLArgs::Parser<Options...>::get_option_value()
     const noexcept requires IsPartOf<Option, Options...> &&CmdHasValue<Option>
 {
-    assert(valid_);
+    assert(valid_ && "parse() method must be called without exceptions before calling get_option_value()");
 
     const auto it = options_.find(std::type_index(typeid(Option)));
     if (it == options_.end())

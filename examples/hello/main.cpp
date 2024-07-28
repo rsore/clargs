@@ -60,7 +60,6 @@ int
 main(const int argc, char **argv)
 {
     ArgumentParser argument_parser;
-
     try
     {
         argument_parser.parse(argc, argv);
