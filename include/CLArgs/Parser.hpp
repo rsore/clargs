@@ -178,7 +178,8 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>::iterator 
                 ss << "Expected value for option '" << arg << '\'';
                 throw std::invalid_argument(ss.str());
             }
-            options_[type_index] = std::make_any<typename Option::ValueType>(from_sv<typename Option::ValueType>(*value_iter));
+            const auto value     = from_sv<typename Option::ValueType>(*value_iter);
+            options_[type_index] = std::make_any<typename Option::ValueType>(value);
             arguments_.erase(iter, value_iter + 1);
         }
         else
