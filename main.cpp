@@ -41,7 +41,7 @@ struct DirectoryOption
     static constexpr std::string_view identifier{ "--directory" };
     static constexpr std::string_view description{ "Specify input directory" };
     static constexpr std::string_view value_hint{ "PATH" };
-    static constexpr bool             required{ false };
+    static constexpr bool             required{ true };
     using ValueType = std::string;
 };
 

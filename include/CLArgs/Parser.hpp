@@ -3,7 +3,6 @@
 
 /**
  * TODO:
- * - Handle required arguments: If they are not passed by the user, issue an error and exit
  * - Handle option groups with validators (For example mutually exclusive options)
  * - Proper from_sv() implementation. We currently just use std::stringstream as a middleman for casting, but it is
  * expensive
@@ -91,15 +90,18 @@ namespace CLArgs
         void process_arg(std::vector<std::string_view>::iterator &);
 
         template <CmdOption Arg, CmdOption... Rest>
+        void validate_required_options() const;
+
+        template <CmdOption Arg, CmdOption... Rest>
         static constexpr void append_args_to_usage(std::stringstream &);
 
         template <CmdOption Arg, CmdOption... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
 
-        std::string_view              program_{ "program_name" };
-        std::vector<std::string_view> arguments_;
-
+        std::string_view                              program_{ "program_name" };
         std::unordered_map<std::type_index, std::any> options_;
+
+        std::vector<std::string_view> arguments_; // Used during parsing
 
         bool valid_{ false };
 
@@ -125,6 +127,8 @@ CLArgs::Parser<Args...>::Parser::parse(int argc, char **argv)
         auto front = arguments_.begin();
         process_arg<Args...>(front);
     }
+
+    validate_required_options<Args...>();
 
     valid_ = true;
 }
@@ -195,6 +199,27 @@ CLArgs::Parser<Args...>::process_arg(std::vector<std::string_view>::iterator &it
             ss << "Unknown option '" << arg << '\'';
             throw std::invalid_argument(ss.str());
         }
+    }
+}
+
+template <CLArgs::CmdOption... Args>
+template <CLArgs::CmdOption Arg, CLArgs::CmdOption... Rest>
+void
+CLArgs::Parser<Args...>::validate_required_options() const
+{
+    if constexpr (Arg::required)
+    {
+        if (!options_.contains(std::type_index(typeid(Arg))))
+        {
+            std::stringstream ss;
+            ss << "Expected required option \"" << Arg::identifier << '"';
+            throw std::invalid_argument(ss.str());
+        }
+    }
+
+    if constexpr (sizeof...(Rest) > 0)
+    {
+        validate_required_options<Rest...>();
     }
 }
 
