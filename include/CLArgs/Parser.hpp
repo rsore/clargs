@@ -12,7 +12,9 @@
 #include <cassert>
 #include <cstddef>
 #include <filesystem>
+#include <format>
 #include <iomanip>
+#include <iostream>
 #include <optional>
 #include <sstream>
 #include <typeindex>
