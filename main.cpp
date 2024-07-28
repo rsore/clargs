@@ -45,15 +45,25 @@ struct DirectoryOption
     using ValueType = std::string;
 };
 
+using ArgumentParser = CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, FileOption, DirectoryOption>;
+
 int
 main(const int argc, char **argv)
 {
-    using ArgumentParser = CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, FileOption, DirectoryOption>;
     ArgumentParser argument_parser;
 
-    argument_parser.parse(argc, argv);
+    try
+    {
+        argument_parser.parse(argc, argv);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "Error: " << e.what() << '\n';
+        std::cerr << argument_parser.help() << std::endl;
+        return EXIT_FAILURE;
+    }
 
-    if (argument_parser.has_flag<HelpFlag>())
+    if (argument_parser.has_option<HelpFlag>())
     {
         std::cout << argument_parser.help() << std::endl;
         return EXIT_SUCCESS;
@@ -61,12 +71,12 @@ main(const int argc, char **argv)
 
     std::cout << "Program is '" << argument_parser.program() << "'" << std::endl;
 
-    std::cout << "Has verbose:   " << std::boolalpha << argument_parser.has_flag<VerboseFlag>() << std::endl;
-    std::cout << "Has hello:     " << std::boolalpha << argument_parser.has_flag<HelloFlag>() << std::endl;
+    std::cout << "Has verbose:   " << std::boolalpha << argument_parser.has_option<VerboseFlag>() << std::endl;
+    std::cout << "Has hello:     " << std::boolalpha << argument_parser.has_option<HelloFlag>() << std::endl;
     std::cout << "Has file:      " << std::boolalpha << argument_parser.has_option<FileOption>() << std::endl;
     std::cout << "Has directory: " << std::boolalpha << argument_parser.has_option<DirectoryOption>() << std::endl;
 
-    if (const auto fileOption = argument_parser.get_option<FileOption>(); fileOption.has_value())
+    if (const auto fileOption = argument_parser.get_option_value<FileOption>(); fileOption.has_value())
     {
         std::cout << "File: " << fileOption.value() << std::endl;
     }
@@ -74,7 +84,7 @@ main(const int argc, char **argv)
     {
         std::cout << "File option is not defined" << std::endl;
     }
-    if (const auto directoryOption = argument_parser.get_option<DirectoryOption>(); directoryOption.has_value())
+    if (const auto directoryOption = argument_parser.get_option_value<DirectoryOption>(); directoryOption.has_value())
     {
         std::cout << "Directory: " << directoryOption.value() << std::endl;
     }
