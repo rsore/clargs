@@ -6,14 +6,17 @@
  * - Handle duplicate arguments, e.g. user passes '-v --verbose' or '-f --foo -f'
  * - Handle required arguments: If they are not passed by the user, issue an error and exit
  * - Handle option groups with validators (For example mutually exclusive options)
+ * - Proper from_sv() implementation. We currently just use std::stringstream as a middleman for casting, but it is expensive
  */
 
+#include <any>
 #include <cassert>
 #include <cstddef>
 #include <filesystem>
 #include <iomanip>
 #include <optional>
 #include <sstream>
+#include <typeindex>
 #include <unordered_map>
 #include <vector>
 
@@ -56,11 +59,14 @@ namespace CLArgs
     template <CmdOption Arg, CmdOption... Rest>
     static constexpr std::size_t max_identifier_length();
 
+    template <typename T>
+    static T from_sv(std::string_view);
+
     template <CmdOption... Args>
     class Parser
     {
       public:
-        Parser() = default;
+        Parser() noexcept = default;
 
         Parser(const Parser &)  = delete;
         Parser(const Parser &&) = delete;
@@ -70,29 +76,30 @@ namespace CLArgs
 
         void parse(int argc, char **argv);
 
-        [[nodiscard]] std::string help() const;
+        [[nodiscard]] std::string help() const noexcept;
 
-        [[nodiscard]] std::filesystem::path program() const;
+        [[nodiscard]] std::filesystem::path program() const noexcept;
 
-        template <CmdOption Flag>
-        [[nodiscard]] bool has_flag() const;
+        template <CmdOption Option>
+        [[nodiscard]] bool has_option() const noexcept;
 
-        template <CmdHasValue Option>
-        [[nodiscard]] bool has_option() const;
-
-        template <CmdHasValue Option>
-        [[nodiscard]] std::optional<typename Option::ValueType> get_option();
+        template <CmdOption Option, typename = std::enable_if<CmdHasValue<Option>>>
+        [[nodiscard]] std::optional<typename Option::ValueType> get_option_value() const noexcept;
 
       private:
+        template <CmdOption Arg, CmdOption... Rest>
+        void process_arg(std::vector<std::string_view>::iterator &);
+
         template <CmdOption Arg, CmdOption... Rest>
         static constexpr void append_args_to_usage(std::stringstream &);
 
         template <CmdOption Arg, CmdOption... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
 
-        std::string_view                                  program_{"program_name"};
+        std::string_view                                  program_{ "program_name" };
         std::vector<std::string_view>                     arguments_;
-        std::unordered_map<std::string_view, std::size_t> argument_index_map_;
+
+        std::unordered_map<std::type_index, std::any> options_;
 
         bool valid_{ false };
 
@@ -108,19 +115,79 @@ CLArgs::Parser<Args...>::Parser::parse(int argc, char **argv)
     argc -= 1;
 
     arguments_.resize(argc);
-    for (std::size_t i{}; i < static_cast<std::size_t>(argc); ++i)
+    for (int i{}; i < argc; ++i)
     {
-        const std::string_view sv = argv[i];
-        arguments_[i]             = sv;
-        argument_index_map_[sv]   = i;
+        arguments_[i] = argv[i];
+    }
+
+    while (!arguments_.empty())
+    {
+        auto front = arguments_.begin();
+        process_arg<Args...>(front);
     }
 
     valid_ = true;
 }
 
 template <CLArgs::CmdOption... Args>
+template <CLArgs::CmdOption Arg, CLArgs::CmdOption... Rest>
+void
+CLArgs::Parser<Args...>::process_arg(std::vector<std::string_view>::iterator &iter)
+{
+    std::string_view arg = *iter;
+
+    bool found{ false };
+    if (arg == Arg::identifier)
+    {
+        found = true;
+    }
+    else if constexpr (CmdHasAlias<Arg>)
+    {
+        if (arg == Arg::alias)
+        {
+            found = true;
+        }
+    }
+
+    if (found)
+    {
+        if constexpr (CmdHasValue<Arg>)
+        {
+            auto value_iter = iter + 1;
+
+            if (value_iter == arguments_.end())
+            {
+                std::stringstream ss;
+                ss << "Expected value for option '" << arg << '\'';
+                throw std::invalid_argument(ss.str());
+            }
+            options_[std::type_index(typeid(Arg))] = std::make_any<Arg::ValueType>(from_sv<Arg::ValueType>(*value_iter));
+            arguments_.erase(iter, value_iter + 1);
+        }
+        else
+        {
+            options_[std::type_index(typeid(Arg))] = std::any{};
+            arguments_.erase(iter);
+        }
+    }
+    else
+    {
+        if constexpr (sizeof...(Rest) > 0)
+        {
+            process_arg<Rest...>(iter);
+        }
+        else
+        {
+            std::stringstream ss;
+            ss << "Unknown option '" << arg << '\'';
+            throw std::invalid_argument(ss.str());
+        }
+    }
+}
+
+template <CLArgs::CmdOption... Args>
 std::string
-CLArgs::Parser<Args...>::help() const
+CLArgs::Parser<Args...>::help() const noexcept
 {
     std::stringstream ss;
     ss << "Usage: " << program_;
@@ -135,7 +202,7 @@ CLArgs::Parser<Args...>::help() const
 
 template <CLArgs::CmdOption... Args>
 std::filesystem::path
-CLArgs::Parser<Args...>::program() const
+CLArgs::Parser<Args...>::program() const noexcept
 {
     assert(valid_);
 
@@ -143,68 +210,43 @@ CLArgs::Parser<Args...>::program() const
 }
 
 template <CLArgs::CmdOption... Args>
-template <CLArgs::CmdOption Flag>
+template <CLArgs::CmdOption Option>
 bool
-CLArgs::Parser<Args...>::has_flag() const
+CLArgs::Parser<Args...>::has_option() const noexcept
 {
     assert(valid_);
 
-    bool result = argument_index_map_.contains(Flag::identifier);
-    if constexpr (CmdHasAlias<Flag>)
-    {
-        result = result || argument_index_map_.contains(Flag::alias);
-    }
-    return result;
+    return options_.contains(std::type_index(typeid(Option)));
 }
 
 template <CLArgs::CmdOption... Args>
-template <CLArgs::CmdHasValue Option>
-bool
-CLArgs::Parser<Args...>::has_option() const
-{
-    assert(valid_);
-
-    bool result = argument_index_map_.contains(Option::identifier);
-    if constexpr (CmdHasAlias<Option>)
-    {
-        result = result || argument_index_map_.contains(Option::alias);
-    }
-    return result;
-}
-
-template <CLArgs::CmdOption... Args>
-template <CLArgs::CmdHasValue Option>
+template <CLArgs::CmdOption Option, typename>
 std::optional<typename Option::ValueType>
-CLArgs::Parser<Args...>::get_option()
+CLArgs::Parser<Args...>::get_option_value() const noexcept
 {
     assert(valid_);
 
-    auto it = argument_index_map_.find(Option::identifier);
-    if (it == argument_index_map_.end())
-    {
-        if constexpr (CmdHasAlias<Option>)
-        {
-            it = argument_index_map_.find(Option::alias);
-        }
-        if (it == argument_index_map_.end())
-        {
-            return std::nullopt;
-        }
-    }
-
-    const std::size_t index = it->second;
-    if (index + 1 >= arguments_.size())
+    const auto it = options_.find(std::type_index(typeid(Option)));
+    if (it == options_.end())
     {
         return std::nullopt;
     }
 
-    const auto                &sv = arguments_[index + 1];
-    typename Option::ValueType result;
-    std::stringstream          ss;
-
-    ss << sv;
-    ss >> result;
-    return result;
+    try
+    {
+        const auto result = std::any_cast<Option::ValueType>(it->second);
+        return result;
+    }
+    catch (std::bad_any_cast &)
+    {
+        std::stringstream ss;
+        ss << "Error performing any_cast in CLargs::Parser::get_option_value() with" << '\n';
+        ss << "  Option: \"" << typeid(Option).name() << "\"\n";
+        ss << "  ValueType: \"" << typeid(Option::ValueType).name() << "\"\n";
+        ss << "Returning nullopt as fallback";
+        std::cerr << ss.str() << std::endl;
+        return std::nullopt;
+    }
 }
 
 template <CLArgs::CmdOption... Args>
@@ -297,6 +339,18 @@ CLArgs::max_identifier_length()
     }
 
     return max_length;
+}
+
+template <typename T>
+static T
+CLArgs::from_sv(std::string_view sv)
+{
+    T                 result;
+    std::stringstream ss;
+    ss << sv;
+    ss >> result;
+
+    return result;
 }
 
 #endif
