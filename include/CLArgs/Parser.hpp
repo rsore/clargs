@@ -87,11 +87,11 @@ namespace CLArgs
 
         template <CmdOption Option>
         [[nodiscard]] std::optional<typename Option::ValueType>
-        get_option_value() const noexcept requires IsPartOf<Option, Options...> && CmdHasValue<Option>;
+        get_option_value() const noexcept requires IsPartOf<Option, Options...> &&CmdHasValue<Option>;
 
       private:
         template <CmdOption Option, CmdOption... Rest>
-        void process_arg(std::vector<std::string_view>::iterator &);
+        void process_arg(std::vector<std::string_view> &, std::vector<std::string_view>::iterator &);
 
         template <CmdOption Option, CmdOption... Rest>
         void validate_required_options() const;
@@ -104,8 +104,6 @@ namespace CLArgs
 
         std::string_view                              program_;
         std::unordered_map<std::type_index, std::any> options_;
-
-        std::vector<std::string_view> arguments_; // Used during parsing
 
         bool valid_{ false };
 
@@ -125,16 +123,16 @@ CLArgs::Parser<Options...>::Parser::parse(int argc, char **argv)
     program_ = *argv++;
     argc -= 1;
 
-    arguments_.resize(argc);
+    std::vector<std::string_view> arguments(argc);
     for (int i{}; i < argc; ++i)
     {
-        arguments_[i] = argv[i];
+        arguments[i] = argv[i];
     }
 
-    while (!arguments_.empty())
+    while (!arguments.empty())
     {
-        auto front = arguments_.begin();
-        process_arg<Options...>(front);
+        auto front = arguments.begin();
+        process_arg<Options...>(arguments, front);
     }
 
     validate_required_options<Options...>();
@@ -145,9 +143,10 @@ CLArgs::Parser<Options...>::Parser::parse(int argc, char **argv)
 template <CLArgs::CmdOption... Options>
 template <CLArgs::CmdOption Option, CLArgs::CmdOption... Rest>
 void
-CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>::iterator &iter)
+CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>           &all,
+                                        std::vector<std::string_view>::iterator &current)
 {
-    std::string_view arg = *iter;
+    std::string_view arg = *current;
 
     bool found{ false };
     if (arg == Option::identifier)
@@ -179,27 +178,27 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>::iterator 
 
         if constexpr (CmdHasValue<Option>)
         {
-            auto value_iter = iter + 1;
+            auto value_iter = current + 1;
 
-            if (value_iter == arguments_.end())
+            if (value_iter == all.end())
             {
                 throw std::invalid_argument(std::format("Expected value for option \"{}\"", arg));
             }
             const auto value     = from_sv<typename Option::ValueType>(*value_iter);
             options_[type_index] = std::make_any<typename Option::ValueType>(value);
-            arguments_.erase(iter, value_iter + 1);
+            all.erase(current, value_iter + 1);
         }
         else
         {
             options_[type_index] = std::any{};
-            arguments_.erase(iter);
+            all.erase(current);
         }
     }
     else
     {
         if constexpr (sizeof...(Rest) > 0)
         {
-            process_arg<Rest...>(iter);
+            process_arg<Rest...>(all, current);
         }
         else
         {
@@ -264,7 +263,8 @@ CLArgs::Parser<Options...>::has_option() const noexcept requires IsPartOf<Option
 template <CLArgs::CmdOption... Options>
 template <CLArgs::CmdOption Option>
 std::optional<typename Option::ValueType>
-CLArgs::Parser<Options...>::get_option_value() const noexcept requires IsPartOf<Option, Options...> && CmdHasValue<Option>
+CLArgs::Parser<Options...>::get_option_value()
+    const noexcept requires IsPartOf<Option, Options...> &&CmdHasValue<Option>
 {
     assert(valid_);
 
