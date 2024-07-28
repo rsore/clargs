@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <iostream>
 #include <string_view>
 
@@ -33,7 +34,7 @@ struct FileOption
     static constexpr std::string_view description{ "Specify input file" };
     static constexpr std::string_view value_hint{ "FILE" };
     static constexpr bool             required{ true };
-    using ValueType = std::string;
+    using ValueType = std::filesystem::path;
 };
 
 struct DirectoryOption
@@ -54,7 +55,17 @@ struct FloatOption
     using ValueType = float;
 };
 
-using ArgumentParser = CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, FileOption, DirectoryOption, FloatOption>;
+struct CharOption
+{
+    static constexpr std::string_view identifier{ "--char" };
+    static constexpr std::string_view description{ "Specify character value" };
+    static constexpr std::string_view value_hint{ "CHARACTER" };
+    static constexpr bool             required{ false };
+    using ValueType = char;
+};
+
+using ArgumentParser =
+    CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, FileOption, DirectoryOption, FloatOption, CharOption>;
 
 int
 main(const int argc, char **argv)
@@ -108,6 +119,10 @@ main(const int argc, char **argv)
     else
     {
         std::cout << "Float option is not defined" << std::endl;
+    }
+    if (const auto char_option = argument_parser.get_option_value<CharOption>(); char_option.has_value())
+    {
+        std::cout << "Character option: " << char_option.value() << std::endl;
     }
 
     return EXIT_SUCCESS;
