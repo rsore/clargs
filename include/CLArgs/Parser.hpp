@@ -52,16 +52,16 @@ namespace CLArgs
         } -> std::convertible_to<std::string_view>;
     };
 
-    template <CmdOption Arg>
+    template <CmdOption Option>
     constexpr std::size_t identifier_length();
 
-    template <CmdOption Arg, CmdOption... Rest>
+    template <CmdOption Option, CmdOption... Rest>
     static constexpr std::size_t max_identifier_length();
 
     template <typename T>
     static T from_sv(std::string_view);
 
-    template <CmdOption... Args>
+    template <CmdOption... Options>
     class Parser
     {
       public:
@@ -86,16 +86,16 @@ namespace CLArgs
         [[nodiscard]] std::optional<typename Option::ValueType> get_option_value() const noexcept;
 
       private:
-        template <CmdOption Arg, CmdOption... Rest>
+        template <CmdOption Option, CmdOption... Rest>
         void process_arg(std::vector<std::string_view>::iterator &);
 
-        template <CmdOption Arg, CmdOption... Rest>
+        template <CmdOption Option, CmdOption... Rest>
         void validate_required_options() const;
 
-        template <CmdOption Arg, CmdOption... Rest>
+        template <CmdOption Option, CmdOption... Rest>
         static constexpr void append_args_to_usage(std::stringstream &);
 
-        template <CmdOption Arg, CmdOption... Rest>
+        template <CmdOption Option, CmdOption... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
 
         std::string_view                              program_{ "program_name" };
@@ -105,13 +105,13 @@ namespace CLArgs
 
         bool valid_{ false };
 
-        static constexpr std::size_t max_identifier_length_{ max_identifier_length<Args...>() };
+        static constexpr std::size_t max_identifier_length_{ max_identifier_length<Options...>() };
     };
 } // namespace CLArgs
 
-template <CLArgs::CmdOption... Args>
+template <CLArgs::CmdOption... Options>
 void
-CLArgs::Parser<Args...>::Parser::parse(int argc, char **argv)
+CLArgs::Parser<Options...>::Parser::parse(int argc, char **argv)
 {
     program_ = *argv++;
     argc -= 1;
@@ -125,29 +125,29 @@ CLArgs::Parser<Args...>::Parser::parse(int argc, char **argv)
     while (!arguments_.empty())
     {
         auto front = arguments_.begin();
-        process_arg<Args...>(front);
+        process_arg<Options...>(front);
     }
 
-    validate_required_options<Args...>();
+    validate_required_options<Options...>();
 
     valid_ = true;
 }
 
-template <CLArgs::CmdOption... Args>
-template <CLArgs::CmdOption Arg, CLArgs::CmdOption... Rest>
+template <CLArgs::CmdOption... Options>
+template <CLArgs::CmdOption Option, CLArgs::CmdOption... Rest>
 void
-CLArgs::Parser<Args...>::process_arg(std::vector<std::string_view>::iterator &iter)
+CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>::iterator &iter)
 {
     std::string_view arg = *iter;
 
     bool found{ false };
-    if (arg == Arg::identifier)
+    if (arg == Option::identifier)
     {
         found = true;
     }
-    else if constexpr (CmdHasAlias<Arg>)
+    else if constexpr (CmdHasAlias<Option>)
     {
-        if (arg == Arg::alias)
+        if (arg == Option::alias)
         {
             found = true;
         }
@@ -155,20 +155,20 @@ CLArgs::Parser<Args...>::process_arg(std::vector<std::string_view>::iterator &it
 
     if (found)
     {
-        const auto type_index = std::type_index(typeid(Arg));
+        const auto type_index = std::type_index(typeid(Option));
         if (options_.contains(type_index))
         {
             std::stringstream ss;
-            ss << "Duplicate argument \"" << Arg::identifier;
-            if constexpr (CmdHasAlias<Arg>)
+            ss << "Duplicate argument \"" << Option::identifier;
+            if constexpr (CmdHasAlias<Option>)
             {
-                ss << " / " << Arg::alias;
+                ss << " / " << Option::alias;
             }
             ss << "\"";
             throw std::invalid_argument(ss.str());
         }
 
-        if constexpr (CmdHasValue<Arg>)
+        if constexpr (CmdHasValue<Option>)
         {
             auto value_iter = iter + 1;
 
@@ -178,7 +178,7 @@ CLArgs::Parser<Args...>::process_arg(std::vector<std::string_view>::iterator &it
                 ss << "Expected value for option '" << arg << '\'';
                 throw std::invalid_argument(ss.str());
             }
-            options_[type_index] = std::make_any<Arg::ValueType>(from_sv<Arg::ValueType>(*value_iter));
+            options_[type_index] = std::make_any<Option::ValueType>(from_sv<Option::ValueType>(*value_iter));
             arguments_.erase(iter, value_iter + 1);
         }
         else
@@ -202,17 +202,17 @@ CLArgs::Parser<Args...>::process_arg(std::vector<std::string_view>::iterator &it
     }
 }
 
-template <CLArgs::CmdOption... Args>
-template <CLArgs::CmdOption Arg, CLArgs::CmdOption... Rest>
+template <CLArgs::CmdOption... Options>
+template <CLArgs::CmdOption Option, CLArgs::CmdOption... Rest>
 void
-CLArgs::Parser<Args...>::validate_required_options() const
+CLArgs::Parser<Options...>::validate_required_options() const
 {
-    if constexpr (Arg::required)
+    if constexpr (Option::required)
     {
-        if (!options_.contains(std::type_index(typeid(Arg))))
+        if (!options_.contains(std::type_index(typeid(Option))))
         {
             std::stringstream ss;
-            ss << "Expected required option \"" << Arg::identifier << '"';
+            ss << "Expected required option \"" << Option::identifier << '"';
             throw std::invalid_argument(ss.str());
         }
     }
@@ -223,44 +223,44 @@ CLArgs::Parser<Args...>::validate_required_options() const
     }
 }
 
-template <CLArgs::CmdOption... Args>
+template <CLArgs::CmdOption... Options>
 std::string
-CLArgs::Parser<Args...>::help() const noexcept
+CLArgs::Parser<Options...>::help() const noexcept
 {
     std::stringstream ss;
     ss << "Usage: " << program_;
-    append_args_to_usage<Args...>(ss);
+    append_args_to_usage<Options...>(ss);
     ss << '\n';
 
     ss << "Options:\n";
-    append_option_descriptions_to_usage<Args...>(ss);
+    append_option_descriptions_to_usage<Options...>(ss);
 
     return ss.str();
 }
 
-template <CLArgs::CmdOption... Args>
+template <CLArgs::CmdOption... Options>
 std::filesystem::path
-CLArgs::Parser<Args...>::program() const noexcept
+CLArgs::Parser<Options...>::program() const noexcept
 {
     assert(valid_);
 
     return program_;
 }
 
-template <CLArgs::CmdOption... Args>
+template <CLArgs::CmdOption... Options>
 template <CLArgs::CmdOption Option>
 bool
-CLArgs::Parser<Args...>::has_option() const noexcept
+CLArgs::Parser<Options...>::has_option() const noexcept
 {
     assert(valid_);
 
     return options_.contains(std::type_index(typeid(Option)));
 }
 
-template <CLArgs::CmdOption... Args>
+template <CLArgs::CmdOption... Options>
 template <CLArgs::CmdOption Option, typename>
 std::optional<typename Option::ValueType>
-CLArgs::Parser<Args...>::get_option_value() const noexcept
+CLArgs::Parser<Options...>::get_option_value() const noexcept
 {
     assert(valid_);
 
@@ -287,24 +287,24 @@ CLArgs::Parser<Args...>::get_option_value() const noexcept
     }
 }
 
-template <CLArgs::CmdOption... Args>
-template <CLArgs::CmdOption Arg, CLArgs::CmdOption... Rest>
+template <CLArgs::CmdOption... Options>
+template <CLArgs::CmdOption Option, CLArgs::CmdOption... Rest>
 constexpr void
-CLArgs::Parser<Args...>::append_args_to_usage(std::stringstream &ss)
+CLArgs::Parser<Options...>::append_args_to_usage(std::stringstream &ss)
 {
     ss << ' ';
 
-    constexpr bool required = Arg::required;
+    constexpr bool required = Option::required;
     if constexpr (!required)
     {
         ss << '[';
     }
 
-    ss << Arg::identifier;
+    ss << Option::identifier;
 
-    if constexpr (CmdHasValue<Arg>)
+    if constexpr (CmdHasValue<Option>)
     {
-        ss << ' ' << Arg::value_hint;
+        ss << ' ' << Option::value_hint;
     }
 
     if constexpr (!required)
@@ -318,23 +318,23 @@ CLArgs::Parser<Args...>::append_args_to_usage(std::stringstream &ss)
     }
 }
 
-template <CLArgs::CmdOption... Args>
-template <CLArgs::CmdOption Arg, CLArgs::CmdOption... Rest>
+template <CLArgs::CmdOption... Options>
+template <CLArgs::CmdOption Option, CLArgs::CmdOption... Rest>
 constexpr void
-CLArgs::Parser<Args...>::append_option_descriptions_to_usage(std::stringstream &ss)
+CLArgs::Parser<Options...>::append_option_descriptions_to_usage(std::stringstream &ss)
 {
-    constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_length<Arg>() + 4;
+    constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_length<Option>() + 4;
 
-    ss << std::setw(2) << "" << Arg::identifier;
-    if constexpr (CmdHasAlias<Arg>)
+    ss << std::setw(2) << "" << Option::identifier;
+    if constexpr (CmdHasAlias<Option>)
     {
-        ss << ", " << Arg::alias;
+        ss << ", " << Option::alias;
     }
 
     ss << std::setw(calculated_padding) << "";
 
     constexpr std::string_view required_str = "REQUIRED";
-    if constexpr (Arg::required)
+    if constexpr (Option::required)
     {
         ss << required_str;
     }
@@ -343,7 +343,7 @@ CLArgs::Parser<Args...>::append_option_descriptions_to_usage(std::stringstream &
         ss << std::setw(required_str.length()) << "";
     }
 
-    ss << "  " << Arg::description << '\n';
+    ss << "  " << Option::description << '\n';
 
     if constexpr (sizeof...(Rest) > 0)
     {
@@ -351,25 +351,25 @@ CLArgs::Parser<Args...>::append_option_descriptions_to_usage(std::stringstream &
     }
 }
 
-template <CLArgs::CmdOption Arg>
+template <CLArgs::CmdOption Option>
 constexpr std::size_t
 CLArgs::identifier_length()
 {
-    std::size_t length = Arg::identifier.length();
-    if constexpr (CmdHasAlias<Arg>)
+    std::size_t length = Option::identifier.length();
+    if constexpr (CmdHasAlias<Option>)
     {
-        constexpr std::size_t alias_length = Arg::alias.length();
+        constexpr std::size_t alias_length = Option::alias.length();
         length += alias_length + 2; // + 2 to account for ", " between identifier and alias
     }
 
     return length;
 }
 
-template <CLArgs::CmdOption Arg, CLArgs::CmdOption... Rest>
+template <CLArgs::CmdOption Option, CLArgs::CmdOption... Rest>
 constexpr std::size_t
 CLArgs::max_identifier_length()
 {
-    std::size_t max_length = identifier_length<Arg>();
+    std::size_t max_length = identifier_length<Option>();
 
     if constexpr (sizeof...(Rest) > 0)
     {
