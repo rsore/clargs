@@ -45,7 +45,16 @@ struct DirectoryOption
     using ValueType = std::string;
 };
 
-using ArgumentParser = CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, FileOption, DirectoryOption>;
+struct FloatOption
+{
+    static constexpr std::string_view identifier{ "--float" };
+    static constexpr std::string_view description{ "Specify floating point value" };
+    static constexpr std::string_view value_hint{ "NUMBER" };
+    static constexpr bool             required{ true };
+    using ValueType = float;
+};
+
+using ArgumentParser = CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, FileOption, DirectoryOption, FloatOption>;
 
 int
 main(const int argc, char **argv)
@@ -75,22 +84,31 @@ main(const int argc, char **argv)
     std::cout << "Has hello:     " << std::boolalpha << argument_parser.has_option<HelloFlag>() << std::endl;
     std::cout << "Has file:      " << std::boolalpha << argument_parser.has_option<FileOption>() << std::endl;
     std::cout << "Has directory: " << std::boolalpha << argument_parser.has_option<DirectoryOption>() << std::endl;
+    std::cout << "Has float:     " << std::boolalpha << argument_parser.has_option<FloatOption>() << std::endl;
 
-    if (const auto fileOption = argument_parser.get_option_value<FileOption>(); fileOption.has_value())
+    if (const auto file_option = argument_parser.get_option_value<FileOption>(); file_option.has_value())
     {
-        std::cout << "File: " << fileOption.value() << std::endl;
+        std::cout << "File: " << file_option.value() << std::endl;
     }
     else
     {
         std::cout << "File option is not defined" << std::endl;
     }
-    if (const auto directoryOption = argument_parser.get_option_value<DirectoryOption>(); directoryOption.has_value())
+    if (const auto directory_option = argument_parser.get_option_value<DirectoryOption>(); directory_option.has_value())
     {
-        std::cout << "Directory: " << directoryOption.value() << std::endl;
+        std::cout << "Directory: " << directory_option.value() << std::endl;
     }
     else
     {
         std::cout << "Directory option is not defined" << std::endl;
+    }
+    if (const auto float_option = argument_parser.get_option_value<FloatOption>(); float_option.has_value())
+    {
+        std::cout << "Float: " << float_option.value() << std::endl;
+    }
+    else
+    {
+        std::cout << "Float option is not defined" << std::endl;
     }
 
     return EXIT_SUCCESS;
