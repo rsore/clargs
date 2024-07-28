@@ -102,7 +102,7 @@ namespace CLArgs
         template <CmdOption Option, CmdOption... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
 
-        std::string_view                              program_{ "program_name" };
+        std::string_view                              program_;
         std::unordered_map<std::type_index, std::any> options_;
 
         std::vector<std::string_view> arguments_; // Used during parsing
@@ -117,6 +117,11 @@ template <CLArgs::CmdOption... Options>
 void
 CLArgs::Parser<Options...>::Parser::parse(int argc, char **argv)
 {
+    if (argv == nullptr || *argv == nullptr)
+    {
+        throw std::invalid_argument("Passing nullptr to Parser::parse() is not allowed");
+    }
+
     program_ = *argv++;
     argc -= 1;
 
@@ -178,9 +183,7 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>::iterator 
 
             if (value_iter == arguments_.end())
             {
-                std::stringstream ss;
-                ss << "Expected value for option '" << arg << '\'';
-                throw std::invalid_argument(ss.str());
+                throw std::invalid_argument(std::format("Expected value for option \"{}\"", arg));
             }
             const auto value     = from_sv<typename Option::ValueType>(*value_iter);
             options_[type_index] = std::make_any<typename Option::ValueType>(value);
@@ -200,9 +203,7 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>::iterator 
         }
         else
         {
-            std::stringstream ss;
-            ss << "Unknown option '" << arg << '\'';
-            throw std::invalid_argument(ss.str());
+            throw std::invalid_argument(std::format("Unknown option \"{}\"", arg));
         }
     }
 }
@@ -216,9 +217,7 @@ CLArgs::Parser<Options...>::validate_required_options() const
     {
         if (!options_.contains(std::type_index(typeid(Option))))
         {
-            std::stringstream ss;
-            ss << "Expected required option \"" << Option::identifier << '"';
-            throw std::invalid_argument(ss.str());
+            throw std::invalid_argument(std::format("Expected required option \"{}\"", Option::identifier));
         }
     }
 
@@ -285,12 +284,10 @@ CLArgs::Parser<Options...>::get_option_value() const noexcept requires IsPartOf<
         // This exception should never be thrown as long as the implementation is correct.
         // The type validation is already done before inserting the element.
         // If this error occurs, there is an error with the library implementation.
-        std::stringstream ss;
-        ss << "Error performing any_cast in CLargs::Parser::get_option_value() with" << '\n';
-        ss << "  Option: \"" << typeid(Option).name() << "\"\n";
-        ss << "  ValueType: \"" << typeid(typename Option::ValueType).name() << "\"\n";
-        ss << "Returning nullopt as fallback";
-        std::cerr << ss.str() << std::endl;
+        std::cerr << "Error performing any_cast in CLargs::Parser::get_option_value() with" << '\n';
+        std::cerr << "  Option: \"" << typeid(Option).name() << "\"\n";
+        std::cerr << "  ValueType: \"" << typeid(typename Option::ValueType).name() << "\"\n";
+        std::cerr << "Returning nullopt as fallback" << std::endl;
         return std::nullopt;
     }
 }
