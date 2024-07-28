@@ -52,6 +52,9 @@ namespace CLArgs
         } -> std::convertible_to<std::string_view>;
     };
 
+    template <typename T, typename... Ts>
+    concept IsPartOf = (std::is_same_v<T, Ts> || ...);
+
     template <CmdOption Option>
     constexpr std::size_t identifier_length();
 
@@ -80,10 +83,11 @@ namespace CLArgs
         [[nodiscard]] std::filesystem::path program() const noexcept;
 
         template <CmdOption Option>
-        [[nodiscard]] bool has_option() const noexcept;
+        [[nodiscard]] bool has_option() const noexcept requires IsPartOf<Option, Options...>;
 
-        template <CmdOption Option, typename = std::enable_if<CmdHasValue<Option>>>
-        [[nodiscard]] std::optional<typename Option::ValueType> get_option_value() const noexcept;
+        template <CmdOption Option>
+        [[nodiscard]] std::optional<typename Option::ValueType>
+        get_option_value() const noexcept requires IsPartOf<Option, Options...> && CmdHasValue<Option>;
 
       private:
         template <CmdOption Option, CmdOption... Rest>
@@ -251,7 +255,7 @@ CLArgs::Parser<Options...>::program() const noexcept
 template <CLArgs::CmdOption... Options>
 template <CLArgs::CmdOption Option>
 bool
-CLArgs::Parser<Options...>::has_option() const noexcept
+CLArgs::Parser<Options...>::has_option() const noexcept requires IsPartOf<Option, Options...>
 {
     assert(valid_);
 
@@ -259,9 +263,9 @@ CLArgs::Parser<Options...>::has_option() const noexcept
 }
 
 template <CLArgs::CmdOption... Options>
-template <CLArgs::CmdOption Option, typename>
+template <CLArgs::CmdOption Option>
 std::optional<typename Option::ValueType>
-CLArgs::Parser<Options...>::get_option_value() const noexcept
+CLArgs::Parser<Options...>::get_option_value() const noexcept requires IsPartOf<Option, Options...> && CmdHasValue<Option>
 {
     assert(valid_);
 
@@ -278,6 +282,9 @@ CLArgs::Parser<Options...>::get_option_value() const noexcept
     }
     catch (std::bad_any_cast &)
     {
+        // This exception should never be thrown as long as the implementation is correct.
+        // The type validation is already done before inserting the element.
+        // If this error occurs, there is an error with the library implementation.
         std::stringstream ss;
         ss << "Error performing any_cast in CLargs::Parser::get_option_value() with" << '\n';
         ss << "  Option: \"" << typeid(Option).name() << "\"\n";
