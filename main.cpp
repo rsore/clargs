@@ -49,11 +49,13 @@ int
 main(const int argc, char **argv)
 {
     using ArgumentParser = CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, FileOption, DirectoryOption>;
-    ArgumentParser argument_parser(argc, argv);
+    ArgumentParser argument_parser;
+
+    argument_parser.parse(argc, argv);
 
     if (argument_parser.has_flag<HelpFlag>())
     {
-        std::cout << argument_parser.usage() << std::endl;
+        std::cout << argument_parser.help() << std::endl;
         return EXIT_SUCCESS;
     }
 

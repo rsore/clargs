@@ -7,12 +7,13 @@
  * - Handle required arguments: If they are not passed by the user, issue an error and exit
  */
 
+#include <cassert>
 #include <cstddef>
 #include <filesystem>
 #include <iomanip>
+#include <optional>
 #include <sstream>
 #include <unordered_map>
-#include <optional>
 #include <vector>
 
 namespace CLArgs
@@ -57,18 +58,18 @@ namespace CLArgs
     template <CmdOption... Args>
     class Parser
     {
-    public:
-        Parser(int argc, char **argv);
+      public:
+        Parser() = default;
 
-        Parser(const Parser &) = delete;
-
+        Parser(const Parser &)  = delete;
         Parser(const Parser &&) = delete;
 
-        Parser &operator=(const Parser &) = delete;
-
+        Parser &operator=(const Parser &)  = delete;
         Parser &operator=(const Parser &&) = delete;
 
-        [[nodiscard]] std::string usage() const;
+        void parse(int argc, char **argv);
+
+        [[nodiscard]] std::string help() const;
 
         [[nodiscard]] std::filesystem::path program() const;
 
@@ -81,25 +82,28 @@ namespace CLArgs
         template <CmdHasValue Option>
         [[nodiscard]] std::optional<typename Option::ValueType> get_option();
 
-    private:
+      private:
         template <CmdOption Arg, CmdOption... Rest>
         static constexpr void append_args_to_usage(std::stringstream &);
 
         template <CmdOption Arg, CmdOption... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
 
-        std::string_view                                  program_;
+        std::string_view                                  program_{"program_name"};
         std::vector<std::string_view>                     arguments_;
         std::unordered_map<std::string_view, std::size_t> argument_index_map_;
 
+        bool valid_{ false };
+
         static constexpr std::size_t max_identifier_length_{ max_identifier_length<Args...>() };
     };
-}
+} // namespace CLArgs
 
 template <CLArgs::CmdOption... Args>
-CLArgs::Parser<Args...>::Parser(int argc, char **argv)
-    : program_(*argv++)
+void
+CLArgs::Parser<Args...>::Parser::parse(int argc, char **argv)
 {
+    program_ = *argv++;
     argc -= 1;
 
     arguments_.resize(argc);
@@ -109,11 +113,13 @@ CLArgs::Parser<Args...>::Parser(int argc, char **argv)
         arguments_[i]             = sv;
         argument_index_map_[sv]   = i;
     }
+
+    valid_ = true;
 }
 
 template <CLArgs::CmdOption... Args>
 std::string
-CLArgs::Parser<Args...>::usage() const
+CLArgs::Parser<Args...>::help() const
 {
     std::stringstream ss;
     ss << "Usage: " << program_;
@@ -130,6 +136,8 @@ template <CLArgs::CmdOption... Args>
 std::filesystem::path
 CLArgs::Parser<Args...>::program() const
 {
+    assert(valid_);
+
     return program_;
 }
 
@@ -138,6 +146,8 @@ template <CLArgs::CmdOption Flag>
 bool
 CLArgs::Parser<Args...>::has_flag() const
 {
+    assert(valid_);
+
     bool result = argument_index_map_.contains(Flag::identifier);
     if constexpr (CmdHasAlias<Flag>)
     {
@@ -151,6 +161,8 @@ template <CLArgs::CmdHasValue Option>
 bool
 CLArgs::Parser<Args...>::has_option() const
 {
+    assert(valid_);
+
     bool result = argument_index_map_.contains(Option::identifier);
     if constexpr (CmdHasAlias<Option>)
     {
@@ -164,6 +176,8 @@ template <CLArgs::CmdHasValue Option>
 std::optional<typename Option::ValueType>
 CLArgs::Parser<Args...>::get_option()
 {
+    assert(valid_);
+
     auto it = argument_index_map_.find(Option::identifier);
     if (it == argument_index_map_.end())
     {
@@ -183,7 +197,7 @@ CLArgs::Parser<Args...>::get_option()
         return std::nullopt;
     }
 
-    const auto &               sv = arguments_[index + 1];
+    const auto                &sv = arguments_[index + 1];
     typename Option::ValueType result;
     std::stringstream          ss;
 
