@@ -476,7 +476,6 @@ template <>
 char
 CLArgs::from_sv<char>(std::string_view sv)
 {
-    std::cout << "Reading character from custom sv!" << std::endl;
     return sv[0];
 }
 
