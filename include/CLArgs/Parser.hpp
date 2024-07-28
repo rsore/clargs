@@ -64,7 +64,7 @@ namespace CLArgs
     static constexpr std::size_t max_identifier_length();
 
     template <typename T>
-    static T from_sv(std::string_view);
+    T from_sv(std::string_view);
 
     template <CmdOption... Options>
     class Parser
@@ -186,8 +186,17 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>           
             {
                 throw std::invalid_argument(std::format("Expected value for option \"{}\"", arg));
             }
-            const auto value     = from_sv<typename Option::ValueType>(*value_iter);
-            options_[type_index] = std::make_any<typename Option::ValueType>(value);
+            try
+            {
+                const auto value     = from_sv<typename Option::ValueType>(*value_iter);
+                options_[type_index] = std::make_any<typename Option::ValueType>(value);
+            }
+            catch (std::exception &e)
+            {
+                throw std::invalid_argument(std::format(R"(Failed to parse "{}" as {} for option "{}": {})",
+                                                        *value_iter, typeid(typename Option::ValueType).name(), arg,
+                                                        e.what()));
+            }
             all.erase(current, value_iter + 1);
         }
         else
@@ -204,7 +213,7 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>           
         }
         else
         {
-            throw std::invalid_argument(std::format("Unknown option \"{}\"", arg));
+            throw std::invalid_argument(std::format(R"(Unknown option "{}")", arg));
         }
     }
 }
@@ -218,7 +227,7 @@ CLArgs::Parser<Options...>::validate_required_options() const
     {
         if (!options_.contains(std::type_index(typeid(Option))))
         {
-            throw std::invalid_argument(std::format("Expected required option \"{}\"", Option::identifier));
+            throw std::invalid_argument(std::format(R"(Expected required option "{}")", Option::identifier));
         }
     }
 
@@ -386,8 +395,9 @@ CLArgs::max_identifier_length()
     return max_length;
 }
 
+// Base implementation. Slow and inefficient, but nice to have
 template <typename T>
-static T
+T
 CLArgs::from_sv(std::string_view sv)
 {
     T                 result;
@@ -396,6 +406,110 @@ CLArgs::from_sv(std::string_view sv)
     ss >> result;
 
     return result;
+}
+
+template <>
+int
+CLArgs::from_sv<int>(std::string_view sv)
+{
+    return std::stoi(sv.data());
+}
+
+template <>
+unsigned int
+CLArgs::from_sv<unsigned int>(std::string_view sv)
+{
+    // TODO: Unsafe, might overflow. Handle this better later.
+    return static_cast<unsigned int>(std::stoul(sv.data()));
+}
+
+template <>
+long
+CLArgs::from_sv<long>(std::string_view sv)
+{
+    return std::stol(sv.data());
+}
+
+template <>
+unsigned long
+CLArgs::from_sv<unsigned long>(std::string_view sv)
+{
+    return std::stoul(sv.data());
+}
+
+template <>
+long long
+CLArgs::from_sv<long long>(std::string_view sv)
+{
+    return std::stoll(sv.data());
+}
+
+template <>
+unsigned long long
+CLArgs::from_sv<unsigned long long>(std::string_view sv)
+{
+    return std::stoull(sv.data());
+}
+
+template <>
+float
+CLArgs::from_sv<float>(std::string_view sv)
+{
+    return std::stof(sv.data());
+}
+
+template <>
+double
+CLArgs::from_sv<double>(std::string_view sv)
+{
+    return std::stod(sv.data());
+}
+
+template <>
+long double
+CLArgs::from_sv<long double>(std::string_view sv)
+{
+    return std::stold(sv.data());
+}
+
+template <>
+char
+CLArgs::from_sv<char>(std::string_view sv)
+{
+    std::cout << "Reading character from custom sv!" << std::endl;
+    return sv[0];
+}
+
+template <>
+std::string
+CLArgs::from_sv<std::string>(std::string_view sv)
+{
+    return std::string(sv);
+}
+
+template <>
+bool
+CLArgs::from_sv<bool>(std::string_view sv)
+{
+    if (sv == "true" || sv == "True" || sv == "TRUE" || sv == "1")
+    {
+        return true;
+    }
+
+    if (sv == "false" || sv == "False" || sv == "FALSE" || sv == "0")
+    {
+        return false;
+    }
+
+    throw std::invalid_argument(
+        R"(Valid bool values are "true", "True", "TRUE", "1", "false", "False", "FALSE" and "0")");
+}
+
+template <>
+std::filesystem::path
+CLArgs::from_sv<std::filesystem::path>(std::string_view sv)
+{
+    return sv;
 }
 
 #endif
