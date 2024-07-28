@@ -3,10 +3,10 @@
 
 /**
  * TODO:
- * - Handle duplicate arguments, e.g. user passes '-v --verbose' or '-f --foo -f'
  * - Handle required arguments: If they are not passed by the user, issue an error and exit
  * - Handle option groups with validators (For example mutually exclusive options)
- * - Proper from_sv() implementation. We currently just use std::stringstream as a middleman for casting, but it is expensive
+ * - Proper from_sv() implementation. We currently just use std::stringstream as a middleman for casting, but it is
+ * expensive
  */
 
 #include <any>
@@ -96,8 +96,8 @@ namespace CLArgs
         template <CmdOption Arg, CmdOption... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
 
-        std::string_view                                  program_{ "program_name" };
-        std::vector<std::string_view>                     arguments_;
+        std::string_view              program_{ "program_name" };
+        std::vector<std::string_view> arguments_;
 
         std::unordered_map<std::type_index, std::any> options_;
 
@@ -151,6 +151,19 @@ CLArgs::Parser<Args...>::process_arg(std::vector<std::string_view>::iterator &it
 
     if (found)
     {
+        const auto type_index = std::type_index(typeid(Arg));
+        if (options_.contains(type_index))
+        {
+            std::stringstream ss;
+            ss << "Duplicate argument \"" << Arg::identifier;
+            if constexpr (CmdHasAlias<Arg>)
+            {
+                ss << " / " << Arg::alias;
+            }
+            ss << "\"";
+            throw std::invalid_argument(ss.str());
+        }
+
         if constexpr (CmdHasValue<Arg>)
         {
             auto value_iter = iter + 1;
@@ -161,12 +174,12 @@ CLArgs::Parser<Args...>::process_arg(std::vector<std::string_view>::iterator &it
                 ss << "Expected value for option '" << arg << '\'';
                 throw std::invalid_argument(ss.str());
             }
-            options_[std::type_index(typeid(Arg))] = std::make_any<Arg::ValueType>(from_sv<Arg::ValueType>(*value_iter));
+            options_[type_index] = std::make_any<Arg::ValueType>(from_sv<Arg::ValueType>(*value_iter));
             arguments_.erase(iter, value_iter + 1);
         }
         else
         {
-            options_[std::type_index(typeid(Arg))] = std::any{};
+            options_[type_index] = std::any{};
             arguments_.erase(iter);
         }
     }
