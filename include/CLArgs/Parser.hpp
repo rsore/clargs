@@ -412,6 +412,11 @@ template <>
 int
 CLArgs::from_sv<int>(std::string_view sv)
 {
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
     return std::stoi(sv.data());
 }
 
@@ -419,7 +424,12 @@ template <>
 unsigned int
 CLArgs::from_sv<unsigned int>(std::string_view sv)
 {
-    // TODO: Unsafe, might overflow. Handle this better later.
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
+    // TODO: Unsafe, might overflow
     return static_cast<unsigned int>(std::stoul(sv.data()));
 }
 
@@ -427,6 +437,11 @@ template <>
 long
 CLArgs::from_sv<long>(std::string_view sv)
 {
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
     return std::stol(sv.data());
 }
 
@@ -434,6 +449,11 @@ template <>
 unsigned long
 CLArgs::from_sv<unsigned long>(std::string_view sv)
 {
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
     return std::stoul(sv.data());
 }
 
@@ -441,6 +461,11 @@ template <>
 long long
 CLArgs::from_sv<long long>(std::string_view sv)
 {
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
     return std::stoll(sv.data());
 }
 
@@ -448,6 +473,11 @@ template <>
 unsigned long long
 CLArgs::from_sv<unsigned long long>(std::string_view sv)
 {
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
     return std::stoull(sv.data());
 }
 
@@ -455,6 +485,11 @@ template <>
 float
 CLArgs::from_sv<float>(std::string_view sv)
 {
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
     return std::stof(sv.data());
 }
 
@@ -462,6 +497,11 @@ template <>
 double
 CLArgs::from_sv<double>(std::string_view sv)
 {
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
     return std::stod(sv.data());
 }
 
@@ -469,6 +509,11 @@ template <>
 long double
 CLArgs::from_sv<long double>(std::string_view sv)
 {
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
     return std::stold(sv.data());
 }
 
@@ -476,6 +521,16 @@ template <>
 char
 CLArgs::from_sv<char>(std::string_view sv)
 {
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
+    if (sv.length() != 1)
+    {
+        throw std::invalid_argument(
+            std::format(R"(Expected exactly one character, got "{}" ({} characters))", sv, sv.length()));
+    }
     return sv[0];
 }
 
@@ -483,6 +538,11 @@ template <>
 std::string
 CLArgs::from_sv<std::string>(std::string_view sv)
 {
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
     return std::string(sv);
 }
 
@@ -490,6 +550,11 @@ template <>
 bool
 CLArgs::from_sv<bool>(std::string_view sv)
 {
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
     if (sv == "true" || sv == "True" || sv == "TRUE" || sv == "1")
     {
         return true;
@@ -508,6 +573,11 @@ template <>
 std::filesystem::path
 CLArgs::from_sv<std::filesystem::path>(std::string_view sv)
 {
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+    
     return sv;
 }
 
