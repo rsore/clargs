@@ -2,6 +2,7 @@
 #define CLARGS_CONCEPTS_HPP
 
 #include <concepts>
+#include <string_view>
 
 namespace CLArgs
 {
