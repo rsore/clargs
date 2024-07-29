@@ -1,8 +1,38 @@
 #include <filesystem>
 #include <iostream>
-#include <string_view>
 
 #include "CLArgs/Parser.hpp"
+
+struct MyStruct
+{
+    explicit MyStruct(const float data)
+    : data(data)
+    {}
+
+    float data;
+};
+
+template <>
+inline MyStruct
+CLArgs::from_sv<MyStruct>(const std::string_view sv)
+{
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
+    return MyStruct(std::stof(sv.data()));
+}
+
+struct MyStructOption
+{
+    static constexpr std::string_view identifier{ "--mystruct" };
+    static constexpr std::string_view alias{ "-ms" };
+    static constexpr std::string_view description{ "Specify value for my struct" };
+    static constexpr std::string_view value_hint{ "NUMBER" };
+    static constexpr bool             required{ false };
+    using ValueType = MyStruct;
+};
 
 struct HelpFlag
 {
@@ -65,11 +95,12 @@ struct CharOption
 };
 
 using ArgumentParser =
-    CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, FileOption, DirectoryOption, FloatOption, CharOption>;
+    CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, MyStructOption, FileOption, DirectoryOption, FloatOption, CharOption>;
 
 int
 main(const int argc, char **argv)
 {
+
     ArgumentParser argument_parser;
     try
     {
@@ -123,6 +154,10 @@ main(const int argc, char **argv)
     if (const auto char_option = argument_parser.get_option_value<CharOption>(); char_option.has_value())
     {
         std::cout << "Character option: " << char_option.value() << std::endl;
+    }
+    if (const auto my_struct_option = argument_parser.get_option_value<MyStructOption>(); my_struct_option.has_value())
+    {
+        std::cout << "My struct option: " << my_struct_option.value().data << std::endl;
     }
 
     return EXIT_SUCCESS;

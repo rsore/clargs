@@ -1,5 +1,5 @@
-#ifndef ARGUMENTPARSER_HPP
-#define ARGUMENTPARSER_HPP
+#ifndef CLARGS_PARSER_HPP
+#define CLARGS_PARSER_HPP
 
 /**
  * TODO:
@@ -7,6 +7,8 @@
  * - Proper from_sv() implementation. We currently just use std::stringstream as a middleman for casting, but it is
  * expensive
  */
+
+#include <CLArgs/concepts.hpp>
 
 #include <any>
 #include <cassert>
@@ -23,40 +25,6 @@
 
 namespace CLArgs
 {
-    template <typename T>
-    concept CmdOption = requires
-    {
-        {
-            T::identifier
-        } -> std::convertible_to<std::string_view>;
-        {
-            T::description
-        } -> std::convertible_to<std::string_view>;
-        {
-            T::required
-        } -> std::convertible_to<bool>;
-    };
-
-    template <typename T>
-    concept CmdHasValue = requires
-    {
-        {
-            T::value_hint
-        } -> std::convertible_to<std::string_view>;
-        typename T::ValueType;
-    };
-
-    template <typename T>
-    concept CmdHasAlias = requires
-    {
-        {
-            T::alias
-        } -> std::convertible_to<std::string_view>;
-    };
-
-    template <typename T, typename... Ts>
-    concept IsPartOf = (std::is_same_v<T, Ts> || ...);
-
     template <CmdOption Option>
     constexpr std::size_t identifier_length();
 
@@ -409,7 +377,7 @@ CLArgs::from_sv(std::string_view sv)
 }
 
 template <>
-int
+inline int
 CLArgs::from_sv<int>(std::string_view sv)
 {
     if (sv.empty())
@@ -421,7 +389,7 @@ CLArgs::from_sv<int>(std::string_view sv)
 }
 
 template <>
-unsigned int
+inline unsigned int
 CLArgs::from_sv<unsigned int>(std::string_view sv)
 {
     if (sv.empty())
@@ -434,7 +402,7 @@ CLArgs::from_sv<unsigned int>(std::string_view sv)
 }
 
 template <>
-long
+inline long
 CLArgs::from_sv<long>(std::string_view sv)
 {
     if (sv.empty())
@@ -446,7 +414,7 @@ CLArgs::from_sv<long>(std::string_view sv)
 }
 
 template <>
-unsigned long
+inline unsigned long
 CLArgs::from_sv<unsigned long>(std::string_view sv)
 {
     if (sv.empty())
@@ -458,7 +426,7 @@ CLArgs::from_sv<unsigned long>(std::string_view sv)
 }
 
 template <>
-long long
+inline long long
 CLArgs::from_sv<long long>(std::string_view sv)
 {
     if (sv.empty())
@@ -470,7 +438,7 @@ CLArgs::from_sv<long long>(std::string_view sv)
 }
 
 template <>
-unsigned long long
+inline unsigned long long
 CLArgs::from_sv<unsigned long long>(std::string_view sv)
 {
     if (sv.empty())
@@ -482,7 +450,7 @@ CLArgs::from_sv<unsigned long long>(std::string_view sv)
 }
 
 template <>
-float
+inline float
 CLArgs::from_sv<float>(std::string_view sv)
 {
     if (sv.empty())
@@ -494,7 +462,7 @@ CLArgs::from_sv<float>(std::string_view sv)
 }
 
 template <>
-double
+inline double
 CLArgs::from_sv<double>(std::string_view sv)
 {
     if (sv.empty())
@@ -506,7 +474,7 @@ CLArgs::from_sv<double>(std::string_view sv)
 }
 
 template <>
-long double
+inline long double
 CLArgs::from_sv<long double>(std::string_view sv)
 {
     if (sv.empty())
@@ -518,7 +486,7 @@ CLArgs::from_sv<long double>(std::string_view sv)
 }
 
 template <>
-char
+inline char
 CLArgs::from_sv<char>(std::string_view sv)
 {
     if (sv.empty())
@@ -535,7 +503,7 @@ CLArgs::from_sv<char>(std::string_view sv)
 }
 
 template <>
-std::string
+inline std::string
 CLArgs::from_sv<std::string>(std::string_view sv)
 {
     if (sv.empty())
@@ -547,7 +515,7 @@ CLArgs::from_sv<std::string>(std::string_view sv)
 }
 
 template <>
-bool
+inline bool
 CLArgs::from_sv<bool>(std::string_view sv)
 {
     if (sv.empty())
@@ -570,7 +538,7 @@ CLArgs::from_sv<bool>(std::string_view sv)
 }
 
 template <>
-std::filesystem::path
+inline std::filesystem::path
 CLArgs::from_sv<std::filesystem::path>(std::string_view sv)
 {
     if (sv.empty())

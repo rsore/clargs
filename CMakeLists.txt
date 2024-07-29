@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(CLArgs INTERFACE
         include/CLArgs/Parser.hpp
+        include/CLArgs/concepts.hpp
+        include/CLArgs/singleton.hpp
 )
 
 target_include_directories(CLArgs INTERFACE
