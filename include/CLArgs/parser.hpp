@@ -4,12 +4,13 @@
 /**
  * TODO:
  * - Handle option groups with validators (For example mutually exclusive options)
- * - Proper from_sv() implementation. We currently just use std::stringstream as a middleman for casting, but it is
+ * - Proper from_string() implementation. We currently just use std::stringstream as a middleman for casting, but it is
  * expensive
  */
 
 #include <CLArgs/concepts.hpp>
 #include <CLArgs/misc.hpp>
+#include <CLArgs/from_string.hpp>
 
 #include <algorithm>
 #include <any>
@@ -31,9 +32,6 @@ namespace CLArgs
 
     template <CmdOption Option, CmdOption... Rest>
     static constexpr std::size_t max_identifier_length();
-
-    template <typename T>
-    T from_sv(std::string_view);
 
     template <CmdOption... Options>
     class Parser
@@ -159,7 +157,7 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>           
             }
             try
             {
-                const auto value     = from_sv<typename Option::ValueType>(*value_iter);
+                const auto value     = from_string<typename Option::ValueType>(*value_iter);
                 options_[type_index] = std::make_any<typename Option::ValueType>(value);
             }
             catch (std::exception &e)
@@ -372,192 +370,6 @@ CLArgs::max_identifier_length()
     }
 
     return max_length;
-}
-
-// Base implementation. Slow and inefficient, but nice to have
-template <typename T>
-T
-CLArgs::from_sv(std::string_view sv)
-{
-    T                 result;
-    std::stringstream ss;
-    ss << sv;
-    ss >> result;
-
-    return result;
-}
-
-template <>
-inline int
-CLArgs::from_sv<int>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    return std::stoi(sv.data());
-}
-
-template <>
-inline unsigned int
-CLArgs::from_sv<unsigned int>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    // TODO: Unsafe, might overflow
-    return static_cast<unsigned int>(std::stoul(sv.data()));
-}
-
-template <>
-inline long
-CLArgs::from_sv<long>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    return std::stol(sv.data());
-}
-
-template <>
-inline unsigned long
-CLArgs::from_sv<unsigned long>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    return std::stoul(sv.data());
-}
-
-template <>
-inline long long
-CLArgs::from_sv<long long>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    return std::stoll(sv.data());
-}
-
-template <>
-inline unsigned long long
-CLArgs::from_sv<unsigned long long>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    return std::stoull(sv.data());
-}
-
-template <>
-inline float
-CLArgs::from_sv<float>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    return std::stof(sv.data());
-}
-
-template <>
-inline double
-CLArgs::from_sv<double>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    return std::stod(sv.data());
-}
-
-template <>
-inline long double
-CLArgs::from_sv<long double>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    return std::stold(sv.data());
-}
-
-template <>
-inline char
-CLArgs::from_sv<char>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    if (sv.length() != 1)
-    {
-        throw std::invalid_argument(
-            std::format(R"(Expected exactly one character, got "{}" ({} characters))", sv, sv.length()));
-    }
-    return sv[0];
-}
-
-template <>
-inline std::string
-CLArgs::from_sv<std::string>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    return std::string(sv);
-}
-
-template <>
-inline bool
-CLArgs::from_sv<bool>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    if (sv == "true" || sv == "True" || sv == "TRUE" || sv == "1")
-    {
-        return true;
-    }
-
-    if (sv == "false" || sv == "False" || sv == "FALSE" || sv == "0")
-    {
-        return false;
-    }
-
-    throw std::invalid_argument(
-        R"(Valid bool values are "true", "True", "TRUE", "1", "false", "False", "FALSE" and "0")");
-}
-
-template <>
-inline std::filesystem::path
-CLArgs::from_sv<std::filesystem::path>(std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    return sv;
 }
 
 #endif
