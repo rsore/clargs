@@ -9,6 +9,8 @@ add_library(CLArgs INTERFACE
         include/CLArgs/Parser.hpp
         include/CLArgs/concepts.hpp
         include/CLArgs/singleton.hpp
+        include/CLArgs/misc.hpp
+        include/CLArgs/platform.hpp
 )
 
 target_include_directories(CLArgs INTERFACE
