@@ -1,12 +1,11 @@
 #include <filesystem>
 #include <iostream>
 
-#include "CLArgs/Parser.hpp"
+#include "CLArgs/parser.hpp"
 
 struct MyStruct
 {
-    explicit
-    MyStruct(const float data)
+    explicit MyStruct(const float data)
         : data(data)
     {}
 
