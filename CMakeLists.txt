@@ -11,6 +11,7 @@ add_library(CLArgs INTERFACE
         include/CLArgs/singleton.hpp
         include/CLArgs/misc.hpp
         include/CLArgs/platform.hpp
+        include/CLArgs/from_string.hpp
 )
 
 target_include_directories(CLArgs INTERFACE

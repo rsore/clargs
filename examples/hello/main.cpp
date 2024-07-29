@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <iostream>
 
-#include "CLArgs/parser.hpp"
+#include <CLArgs/parser.hpp>
 
 struct MyStruct
 {
@@ -14,7 +14,7 @@ struct MyStruct
 
 template <>
 inline MyStruct
-CLArgs::from_sv<MyStruct>(const std::string_view sv)
+CLArgs::from_string<MyStruct>(const std::string_view sv)
 {
     if (sv.empty())
     {
