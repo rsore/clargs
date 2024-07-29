@@ -1,17 +1,33 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include <cstdint>
+#include <CLArgs/parser.hpp>
 
-static std::uint32_t
-factorial(const std::uint32_t number)
-{
-    return number <= 1 ? number : factorial(number - 1) * number;
-}
+#include <array>
 
-TEST_CASE("Factorials are computed", "[factorial]")
+struct VerboseOption
 {
-    REQUIRE(factorial(1) == 1);
-    REQUIRE(factorial(2) == 2);
-    REQUIRE(factorial(3) == 6);
-    REQUIRE(factorial(10) == 3'628'800);
+    static constexpr std::string_view identifier{ "--verbose" };
+    static constexpr std::string_view alias{ "-v" };
+    static constexpr std::string_view description{ "Enable verbose output" };
+    static constexpr bool             required{ false };
+};
+
+struct FileOption
+{
+    static constexpr std::string_view identifier{ "--file" };
+    static constexpr std::string_view value_hint{ "FILE" };
+    static constexpr std::string_view description{ "Specify file to load" };
+    static constexpr bool             required{ true };
+    using ValueType = std::filesystem::path;
+};
+
+TEST_CASE("Parse arguments", "[parse]")
+{
+    std::array args = {"program", "-v", "--file", "test.txt"};
+
+    int argc = static_cast<int>(args.size());
+    char** argv = const_cast<char **>(args.data());
+
+    CLArgs::Parser<VerboseOption, FileOption> parser;
+    REQUIRE_NOTHROW(parser.parse(argc, argv));
 }
