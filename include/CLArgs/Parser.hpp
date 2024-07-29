@@ -83,7 +83,7 @@ namespace CLArgs
 
 template <CLArgs::CmdOption... Options>
 void
-CLArgs::Parser<Options...>::Parser::parse(int argc, char **argv)
+CLArgs::Parser<Options...>::parse(int argc, char **argv)
 {
     if (argv == nullptr || *argv == nullptr)
     {
