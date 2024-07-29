@@ -4,8 +4,8 @@
 #include <CLArgs/platform.hpp>
 
 #include <cstdlib>
-#include <format>
 #include <iostream>
+#include <sstream>
 #include <string_view>
 
 #ifndef NDEBUG
@@ -26,7 +26,7 @@ CLArgs::_internal::assert_impl(const bool expr, const std::string_view msg, cons
 {
     if (!expr)
     {
-        std::cerr << std::format("{}:{}: Assertion failed: {}", file, line, msg);
+        std::cerr << file << ':' << line << ": Assertion failed: " << msg;
         CLARGS_DEBUG_BREAK();
         std::abort();
     }

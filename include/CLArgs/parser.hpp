@@ -9,14 +9,13 @@
  */
 
 #include <CLArgs/concepts.hpp>
-#include <CLArgs/misc.hpp>
 #include <CLArgs/from_string.hpp>
+#include <CLArgs/misc.hpp>
 
 #include <algorithm>
 #include <any>
 #include <cstddef>
 #include <filesystem>
-#include <format>
 #include <iomanip>
 #include <iostream>
 #include <optional>
@@ -153,7 +152,9 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>           
 
             if (value_iter == all.end())
             {
-                throw std::invalid_argument(std::format("Expected value for option \"{}\"", arg));
+                std::stringstream ss;
+                ss << "Expected value for option \"" << arg << "\"";
+                throw std::invalid_argument(ss.str());
             }
             try
             {
@@ -162,9 +163,10 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>           
             }
             catch (std::exception &e)
             {
-                throw std::invalid_argument(std::format(R"(Failed to parse "{}" as {} for option "{}": {})",
-                                                        *value_iter, typeid(typename Option::ValueType).name(), arg,
-                                                        e.what()));
+                std::stringstream ss;
+                ss << "Failed to parse \"" << *value_iter << "\" as type " << typeid(typename Option::ValueType).name()
+                   << " for option \"" << arg << "\": " << e.what();
+                throw std::invalid_argument(ss.str());
             }
             all.erase(current, value_iter + 1);
         }
@@ -182,7 +184,9 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>           
         }
         else
         {
-            throw std::invalid_argument(std::format(R"(Unknown option "{}")", arg));
+            std::stringstream ss;
+            ss << "Unknown option \"" << arg << "\"";
+            throw std::invalid_argument(ss.str());
         }
     }
 }
@@ -196,7 +200,9 @@ CLArgs::Parser<Options...>::validate_required_options() const
     {
         if (!options_.contains(std::type_index(typeid(Option))))
         {
-            throw std::invalid_argument(std::format(R"(Expected required option "{}")", Option::identifier));
+            std::stringstream ss;
+            ss << "Expected required option \"" << Option::identifier << "\"";
+            throw std::invalid_argument(ss.str());
         }
     }
 
