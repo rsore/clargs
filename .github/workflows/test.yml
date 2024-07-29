@@ -1,0 +1,22 @@
+name: Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    - name: install dependencies
+      run: sudo apt-get install build-essential libssl-dev -y
+    - name: configure
+      run: mkdir build && cmake -Bbuild -S. -DCMAKE_BUILD_TYPE=Debug
+    - name: make
+      run: cmake --build build --target tests -j${{ runner.cpu }}
+    - name: run tests
+      run: ./build/tests/tests
