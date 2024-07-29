@@ -5,8 +5,9 @@
 
 struct MyStruct
 {
-    explicit MyStruct(const float data)
-    : data(data)
+    explicit
+    MyStruct(const float data)
+        : data(data)
     {}
 
     float data;
@@ -94,13 +95,12 @@ struct CharOption
     using ValueType = char;
 };
 
-using ArgumentParser =
-    CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, MyStructOption, FileOption, DirectoryOption, FloatOption, CharOption>;
+using ArgumentParser = CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, MyStructOption, FileOption, DirectoryOption,
+                                      FloatOption, CharOption>;
 
 int
 main(const int argc, char **argv)
 {
-
     ArgumentParser argument_parser;
     try
     {

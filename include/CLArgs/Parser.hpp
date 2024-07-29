@@ -545,7 +545,7 @@ CLArgs::from_sv<std::filesystem::path>(std::string_view sv)
     {
         throw std::invalid_argument("sv cannot be empty");
     }
-    
+
     return sv;
 }
 
