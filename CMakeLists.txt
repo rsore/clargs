@@ -22,4 +22,5 @@ option(CLARGS_BUILD_EXAMPLES "Build CLArgs examples" ON)
 
 if (${CLARGS_BUILD_EXAMPLES})
     add_subdirectory(examples/hello)
+    add_subdirectory(examples/basic)
 endif ()
