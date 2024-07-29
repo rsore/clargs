@@ -23,10 +23,10 @@ struct FileOption
 
 TEST_CASE("Parse arguments", "[parse]")
 {
-    std::array args = {"program", "-v", "--file", "test.txt"};
+    std::array args = { "program", "-v", "--file", "test.txt" };
 
-    int argc = static_cast<int>(args.size());
-    char** argv = const_cast<char **>(args.data());
+    int    argc = static_cast<int>(args.size());
+    char **argv = const_cast<char **>(args.data());
 
     CLArgs::Parser<VerboseOption, FileOption> parser;
     REQUIRE_NOTHROW(parser.parse(argc, argv));
