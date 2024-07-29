@@ -9,9 +9,10 @@
  */
 
 #include <CLArgs/concepts.hpp>
+#include <CLArgs/misc.hpp>
 
+#include <algorithm>
 #include <any>
-#include <cassert>
 #include <cstddef>
 #include <filesystem>
 #include <format>
@@ -60,6 +61,8 @@ namespace CLArgs
         get_option_value() const noexcept requires IsPartOf<Option, Options...> &&CmdHasValue<Option>;
 
       private:
+        void check_invariant() const;
+
         template <CmdOption Option, CmdOption... Rest>
         void process_arg(std::vector<std::string_view> &, std::vector<std::string_view>::iterator &);
 
@@ -75,7 +78,7 @@ namespace CLArgs
         std::string_view                              program_;
         std::unordered_map<std::type_index, std::any> options_;
 
-        bool valid_{ false };
+        bool has_successfully_parsed_args_{ false };
 
         static constexpr std::size_t max_identifier_length_{ max_identifier_length<Options...>() };
     };
@@ -107,7 +110,7 @@ CLArgs::Parser<Options...>::parse(int argc, char **argv)
 
     validate_required_options<Options...>();
 
-    valid_ = true;
+    has_successfully_parsed_args_ = true;
 }
 
 template <CLArgs::CmdOption... Options>
@@ -224,8 +227,7 @@ template <CLArgs::CmdOption... Options>
 std::filesystem::path
 CLArgs::Parser<Options...>::program() const noexcept
 {
-    assert(valid_ && "parse() method must be called without exceptions before calling program()");
-
+    check_invariant();
     return program_;
 }
 
@@ -234,8 +236,7 @@ template <CLArgs::CmdOption Option>
 bool
 CLArgs::Parser<Options...>::has_option() const noexcept requires IsPartOf<Option, Options...>
 {
-    assert(valid_ && "parse() method must be called without exceptions before calling has_option()");
-
+    check_invariant();
     return options_.contains(std::type_index(typeid(Option)));
 }
 
@@ -245,7 +246,7 @@ std::optional<typename Option::ValueType>
 CLArgs::Parser<Options...>::get_option_value()
     const noexcept requires IsPartOf<Option, Options...> &&CmdHasValue<Option>
 {
-    assert(valid_ && "parse() method must be called without exceptions before calling get_option_value()");
+    check_invariant();
 
     const auto it = options_.find(std::type_index(typeid(Option)));
     if (it == options_.end())
@@ -269,6 +270,16 @@ CLArgs::Parser<Options...>::get_option_value()
         std::cerr << "Returning nullopt as fallback" << std::endl;
         return std::nullopt;
     }
+}
+
+template <CLArgs::CmdOption... Options>
+void
+CLArgs::Parser<Options...>::check_invariant() const
+{
+    CLARGS_ASSERT(has_successfully_parsed_args_,
+                  "Have you called the parse() method yet? It must be called before any other method "
+                  "to ensure proper behaviour. If you don't, I will crash your application until you "
+                  "fix it.");
 }
 
 template <CLArgs::CmdOption... Options>
