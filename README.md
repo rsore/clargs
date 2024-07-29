@@ -1,3 +1,6 @@
+[![Test](https://github.com/rubensorensen/clargs/actions/workflows/test.yml/badge.svg)](https://github.com/rubensorensen/clargs/actions/workflows/test.yml)
+[![pages-build-deployment](https://github.com/rubensorensen/clargs/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/rubensorensen/clargs/actions/workflows/pages/pages-build-deployment)
+
 # CLArgs
 
 Command-line argument parser written in C++20.
