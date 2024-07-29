@@ -38,6 +38,6 @@ namespace CLArgs
 
     template <typename T, typename... Ts>
     concept IsPartOf = (std::is_same_v<T, Ts> || ...);
-}
+} // namespace CLArgs
 
 #endif
