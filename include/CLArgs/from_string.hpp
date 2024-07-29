@@ -3,6 +3,7 @@
 
 #include <exception>
 #include <filesystem>
+#include <sstream>
 #include <string_view>
 
 namespace CLArgs
@@ -131,8 +132,9 @@ CLArgs::from_string<char>(const std::string_view sv)
 
     if (sv.length() != 1)
     {
-        throw std::invalid_argument(
-            std::format(R"(Expected exactly one character, got "{}" ({} characters))", sv, sv.length()));
+        std::stringstream ss;
+        ss << "Expected exactly one character, got \"" << sv << "\" (" << sv.length() << " characters";
+        throw std::invalid_argument(ss.str());
     }
     return sv[0];
 }

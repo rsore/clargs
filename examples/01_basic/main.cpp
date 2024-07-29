@@ -1,7 +1,7 @@
 #include <CLArgs/parser.hpp>
 
 #include <filesystem>
-#include <format>
+#include <sstream>
 #include <string_view>
 
 struct VerboseOption
@@ -31,13 +31,13 @@ main(int argc, char **argv)
     }
     catch (std::exception &e)
     {
-        std::cerr << std::format("Error: {}\n", e.what());
+        std::cerr << "Error: " << e.what() << '\n';
         std::cerr << parser.help() << std::endl;
         return EXIT_FAILURE;
     }
 
     const bool has_verbose = parser.has_option<VerboseOption>();
-    std::cout << std::format("Has option {}: {}\n", VerboseOption::identifier, has_verbose);
+    std::cout << "Has option " << VerboseOption::identifier << ": " << has_verbose << "\n";
 
     if (const auto file = parser.get_option_value<FileOption>(); file.has_value())
     {
