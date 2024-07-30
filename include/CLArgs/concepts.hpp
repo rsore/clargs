@@ -1,11 +1,18 @@
 #ifndef CLARGS_CONCEPTS_HPP
 #define CLARGS_CONCEPTS_HPP
 
+#include <any>
 #include <concepts>
 #include <string_view>
+#include <typeindex>
+#include <unordered_map>
+#include <utility>
 
 namespace CLArgs
 {
+    template <typename T, typename... Ts>
+    concept IsPartOf = (std::is_same_v<T, Ts> || ...);
+
     template <typename T>
     concept CmdOption = requires
     {
@@ -37,8 +44,24 @@ namespace CLArgs
         } -> std::convertible_to<std::string_view>;
     };
 
-    template <typename T, typename... Ts>
-    concept IsPartOf = (std::is_same_v<T, Ts> || ...);
+    template <CLArgs::CmdOption... Opts>
+    using Options = std::tuple<Opts...>;
+
+    template <typename T>
+    concept CmdGroup = requires
+    {
+        typename T::Options;
+        typename T::Validator;
+    };
+
+    template <typename T, typename TupleLike>
+    concept CmdGroupValidator = requires(T t, std::unordered_map<std::type_index, std::any> options)
+    {
+        {
+            T::template validate<TupleLike>(options)
+        } -> std::convertible_to<bool>;
+    };
+
 } // namespace CLArgs
 
 #endif
