@@ -36,7 +36,11 @@ struct MutualExclusionValidator
     static void
     count_present_options(std::unordered_map<std::type_index, std::any> &options, std::uint32_t &count)
     {
-        if (options.contains(std::type_index(typeid(std::tuple_element_t<Index, TupleLike>))))
+        using Option = std::tuple_element_t<Index, TupleLike>;
+        static_assert(CLArgs::CmdOption<Option>);
+
+        const auto key = std::type_index(typeid(Option));
+        if (options.contains(key))
         {
             count += 1;
         }
