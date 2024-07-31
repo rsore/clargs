@@ -1,8 +1,7 @@
-# CLArgs
-
-This is the documentation for **CLArgs**.
-
-## About
+---
+title: CLArgs
+layout: home
+---
 
 **CLArgs** is a modern, safe, and statically typed command-line argument parser written in C++. 
 It leverages C++20 concepts and constraints to ensure type safety and correctness, 
