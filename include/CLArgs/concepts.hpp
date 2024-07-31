@@ -52,11 +52,19 @@ namespace CLArgs
     {
         typename T::Options;
         typename T::Validator;
+
+        {
+            T::name
+        } -> std::convertible_to<std::string_view>;
     };
 
     template <typename T, typename TupleLike>
     concept CmdGroupValidator = requires(T t, std::unordered_map<std::type_index, std::any> options)
     {
+        {
+            T::description
+        } -> std::convertible_to<std::string_view>;
+
         {
             T::template validate<TupleLike>(options)
         } -> std::convertible_to<bool>;

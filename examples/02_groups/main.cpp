@@ -23,6 +23,8 @@ struct QuietOption
 
 struct MutualExclusionValidator
 {
+    static constexpr std::string_view description{"Mutual exclusivity: At most one option may be passed"};
+
     template <typename TupleLike>
     static bool
     validate(std::unordered_map<std::type_index, std::any> &options)
@@ -54,6 +56,7 @@ struct MutualExclusionValidator
 
 struct VerboseQuietGroup
 {
+    static constexpr std::string_view name{"Output modifiers"};
     using Options   = CLArgs::Options<VerboseOption, QuietOption>;
     using Validator = MutualExclusionValidator;
 };
@@ -67,7 +70,7 @@ main(int argc, char **argv)
     options[std::type_index(typeid(QuietOption))]   = std::any{};
     options[std::type_index(typeid(VerboseOption))] = std::any{};
 
-    std::cout << std::boolalpha << MutualExclusionValidator::validate<typename VerboseQuietGroup::Options>(options);
+    std::cout << std::boolalpha << VerboseQuietGroup::Validator::validate<typename VerboseQuietGroup::Options>(options) << std::endl;
 
     CLArgs::Parser<VerboseOption, QuietOption> parser;
     try
