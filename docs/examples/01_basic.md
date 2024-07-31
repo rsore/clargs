@@ -1,3 +1,10 @@
+---
+layout: default
+title: Basic example
+parent: Code Examples
+grand_parent: CLArgs
+---
+
 # Basic example
 
 In this example, we define two options: `VerboseOption` and `FileOption`. 
