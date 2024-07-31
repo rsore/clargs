@@ -1,2 +1,8 @@
-title: CLArgs documentation
-theme: jekyll-theme-cayman
+title: CLArgs Documentation
+description: The documentation for the CLArgs command-line argument parsing library.
+theme: just-the-docs
+
+url: https://rubensorensen.github.io/clargs/
+
+aux_links:
+  Template Repository: https://github.com/rubensorensen/clargs
