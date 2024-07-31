@@ -1,11 +1,11 @@
 ---
 layout: default
-title: Basic example
+title: Basic
 parent: Code Examples
 grand_parent: CLArgs
 ---
 
-# Basic example
+# Basic
 
 In this example, we define two options: `VerboseOption` and `FileOption`. 
 These options demonstrate how to handle different types of command-line arguments using CLArgs.
