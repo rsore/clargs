@@ -72,8 +72,8 @@ namespace CLArgs
         template <CmdOption Option, CmdOption... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
 
-        std::string_view                              program_;
-        std::unordered_map<std::type_index, std::any> options_;
+        std::string_view program_;
+        OptionMap        options_;
 
         bool has_successfully_parsed_args_{ false };
 

@@ -13,6 +13,8 @@ namespace CLArgs
     template <typename T, typename... Ts>
     concept IsPartOf = (std::is_same_v<T, Ts> || ...);
 
+    using OptionMap = std::unordered_map<std::type_index, std::any>;
+
     template <typename T>
     concept CmdOption = requires
     {
@@ -59,7 +61,7 @@ namespace CLArgs
     };
 
     template <typename T, typename TupleLike>
-    concept CmdGroupValidator = requires(T t, std::unordered_map<std::type_index, std::any> options)
+    concept CmdGroupValidator = requires(T t, OptionMap options)
     {
         {
             T::description

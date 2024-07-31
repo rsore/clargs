@@ -13,6 +13,7 @@ add_library(CLArgs INTERFACE
         include/CLArgs/platform.hpp
         include/CLArgs/from_string.hpp
         include/CLArgs/macro_api.hpp
+        include/CLArgs/validators.hpp
 )
 
 target_include_directories(CLArgs INTERFACE
