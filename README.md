@@ -1,5 +1,5 @@
-[![Test](https://github.com/rubensorensen/clargs/actions/workflows/test.yml/badge.svg)](https://github.com/rubensorensen/clargs/actions/workflows/test.yml)
-[![pages-build-deployment](https://github.com/rubensorensen/clargs/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/rubensorensen/clargs/actions/workflows/pages/pages-build-deployment)
+[![tests](https://github.com/rubensorensen/clargs/actions/workflows/tests.yml/badge.svg)](https://github.com/rubensorensen/clargs/actions/workflows/tests.yml)
+[![docs](https://github.com/rubensorensen/clargs/actions/workflows/docs.yml/badge.svg)](https://github.com/rubensorensen/clargs/actions/workflows/docs.yml)
 
 # CLArgs
 
