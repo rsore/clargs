@@ -54,14 +54,14 @@ struct MutualExclusionValidator
     }
 };
 
-struct VerboseQuietGroup
+struct OutputModifierGroup
 {
     static constexpr std::string_view name{"Output modifiers"};
     using Options   = CLArgs::Options<VerboseOption, QuietOption>;
     using Validator = MutualExclusionValidator;
 };
-static_assert(CLArgs::CmdGroup<VerboseQuietGroup>);
-static_assert(CLArgs::CmdGroupValidator<MutualExclusionValidator, typename VerboseQuietGroup::Options>);
+static_assert(CLArgs::CmdGroup<OutputModifierGroup>);
+static_assert(CLArgs::CmdGroupValidator<MutualExclusionValidator, typename OutputModifierGroup::Options>);
 
 int
 main(int argc, char **argv)
@@ -70,7 +70,7 @@ main(int argc, char **argv)
     options[std::type_index(typeid(QuietOption))]   = std::any{};
     options[std::type_index(typeid(VerboseOption))] = std::any{};
 
-    std::cout << std::boolalpha << VerboseQuietGroup::Validator::validate<typename VerboseQuietGroup::Options>(options) << std::endl;
+    std::cout << std::boolalpha << OutputModifierGroup::Validator::validate<typename OutputModifierGroup::Options>(options) << std::endl;
 
     CLArgs::Parser<VerboseOption, QuietOption> parser;
     try
