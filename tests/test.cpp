@@ -4,6 +4,14 @@
 
 #include <array>
 
+template <std::size_t N>
+std::pair<int, char **> create_argc_argv(const std::array<const char *, N>& args)
+{
+    const int argc = static_cast<int>(N);
+    char **argv = const_cast<char **>(args.data()); // NOLINT(cppcoreguidelines-pro-type-const-cast)
+    return std::make_pair(argc, argv);
+}
+
 struct VerboseOption
 {
     static constexpr std::string_view identifier{ "--verbose" };
@@ -23,10 +31,8 @@ struct FileOption
 
 TEST_CASE("Parse arguments", "[parse]")
 {
-    std::array args = { "program", "-v", "--file", "test.txt" };
-
-    int    argc = static_cast<int>(args.size());
-    char **argv = const_cast<char **>(args.data());
+    constexpr std::array args = { "program", "-v", "--file", "test.txt" };
+    auto [argc, argv] = create_argc_argv(args);
 
     CLArgs::Parser<VerboseOption, FileOption> parser;
     REQUIRE_NOTHROW(parser.parse(argc, argv));
