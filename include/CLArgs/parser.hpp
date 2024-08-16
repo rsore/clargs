@@ -1,13 +1,6 @@
 #ifndef CLARGS_PARSER_HPP
 #define CLARGS_PARSER_HPP
 
-/**
- * TODO:
- * - Handle option groups with validators (For example mutually exclusive options)
- * - Proper from_string() implementation. We currently just use std::stringstream as a middleman for casting, but it is
- * expensive
- */
-
 #include <CLArgs/concepts.hpp>
 #include <CLArgs/from_string.hpp>
 #include <CLArgs/misc.hpp>
