@@ -5,9 +5,9 @@
 
 struct MyStruct
 {
-    explicit MyStruct(const float data)
-        : data(data)
-    {}
+    explicit MyStruct(const float data) : data(data)
+    {
+    }
 
     float data;
 };
@@ -26,76 +26,76 @@ CLArgs::from_string<MyStruct>(const std::string_view sv)
 
 struct MyStructOption
 {
-    static constexpr std::string_view identifier{ "--mystruct" };
-    static constexpr std::string_view alias{ "-ms" };
-    static constexpr std::string_view description{ "Specify value for my struct" };
-    static constexpr std::string_view value_hint{ "NUMBER" };
-    static constexpr bool             required{ false };
+    static constexpr std::string_view identifier{"--mystruct"};
+    static constexpr std::string_view alias{"-ms"};
+    static constexpr std::string_view description{"Specify value for my struct"};
+    static constexpr std::string_view value_hint{"NUMBER"};
+    static constexpr bool             required{false};
     using ValueType = MyStruct;
 };
 
 struct HelpFlag
 {
-    static constexpr std::string_view identifier{ "--help" };
-    static constexpr std::string_view alias{ "-h" };
-    static constexpr std::string_view description{ "Display help menu" };
-    static constexpr bool             required{ false };
+    static constexpr std::string_view identifier{"--help"};
+    static constexpr std::string_view alias{"-h"};
+    static constexpr std::string_view description{"Display help menu"};
+    static constexpr bool             required{false};
 };
 
 struct HelloFlag
 {
-    static constexpr std::string_view identifier{ "--hello" };
-    static constexpr std::string_view description{ "Print hello world" };
-    static constexpr bool             required{ false };
+    static constexpr std::string_view identifier{"--hello"};
+    static constexpr std::string_view description{"Print hello world"};
+    static constexpr bool             required{false};
 };
 
 struct VerboseFlag
 {
-    static constexpr std::string_view identifier{ "--verbose" };
-    static constexpr std::string_view alias{ "-v" };
-    static constexpr std::string_view description{ "Enable verbose printing" };
-    static constexpr bool             required{ false };
+    static constexpr std::string_view identifier{"--verbose"};
+    static constexpr std::string_view alias{"-v"};
+    static constexpr std::string_view description{"Enable verbose printing"};
+    static constexpr bool             required{false};
 };
 
 struct FileOption
 {
-    static constexpr std::string_view identifier{ "--file" };
-    static constexpr std::string_view alias{ "-f" };
-    static constexpr std::string_view description{ "Specify input file" };
-    static constexpr std::string_view value_hint{ "FILE" };
-    static constexpr bool             required{ true };
+    static constexpr std::string_view identifier{"--file"};
+    static constexpr std::string_view alias{"-f"};
+    static constexpr std::string_view description{"Specify input file"};
+    static constexpr std::string_view value_hint{"FILE"};
+    static constexpr bool             required{true};
     using ValueType = std::filesystem::path;
 };
 
 struct DirectoryOption
 {
-    static constexpr std::string_view identifier{ "--directory" };
-    static constexpr std::string_view description{ "Specify input directory" };
-    static constexpr std::string_view value_hint{ "PATH" };
-    static constexpr bool             required{ false };
+    static constexpr std::string_view identifier{"--directory"};
+    static constexpr std::string_view description{"Specify input directory"};
+    static constexpr std::string_view value_hint{"PATH"};
+    static constexpr bool             required{false};
     using ValueType = std::string;
 };
 
 struct FloatOption
 {
-    static constexpr std::string_view identifier{ "--float" };
-    static constexpr std::string_view description{ "Specify floating point value" };
-    static constexpr std::string_view value_hint{ "NUMBER" };
-    static constexpr bool             required{ true };
+    static constexpr std::string_view identifier{"--float"};
+    static constexpr std::string_view description{"Specify floating point value"};
+    static constexpr std::string_view value_hint{"NUMBER"};
+    static constexpr bool             required{true};
     using ValueType = float;
 };
 
 struct CharOption
 {
-    static constexpr std::string_view identifier{ "--char" };
-    static constexpr std::string_view description{ "Specify character value" };
-    static constexpr std::string_view value_hint{ "CHARACTER" };
-    static constexpr bool             required{ false };
+    static constexpr std::string_view identifier{"--char"};
+    static constexpr std::string_view description{"Specify character value"};
+    static constexpr std::string_view value_hint{"CHARACTER"};
+    static constexpr bool             required{false};
     using ValueType = char;
 };
 
-using ArgumentParser = CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, MyStructOption, FileOption, DirectoryOption,
-                                      FloatOption, CharOption>;
+using ArgumentParser =
+        CLArgs::Parser<HelpFlag, HelloFlag, VerboseFlag, MyStructOption, FileOption, DirectoryOption, FloatOption, CharOption>;
 
 int
 main(const int argc, char **argv)
