@@ -1,13 +1,6 @@
 #ifndef CLARGS_PARSER_HPP
 #define CLARGS_PARSER_HPP
 
-/**
- * TODO:
- * - Handle option groups with validators (For example mutually exclusive options)
- * - Proper from_string() implementation. We currently just use std::stringstream as a middleman for casting, but it is
- * expensive
- */
-
 #include <CLArgs/concepts.hpp>
 #include <CLArgs/from_string.hpp>
 #include <CLArgs/misc.hpp>
@@ -35,7 +28,7 @@ namespace CLArgs
     template <CmdOption... Options>
     class Parser
     {
-      public:
+    public:
         Parser() noexcept = default;
 
         Parser(const Parser &)  = delete;
@@ -51,13 +44,14 @@ namespace CLArgs
         [[nodiscard]] std::filesystem::path program() const noexcept;
 
         template <CmdOption Option>
-        [[nodiscard]] bool has_option() const noexcept requires IsPartOf<Option, Options...>;
+        [[nodiscard]] bool has_option() const noexcept
+            requires IsPartOf<Option, Options...>;
 
         template <CmdOption Option>
-        [[nodiscard]] std::optional<typename Option::ValueType>
-        get_option_value() const noexcept requires IsPartOf<Option, Options...> &&CmdHasValue<Option>;
+        [[nodiscard]] std::optional<typename Option::ValueType> get_option_value() const noexcept
+            requires IsPartOf<Option, Options...> && CmdHasValue<Option>;
 
-      private:
+    private:
         void check_invariant() const;
 
         template <CmdOption Option, CmdOption... Rest>
@@ -75,9 +69,9 @@ namespace CLArgs
         std::string_view                              program_;
         std::unordered_map<std::type_index, std::any> options_;
 
-        bool has_successfully_parsed_args_{ false };
+        bool has_successfully_parsed_args_{false};
 
-        static constexpr std::size_t max_identifier_length_{ max_identifier_length<Options...>() };
+        static constexpr std::size_t max_identifier_length_{max_identifier_length<Options...>()};
     };
 } // namespace CLArgs
 
@@ -113,12 +107,11 @@ CLArgs::Parser<Options...>::parse(int argc, char **argv)
 template <CLArgs::CmdOption... Options>
 template <CLArgs::CmdOption Option, CLArgs::CmdOption... Rest>
 void
-CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>           &all,
-                                        std::vector<std::string_view>::iterator &current)
+CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view> &all, std::vector<std::string_view>::iterator &current)
 {
     std::string_view arg = *current;
 
-    bool found{ false };
+    bool found{false};
     if (arg == Option::identifier)
     {
         found = true;
@@ -164,8 +157,8 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view>           
             catch (std::exception &e)
             {
                 std::stringstream ss;
-                ss << "Failed to parse \"" << *value_iter << "\" as type " << typeid(typename Option::ValueType).name()
-                   << " for option \"" << arg << "\": " << e.what();
+                ss << "Failed to parse \"" << *value_iter << "\" as type " << typeid(typename Option::ValueType).name() << " for option \""
+                   << arg << "\": " << e.what();
                 throw std::invalid_argument(ss.str());
             }
             all.erase(current, value_iter + 1);
@@ -238,7 +231,8 @@ CLArgs::Parser<Options...>::program() const noexcept
 template <CLArgs::CmdOption... Options>
 template <CLArgs::CmdOption Option>
 bool
-CLArgs::Parser<Options...>::has_option() const noexcept requires IsPartOf<Option, Options...>
+CLArgs::Parser<Options...>::has_option() const noexcept
+    requires IsPartOf<Option, Options...>
 {
     check_invariant();
     return options_.contains(std::type_index(typeid(Option)));
@@ -247,8 +241,8 @@ CLArgs::Parser<Options...>::has_option() const noexcept requires IsPartOf<Option
 template <CLArgs::CmdOption... Options>
 template <CLArgs::CmdOption Option>
 std::optional<typename Option::ValueType>
-CLArgs::Parser<Options...>::get_option_value()
-    const noexcept requires IsPartOf<Option, Options...> &&CmdHasValue<Option>
+CLArgs::Parser<Options...>::get_option_value() const noexcept
+    requires IsPartOf<Option, Options...> && CmdHasValue<Option>
 {
     check_invariant();
 

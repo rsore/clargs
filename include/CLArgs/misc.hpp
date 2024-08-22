@@ -9,11 +9,11 @@
 #include <string_view>
 
 #ifndef NDEBUG
-#    define CLARGS_ASSERT(expr, msg) ::CLArgs::_internal::assert_impl(expr, msg, __FILE__, __LINE__)
-#    define CLARGS_DEBUG_BREAK()     CLARGS_PLATFORM_DEBUG_BREAK()
+    #define CLARGS_ASSERT(expr, msg) ::CLArgs::_internal::assert_impl(expr, msg, __FILE__, __LINE__)
+    #define CLARGS_DEBUG_BREAK() CLARGS_PLATFORM_DEBUG_BREAK()
 #else
-#    define CLARGS_ASSERT(expr, msg)
-#    define CLARGS_DEBUG_BREAK()
+    #define CLARGS_ASSERT(expr, msg)
+    #define CLARGS_DEBUG_BREAK()
 #endif
 
 namespace CLArgs::_internal
