@@ -10,7 +10,7 @@ namespace CLArgs
     {
         using ArgumentParser = Parser<Options...>;
 
-      public:
+    public:
         static void parse(int, char **);
 
         static std::string help() noexcept;
@@ -18,13 +18,14 @@ namespace CLArgs
         static std::filesystem::path program() noexcept;
 
         template <CmdOption Option>
-        static bool has_option() noexcept requires CLArgs::IsPartOf<Option, Options...>;
+        static bool has_option() noexcept
+            requires CLArgs::IsPartOf<Option, Options...>;
 
         template <CmdOption Option>
-        std::optional<typename Option::ValueType> static get_option_value() noexcept requires
-            CLArgs::IsPartOf<Option, Options...> &&CLArgs::CmdHasValue<Option>;
+        std::optional<typename Option::ValueType> static get_option_value() noexcept
+            requires CLArgs::IsPartOf<Option, Options...> && CLArgs::CmdHasValue<Option>;
 
-      private:
+    private:
         ParserSingleton() = default;
 
         static ArgumentParser &
@@ -60,7 +61,8 @@ CLArgs::ParserSingleton<Options...>::program() noexcept
 template <CLArgs::CmdOption... Options>
 template <CLArgs::CmdOption Option>
 bool
-CLArgs::ParserSingleton<Options...>::has_option() noexcept requires CLArgs::IsPartOf<Option, Options...>
+CLArgs::ParserSingleton<Options...>::has_option() noexcept
+    requires CLArgs::IsPartOf<Option, Options...>
 {
     return get_instance().template has_option<Option>();
 }
@@ -68,8 +70,8 @@ CLArgs::ParserSingleton<Options...>::has_option() noexcept requires CLArgs::IsPa
 template <CLArgs::CmdOption... Options>
 template <CLArgs::CmdOption Option>
 std::optional<typename Option::ValueType>
-CLArgs::ParserSingleton<Options...>::get_option_value() noexcept requires
-    CLArgs::IsPartOf<Option, Options...> &&CLArgs::CmdHasValue<Option>
+CLArgs::ParserSingleton<Options...>::get_option_value() noexcept
+    requires CLArgs::IsPartOf<Option, Options...> && CLArgs::CmdHasValue<Option>
 {
     return get_instance().template get_option_value<Option>();
 }

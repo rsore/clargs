@@ -170,8 +170,7 @@ CLArgs::from_string<bool>(const std::string_view sv)
         return false;
     }
 
-    throw std::invalid_argument(
-        R"(Valid bool values are "true", "True", "TRUE", "1", "false", "False", "FALSE" and "0")");
+    throw std::invalid_argument(R"(Valid bool values are "true", "True", "TRUE", "1", "false", "False", "FALSE" and "0")");
 }
 
 template <>

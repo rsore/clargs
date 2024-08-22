@@ -1,27 +1,50 @@
 ---
-Checks:          '-*,bugprone-argument-comment,bugprone-assert-side-effect,bugprone-assignment-in-if-condition,bugprone-bad-signal-to-kill-thread,bugprone-bool-pointer-implicit-conversion,bugprone-copy-constructor-init,bugprone-dangling-handle,bugprone-dynamic-static-initializers,bugprone-empty-catch,bugprone-exception-escape,bugprone-fold-init-type,bugprone-forward-declaration-namespace,bugprone-forwarding-reference-overload,bugprone-inaccurate-erase,bugprone-incorrect-roundings,bugprone-infinite-loop,bugprone-integer-division,bugprone-lambda-function-name,bugprone-macro-*,bugprone-misplaced-*,bugprone-move-forwarding-reference,bugprone-multiple-*,bugprone-narrowing-conversions,bugprone-no-escape,bugprone-non-zero-enum-to-bool-conversion,bugprone-not-null-terminated-result,bugprone-parent-virtual-call,bugprone-posix-return,bugprone-redundant-branch-condition,bugprone-reserved-identifier,bugprone-shared-ptr-array-mismatch,bugprone-signal-handler,bugprone-signed-char-misuse,bugprone-sizeof-*,bugprone-spuriously-wake-up-functions,bugprone-standalone-empty,bugprone-string-*,bugprone-stringview-nullptr,bugprone-suspicious-*,bugprone-swapped-arguments,bugprone-switch-missing-default-case,bugprone-terminating-continue,bugprone-throw-keyword-missing,bugprone-too-small-loop-variable,bugprone-unchecked-optional-access,bugprone-undefined-memory-manipulation,bugprone-undelegated-constructor,bugprone-unhandled-*,bugprone-unique-ptr-array-mismatch,bugprone-unused-*,bugprone-use-after-move,bugprone-virtual-near-miss,cppcoreguidelines-avoid-c-arrays,cppcoreguidelines-avoid-capturing-lambda-coroutines,cppcoreguidelines-avoid-const-or-ref-data-members,cppcoreguidelines-avoid-goto,cppcoreguidelines-avoid-reference-coroutine-parameters,cppcoreguidelines-c-copy-assignment-signature,cppcoreguidelines-explicit-virtual-functions,cppcoreguidelines-init-variables,cppcoreguidelines-interfaces-global-init,cppcoreguidelines-macro-usage,cppcoreguidelines-misleading-capture-default-by-value,cppcoreguidelines-missing-std-forward,cppcoreguidelines-narrowing-conversions,cppcoreguidelines-no-malloc,cppcoreguidelines-noexcept-*,cppcoreguidelines-prefer-member-initializer,cppcoreguidelines-pro-type-const-cast,cppcoreguidelines-pro-type-cstyle-cast,cppcoreguidelines-pro-type-member-init,cppcoreguidelines-pro-type-static-cast-downcast,cppcoreguidelines-pro-type-union-access,cppcoreguidelines-pro-type-vararg,cppcoreguidelines-rvalue-reference-param-not-moved,cppcoreguidelines-slicing,cppcoreguidelines-special-member-functions,cppcoreguidelines-use-default-member-init,cppcoreguidelines-virtual-class-destructor,hicpp-avoid-*,hicpp-braces-around-statements,hicpp-deprecated-headers,hicpp-exception-baseclass,hicpp-explicit-conversions,hicpp-function-size,hicpp-invalid-access-moved,hicpp-member-init,hicpp-move-const-arg,hicpp-multiway-paths-covered,hicpp-new-delete-operators,hicpp-no-assembler,hicpp-no-malloc,hicpp-noexcept-move,hicpp-signed-bitwise,hicpp-special-member-functions,hicpp-static-assert,hicpp-undelegated-constructor,hicpp-uppercase-literal-suffix,hicpp-use-*,hicpp-vararg,misc-confusable-identifiers,misc-const-correctness,misc-definitions-in-headers,misc-header-include-cycle,misc-include-cleaner,misc-misleading-*,misc-new-delete-overloads,misc-no-recursion,misc-non-copyable-objects,misc-static-assert,misc-throw-by-value-catch-by-reference,misc-unconventional-assign-operator,misc-uniqueptr-reset-release,misc-unused-*,misc-use-anonymous-namespace,modernize-avoid-*,modernize-concat-nested-namespaces,modernize-deprecated-*,modernize-loop-convert,modernize-macro-to-enum,modernize-make-*,modernize-raw-string-literal,modernize-redundant-void-arg,modernize-replace-*,modernize-return-braced-init-list,modernize-shrink-to-fit,modernize-type-traits,modernize-unary-static-assert,modernize-use-auto,modernize-use-bool-literals,modernize-use-default-member-init,modernize-use-emplace,modernize-use-equals-*,modernize-use-nodiscard,modernize-use-noexcept,modernize-use-nullptr,modernize-use-override,modernize-use-transparent-functors,modernize-use-uncaught-exceptions,modernize-use-using,readability-avoid-*,readability-braces-around-statements,readability-const-return-type,readability-container-*,readability-delete-null-pointer,readability-duplicate-include,readability-else-after-return,readability-function-size,readability-identifier-naming,readability-implicit-bool-conversion,readability-inconsistent-declaration-parameter-name,readability-isolate-declaration,readability-make-member-function-const,readability-misleading-indentation,readability-misplaced-array-index,readability-non-const-parameter,readability-qualified-auto,readability-redundant-control-flow,readability-redundant-declaration,readability-redundant-function-ptr-dereference,readability-redundant-member-init,readability-redundant-preprocessor,readability-redundant-smartptr-get,readability-redundant-string-*,readability-simplify-*,readability-static-definition-in-anonymous-namespace,readability-string-compare,readability-suspicious-call-argument,readability-uniqueptr-delete-release,readability-uppercase-literal-suffix,readability-use-anyofallof'
-WarningsAsErrors: ''
-HeaderFilterRegex: ''
-AnalyzeTemporaryDtors: false
-FormatStyle:     none
-CheckOptions:
-  llvm-else-after-return.WarnOnConditionVariables: 'false'
-  modernize-loop-convert.MinConfidence: reasonable
-  modernize-replace-auto-ptr.IncludeStyle: llvm
-  cert-str34-c.DiagnoseSignedUnsignedCharComparisons: 'false'
-  google-readability-namespace-comments.ShortNamespaceLines: '10'
-  cert-err33-c.CheckedFunctions: '::aligned_alloc;::asctime_s;::at_quick_exit;::atexit;::bsearch;::bsearch_s;::btowc;::c16rtomb;::c32rtomb;::calloc;::clock;::cnd_broadcast;::cnd_init;::cnd_signal;::cnd_timedwait;::cnd_wait;::ctime_s;::fclose;::fflush;::fgetc;::fgetpos;::fgets;::fgetwc;::fopen;::fopen_s;::fprintf;::fprintf_s;::fputc;::fputs;::fputwc;::fputws;::fread;::freopen;::freopen_s;::fscanf;::fscanf_s;::fseek;::fsetpos;::ftell;::fwprintf;::fwprintf_s;::fwrite;::fwscanf;::fwscanf_s;::getc;::getchar;::getenv;::getenv_s;::gets_s;::getwc;::getwchar;::gmtime;::gmtime_s;::localtime;::localtime_s;::malloc;::mbrtoc16;::mbrtoc32;::mbsrtowcs;::mbsrtowcs_s;::mbstowcs;::mbstowcs_s;::memchr;::mktime;::mtx_init;::mtx_lock;::mtx_timedlock;::mtx_trylock;::mtx_unlock;::printf_s;::putc;::putwc;::raise;::realloc;::remove;::rename;::scanf;::scanf_s;::setlocale;::setvbuf;::signal;::snprintf;::snprintf_s;::sprintf;::sprintf_s;::sscanf;::sscanf_s;::strchr;::strerror_s;::strftime;::strpbrk;::strrchr;::strstr;::strtod;::strtof;::strtoimax;::strtok;::strtok_s;::strtol;::strtold;::strtoll;::strtoul;::strtoull;::strtoumax;::strxfrm;::swprintf;::swprintf_s;::swscanf;::swscanf_s;::thrd_create;::thrd_detach;::thrd_join;::thrd_sleep;::time;::timespec_get;::tmpfile;::tmpfile_s;::tmpnam;::tmpnam_s;::tss_create;::tss_get;::tss_set;::ungetc;::ungetwc;::vfprintf;::vfprintf_s;::vfscanf;::vfscanf_s;::vfwprintf;::vfwprintf_s;::vfwscanf;::vfwscanf_s;::vprintf_s;::vscanf;::vscanf_s;::vsnprintf;::vsnprintf_s;::vsprintf;::vsprintf_s;::vsscanf;::vsscanf_s;::vswprintf;::vswprintf_s;::vswscanf;::vswscanf_s;::vwprintf_s;::vwscanf;::vwscanf_s;::wcrtomb;::wcschr;::wcsftime;::wcspbrk;::wcsrchr;::wcsrtombs;::wcsrtombs_s;::wcsstr;::wcstod;::wcstof;::wcstoimax;::wcstok;::wcstok_s;::wcstol;::wcstold;::wcstoll;::wcstombs;::wcstombs_s;::wcstoul;::wcstoull;::wcstoumax;::wcsxfrm;::wctob;::wctrans;::wctype;::wmemchr;::wprintf_s;::wscanf;::wscanf_s;'
-  cert-oop54-cpp.WarnOnlyIfThisHasSuspiciousField: 'false'
-  cert-dcl16-c.NewSuffixes: 'L;LL;LU;LLU'
-  google-readability-braces-around-statements.ShortStatementLines: '1'
-  cppcoreguidelines-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: 'true'
-  google-readability-namespace-comments.SpacesBeforeComments: '2'
-  modernize-loop-convert.MaxCopySize: '16'
-  modernize-pass-by-value.IncludeStyle: llvm
-  modernize-use-nullptr.NullMacros: 'NULL'
-  llvm-qualified-auto.AddConstToQualified: 'false'
-  modernize-loop-convert.NamingStyle: CamelCase
-  llvm-else-after-return.WarnOnUnfixable: 'false'
-  google-readability-function-size.StatementThreshold: '800'
-...
-
+Checks: '-*
+cppcoreguidelines-*
+mpi-*
+bugprone-*
+-bugprone-easily-swappable-parameters
+-bugprone-non-zero-enum-to-bool-conversion
+cert-err52-cpp
+cert-err60-cpp
+cert-err34-c
+cert-str34-c
+cert-msc50-cpp
+cert-msc51-cpp
+cert-dcl58-cpp
+cert-flp30-c
+google-readability-casting
+google-default-arguments
+google-global-names-in-headers
+google-readability-todo
+google-runtime-int
+google-runtime-operator
+google-explicit-constructor
+google-build-using-namespace
+hicpp-multiway-paths-covered
+hicpp-exception-baseclass
+llvm-else-after-return
+misc-*
+-misc-definitions-in-headers
+-misc-coroutine-hostile-raii
+-misc-misleading-bidirectional
+-misc-non-private-member-variables-in-classes
+modernize-*
+-modernize-use-trailing-return-type
+openmp-use-default-none
+performance-*
+-performance-noexcept-swap
+-performance-no-int-to-ptr
+portability-simd-intrinsics
+readability-*
+-readability-function-size
+-readability-identifier-length
+-readability-suspicious-call-argument
+-readability-avoid-nested-conditional-operator
+-readability-isolate-declaration
+-readability-redundant-access-specifiers
+-readability-avoid-return-with-void-value
+-readability-avoid-unconditional-preprocessor-if
+-readability-function-cognitive-complexity
+-readability-identifier-naming
+-readability-reference-to-constructed-temporary'
