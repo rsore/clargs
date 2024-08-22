@@ -21,10 +21,12 @@ struct FileOption
     using ValueType = std::filesystem::path;
 };
 
+using ConfigOption = CLArgs::Option<"--config", "-c", "<filepath>", "Specify config file", true, std::filesystem::path>;
+
 int
 main(int argc, char **argv)
 {
-    CLArgs::Parser<VerboseOption, FileOption> parser;
+    CLArgs::Parser<VerboseOption, FileOption, ConfigOption> parser;
     try
     {
         parser.parse(argc, argv);
@@ -42,6 +44,11 @@ main(int argc, char **argv)
     if (const auto file = parser.get_option_value<FileOption>(); file.has_value())
     {
         std::cout << "File: " << file.value() << std::endl;
+    }
+
+    if (const auto config = parser.get_option_value<ConfigOption>(); config.has_value())
+    {
+        std::cout << "Config file: " << config.value() << std::endl;
     }
 
     return EXIT_SUCCESS;

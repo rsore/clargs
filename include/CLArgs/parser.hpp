@@ -25,6 +25,31 @@ namespace CLArgs
     template <CmdOption Option, CmdOption... Rest>
     static constexpr std::size_t max_identifier_length();
 
+    template <std::size_t N>
+    struct StringLiteral
+    {
+        constexpr
+        StringLiteral(const char (&str)[N]); // NOLINT (Marked NOLINT to suppress warning about non-explicit single-argument constructor
+
+        char value[N]{};
+    };
+
+    template <const StringLiteral Identifier,
+              const StringLiteral Alias,
+              const StringLiteral ValueHint,
+              const StringLiteral Description,
+              const bool          Required,
+              typename ValType>
+    struct Option
+    {
+        static constexpr std::string_view identifier{Identifier.value};
+        static constexpr std::string_view alias{Alias.value};
+        static constexpr std::string_view value_hint{ValueHint.value};
+        static constexpr std::string_view description{Description.value};
+        static constexpr bool             required{Required};
+        using ValueType = ValType;
+    };
+
     template <CmdOption... Options>
     class Parser
     {
@@ -342,6 +367,12 @@ CLArgs::Parser<Options...>::append_option_descriptions_to_usage(std::stringstrea
     {
         append_option_descriptions_to_usage<Rest...>(ss);
     }
+}
+
+template <std::size_t N>
+constexpr CLArgs::StringLiteral<N>::StringLiteral(const char (&str)[N])
+{
+    std::copy_n(str, N, value);
 }
 
 template <CLArgs::CmdOption Option>
