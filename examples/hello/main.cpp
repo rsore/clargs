@@ -5,7 +5,9 @@
 
 struct MyStruct
 {
-    explicit MyStruct(const float data) : data(data)
+    explicit
+    MyStruct(const float data)
+        : data(data)
     {
     }
 
