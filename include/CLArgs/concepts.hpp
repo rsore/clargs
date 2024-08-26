@@ -7,17 +7,20 @@
 namespace CLArgs
 {
     template <typename T>
-    concept CmdOption = requires {
+    concept CmdFlag = requires {
         { T::identifier } -> std::convertible_to<std::string_view>;
         { T::description } -> std::convertible_to<std::string_view>;
         { T::required } -> std::convertible_to<bool>;
     };
 
     template <typename T>
-    concept CmdHasValue = requires {
+    concept CmdOption = CmdFlag<T> && requires {
         { T::value_hint } -> std::convertible_to<std::string_view>;
         typename T::ValueType;
     };
+
+    template <typename T>
+    concept Parseable = CmdFlag<T> || CmdOption<T>;
 
     template <typename T>
     concept CmdHasAlias = requires {
