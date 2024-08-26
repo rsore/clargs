@@ -21,12 +21,14 @@ struct FileOption
     using ValueType = std::filesystem::path;
 };
 
+using RecursiveFlag = CLArgs::Flag<"--recursive", "-r", "Enable recursive travel", false>;
+
 using ConfigOption = CLArgs::Option<"--config", "-c", "<filepath>", "Specify config file", true, std::filesystem::path>;
 
 int
 main(int argc, char **argv)
 {
-    CLArgs::Parser<VerboseOption, FileOption, ConfigOption> parser;
+    CLArgs::Parser<VerboseOption, FileOption, RecursiveFlag, ConfigOption> parser;
     try
     {
         parser.parse(argc, argv);

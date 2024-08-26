@@ -34,6 +34,15 @@ namespace CLArgs
         char value[N]{};
     };
 
+    template <const StringLiteral Identifier, const StringLiteral Alias, const StringLiteral Description, const bool Required>
+    struct Flag
+    {
+        static constexpr std::string_view identifier{Identifier.value};
+        static constexpr std::string_view alias{Alias.value};
+        static constexpr std::string_view description{Description.value};
+        static constexpr bool             required{Required};
+    };
+
     template <const StringLiteral Identifier,
               const StringLiteral Alias,
               const StringLiteral ValueHint,
