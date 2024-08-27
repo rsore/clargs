@@ -1,7 +1,7 @@
 #ifndef CLARGS_PARSER_HPP
 #define CLARGS_PARSER_HPP
 
-#include <CLArgs/concepts.hpp>
+#include <CLArgs/core.hpp>
 #include <CLArgs/from_string.hpp>
 #include <CLArgs/misc.hpp>
 
@@ -24,15 +24,6 @@ namespace CLArgs
 
     template <Parseable This, Parseable... Rest>
     static constexpr std::size_t max_identifier_length();
-
-    template <std::size_t N>
-    struct StringLiteral
-    {
-        constexpr
-        StringLiteral(const char (&str)[N]); // NOLINT (Marked NOLINT to suppress warning about non-explicit single-argument constructor
-
-        char value[N]{};
-    };
 
     template <const StringLiteral Identifier, const StringLiteral Alias, const StringLiteral Description, const bool Required>
     struct Flag
@@ -376,12 +367,6 @@ CLArgs::Parser<Parseables...>::append_option_descriptions_to_usage(std::stringst
     {
         append_option_descriptions_to_usage<Rest...>(ss);
     }
-}
-
-template <std::size_t N>
-constexpr CLArgs::StringLiteral<N>::StringLiteral(const char (&str)[N])
-{
-    std::copy_n(str, N, value);
 }
 
 template <CLArgs::Parseable Parseable>
