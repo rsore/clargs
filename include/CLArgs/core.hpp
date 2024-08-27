@@ -84,7 +84,9 @@ CLArgs::array_from_delimited_string()
     static_assert(!strv.empty(), "string cannot be empty");
     static_assert(strv.front() != delimiter, "string cannot begin with delimiter");
     static_assert(strv.back() != delimiter, "string cannot end with delimiter");
-    static_assert(strv.find(std::string(2, delimiter)) == std::string_view::npos, "consecutive delimiters are not allowed");
+
+    constexpr char consecutive_delimiters[] = {delimiter, delimiter, '\0'};
+    static_assert(strv.find(consecutive_delimiters) == std::string_view::npos, "consecutive delimiters are not allowed");
 
     std::array<std::string_view, count_delimited_elements<str, delimiter>()> result{};
 
