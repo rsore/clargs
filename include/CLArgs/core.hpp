@@ -35,7 +35,7 @@ namespace CLArgs
     template <std::size_t N>
     struct StringLiteral
     {
-        constexpr StringLiteral(const char (&str)[N]); // NOLINT (suppress non-explicit single-argument constructor warning)
+        constexpr StringLiteral(const char (&str)[N]); // NOLINT(google-explicit-constructor)
 
         char value[N]{};
     };
