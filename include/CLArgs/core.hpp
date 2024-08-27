@@ -40,15 +40,7 @@ namespace CLArgs
         char value[N]{};
     };
 
-    static constexpr auto default_delimiter{','};
-
-    template <StringLiteral str, char delimiter = default_delimiter>
-    [[nodiscard]] consteval std::size_t count_delimiters();
-
-    template <StringLiteral str, char delimiter = default_delimiter>
-    [[nodiscard]] consteval std::size_t count_delimited_elements();
-
-    template <StringLiteral str, char delimiter = default_delimiter>
+    template <StringLiteral str, char delimiter = ','>
     [[nodiscard]] consteval auto array_from_delimited_string();
 } // namespace CLArgs
 
@@ -56,21 +48,6 @@ template <std::size_t N>
 constexpr CLArgs::StringLiteral<N>::StringLiteral(const char (&str)[N])
 {
     std::copy_n(str, N, value);
-}
-
-template <CLArgs::StringLiteral str, char delimiter>
-consteval std::size_t
-CLArgs::count_delimiters()
-{
-    constexpr std::string_view strv{str.value};
-    return std::ranges::count(strv, delimiter);
-}
-
-template <CLArgs::StringLiteral str, char delimiter>
-consteval std::size_t
-CLArgs::count_delimited_elements()
-{
-    return count_delimiters<str, delimiter>() + 1;
 }
 
 template <CLArgs::StringLiteral str, char delimiter>
@@ -87,7 +64,7 @@ CLArgs::array_from_delimited_string()
     constexpr char consecutive_delimiters[] = {delimiter, delimiter, '\0'};
     static_assert(strv.find(consecutive_delimiters) == std::string_view::npos, "consecutive delimiters are not allowed");
 
-    std::array<std::string_view, count_delimited_elements<str, delimiter>()> result{};
+    std::array<std::string_view, std::ranges::count(strv, delimiter) + 1> result{};
 
     auto       start       = strv.begin();
     const auto end         = strv.end();
