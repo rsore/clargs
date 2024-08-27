@@ -88,15 +88,20 @@ CLArgs::array_from_delimited_string()
 
     std::array<std::string_view, count_delimited_elements<str, delimiter>()> result{};
 
-    std::size_t start = 0;
-    std::size_t index = 0;
+    auto       start       = strv.begin();
+    const auto end         = strv.end();
+    auto       result_iter = result.begin();
 
-    for (std::size_t i = 0; i <= strv.size(); ++i)
+    for (auto iter = start; iter != end; ++iter)
     {
-        if (i == strv.size() || strv[i] == delimiter)
+        const auto next = std::next(iter);
+        if (*iter == delimiter || next == end)
         {
-            result[index++] = strv.substr(start, i - start);
-            start           = i + 1;
+            const auto first = start;
+            const auto last  = (*iter == delimiter) ? iter : next;
+            *result_iter     = std::string_view{first, last};
+            start            = next;
+            result_iter += 1;
         }
     }
 
