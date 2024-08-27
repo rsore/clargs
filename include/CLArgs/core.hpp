@@ -44,13 +44,13 @@ namespace CLArgs
     static constexpr auto default_delimiter{','};
 
     template <StringLiteral str, char delimiter = default_delimiter>
-    consteval std::size_t count_delimiters();
+    [[nodiscard]] consteval std::size_t count_delimiters();
 
     template <StringLiteral str, char delimiter = default_delimiter>
-    consteval std::size_t count_delimited_elements();
+    [[nodiscard]] consteval std::size_t count_delimited_elements();
 
     template <StringLiteral str, char delimiter = default_delimiter>
-    consteval auto array_from_delimited_string();
+    [[nodiscard]] consteval auto array_from_delimited_string();
 } // namespace CLArgs
 
 template <std::size_t N>
@@ -64,16 +64,7 @@ consteval std::size_t
 CLArgs::count_delimiters()
 {
     constexpr std::string_view strv{str.value};
-
-    std::size_t count = 0;
-    for (const char ch : strv)
-    {
-        if (ch == delimiter)
-        {
-            count += 1;
-        }
-    }
-    return count;
+    return std::count(strv.begin(), strv.end(), delimiter);
 }
 
 template <CLArgs::StringLiteral str, char delimiter>
@@ -89,6 +80,7 @@ CLArgs::array_from_delimited_string()
 {
     constexpr std::string_view strv{str.value};
 
+    static_assert(delimiter != '\0', "null character cannot be used as a delimiter.");
     static_assert(!strv.empty(), "string cannot be empty");
     static_assert(strv.front() != delimiter, "string cannot begin with delimiter");
     static_assert(strv.back() != delimiter, "string cannot end with delimiter");
