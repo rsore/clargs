@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <array>
 #include <concepts>
-#include <string>
 #include <string_view>
 
 namespace CLArgs
@@ -64,7 +63,7 @@ consteval std::size_t
 CLArgs::count_delimiters()
 {
     constexpr std::string_view strv{str.value};
-    return std::count(strv.begin(), strv.end(), delimiter);
+    return std::ranges::count(strv, delimiter);
 }
 
 template <CLArgs::StringLiteral str, char delimiter>
@@ -96,8 +95,7 @@ CLArgs::array_from_delimited_string()
 
     for (auto iter = start; iter != end; ++iter)
     {
-        const auto next = std::next(iter);
-        if (*iter == delimiter || next == end)
+        if (const auto next = std::next(iter); *iter == delimiter || next == end)
         {
             const auto first = start;
             const auto last  = (*iter == delimiter) ? iter : next;
