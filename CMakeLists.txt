@@ -24,6 +24,7 @@ option(CLARGS_BUILD_EXAMPLES "Build CLArgs examples" ON)
 
 if (${CLARGS_BUILD_EXAMPLES})
     add_subdirectory(examples/01_basic)
+    add_subdirectory(examples/02_singleton)
 endif ()
 
 option(CLARGS_BUILD_TESTS "Build CLArgs tests" ON)
