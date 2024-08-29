@@ -1,14 +1,12 @@
 #include <CLArgs/flag.hpp>
 #include <CLArgs/option.hpp>
-#include <CLArgs/parser.hpp>
 #include <CLArgs/singleton.hpp>
 
 #include <filesystem>
-#include <sstream>
-#include <string_view>
 
-using VerboseFlag   = CLArgs::Flag<"--verbose,-v", "Enable verbose output", false>;
-using ConfigOption  = CLArgs::Option<"--configuration,--config,-c", "FILEPATH", "Specify path to configuration file", true, std::filesystem::path>;
+using VerboseFlag = CLArgs::Flag<"--verbose,-v", "Enable verbose output", false>;
+using ConfigOption =
+        CLArgs::Option<"--configuration,--config,-c", "FILEPATH", "Specify path to configuration file", true, std::filesystem::path>;
 
 using Parser = CLArgs::ParserSingleton<VerboseFlag, ConfigOption>;
 

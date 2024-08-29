@@ -1,10 +1,8 @@
-#include <CLArgs/parser.hpp>
 #include <CLArgs/flag.hpp>
 #include <CLArgs/option.hpp>
+#include <CLArgs/parser.hpp>
 
 #include <filesystem>
-#include <sstream>
-#include <string_view>
 
 using VerboseFlag   = CLArgs::Flag<"--verbose,-v", "Enable verbose output", false>;
 using FileOption    = CLArgs::Option<"--file", "FILE", "Specify file to load", true, std::filesystem::path>;
