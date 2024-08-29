@@ -10,47 +10,30 @@ Uses C++20 concepts and constraints to handle command-line argument parsing with
 ## Example usage
 
 ```cpp
-struct VerboseFlag
-{
-    static constexpr std::string_view identifier{ "--verbose" };
-    static constexpr std::string_view alias{ "-v" };
-    static constexpr std::string_view description{ "Enable verbose printing" };
-    static constexpr bool             required{ false };
-};
-
-struct FileOption
-{
-    static constexpr std::string_view identifier{ "--file" };
-    static constexpr std::string_view alias{ "-f" };
-    static constexpr std::string_view description{ "Specify input file" };
-    static constexpr std::string_view value_hint{ "FILE" };
-    static constexpr bool             required{ true };
-    using ValueType = std::string;
-};
+using VerboseFlag   = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
+using ConfigOption  = CLArgs::Option<"--config,--configuration,-c", "<filepath>", "Specify config file", std::filesystem::path>;
 
 int
 main(int argc, char **argv)
 {
-    CLArgs::Parser<VerboseFlag, FileOption> argument_parser;
+    CLArgs::Parser<VerboseFlag, ConfigOption> parser;
     try
     {
-        argument_parser.parse(argc, argv);
+        parser.parse(argc, argv);
     }
     catch (std::exception &e)
     {
         std::cerr << "Error: " << e.what() << '\n';
-        std::cerr << argument_parser.help() << std::endl;
+        std::cerr << parser.help() << std::endl;
         return EXIT_FAILURE;
     }
-    
-    if (argument_parser.has_option<VerboseFlag>())
+
+    const bool has_verbose = parser.has_flag<VerboseFlag>();
+    std::cout << "Has verbose option: " << std::boolalpha << has_verbose << "\n";
+
+    if (const auto config = parser.get_option<ConfigOption>(); config.has_value())
     {
-        std::cout << "Verbose printing enabled" << std::endl;
-    }
-    
-    if (const auto file = argument_parser.get_option_value<FileOption>(); file.has_value())
-    {
-        std::cout << "File: " << file.value() << std::endl;
+        std::cout << "Config file: " << config.value() << std::endl;
     }
 }
 ```
