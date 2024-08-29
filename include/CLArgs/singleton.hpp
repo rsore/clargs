@@ -5,10 +5,10 @@
 
 namespace CLArgs
 {
-    template <CmdOption... Options>
+    template <Parseable... Parseables>
     class ParserSingleton
     {
-        using ArgumentParser = Parser<Options...>;
+        using ArgumentParser = Parser<Parseables...>;
 
     public:
         static void parse(int, char **);
@@ -17,13 +17,13 @@ namespace CLArgs
 
         static std::filesystem::path program() noexcept;
 
-        template <CmdOption Option>
-        static bool has_option() noexcept
-            requires CLArgs::IsPartOf<Option, Options...>;
+        template <CmdFlag Flag>
+        static bool has_flag() noexcept
+            requires CLArgs::IsPartOf<Flag, Parseables...>;
 
         template <CmdOption Option>
-        std::optional<typename Option::ValueType> static get_option_value() noexcept
-            requires CLArgs::IsPartOf<Option, Options...> && CLArgs::CmdHasValue<Option>;
+        std::optional<typename Option::ValueType> static get_option() noexcept
+            requires CLArgs::IsPartOf<Option, Parseables...>;
 
     private:
         ParserSingleton() = default;
@@ -37,43 +37,43 @@ namespace CLArgs
     };
 } // namespace CLArgs
 
-template <CLArgs::CmdOption... Options>
+template <CLArgs::Parseable... Parseables>
 void
-CLArgs::ParserSingleton<Options...>::parse(int argc, char **argv)
+CLArgs::ParserSingleton<Parseables...>::parse(int argc, char **argv)
 {
     get_instance().parse(argc, argv);
 }
 
-template <CLArgs::CmdOption... Options>
+template <CLArgs::Parseable... Parseables>
 std::string
-CLArgs::ParserSingleton<Options...>::help() noexcept
+CLArgs::ParserSingleton<Parseables...>::help() noexcept
 {
     return get_instance().help();
 }
 
-template <CLArgs::CmdOption... Options>
+template <CLArgs::Parseable... Parseables>
 std::filesystem::path
-CLArgs::ParserSingleton<Options...>::program() noexcept
+CLArgs::ParserSingleton<Parseables...>::program() noexcept
 {
     return get_instance().program();
 }
 
-template <CLArgs::CmdOption... Options>
-template <CLArgs::CmdOption Option>
+template <CLArgs::Parseable... Parseables>
+template <CLArgs::CmdFlag Flag>
 bool
-CLArgs::ParserSingleton<Options...>::has_option() noexcept
-    requires CLArgs::IsPartOf<Option, Options...>
+CLArgs::ParserSingleton<Parseables...>::has_flag() noexcept
+    requires CLArgs::IsPartOf<Flag, Parseables...>
 {
-    return get_instance().template has_option<Option>();
+    return get_instance().template has_flag<Flag>();
 }
 
-template <CLArgs::CmdOption... Options>
+template <CLArgs::Parseable... Parseables>
 template <CLArgs::CmdOption Option>
 std::optional<typename Option::ValueType>
-CLArgs::ParserSingleton<Options...>::get_option_value() noexcept
-    requires CLArgs::IsPartOf<Option, Options...> && CLArgs::CmdHasValue<Option>
+CLArgs::ParserSingleton<Parseables...>::get_option() noexcept
+    requires CLArgs::IsPartOf<Option, Parseables...>
 {
-    return get_instance().template get_option_value<Option>();
+    return get_instance().template get_option<Option>();
 }
 
 #endif

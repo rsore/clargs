@@ -6,7 +6,7 @@
         #define NOMINMAX
     #endif
     #include <windows.h>
-    #define CLARGS_PLATFORM_DEBUG_BREAK() DebugBreak();
+    #define CLARGS_PLATFORM_DEBUG_BREAK() DebugBreak()
 #elif defined(__linux__)
     #include <csignal>
     #define CLARGS_PLATFORM_DEBUG_BREAK() raise(SIGTRAP);
