@@ -1,5 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <CLArgs/flag.hpp>
+#include <CLArgs/option.hpp>
 #include <CLArgs/parser.hpp>
 
 #include <array>
@@ -13,22 +15,8 @@ create_argc_argv(const std::array<const char *, N> &args)
     return std::make_pair(argc, argv);
 }
 
-struct VerboseOption
-{
-    static constexpr std::string_view identifier{"--verbose"};
-    static constexpr std::string_view alias{"-v"};
-    static constexpr std::string_view description{"Enable verbose output"};
-    static constexpr bool             required{false};
-};
-
-struct FileOption
-{
-    static constexpr std::string_view identifier{"--file"};
-    static constexpr std::string_view value_hint{"FILE"};
-    static constexpr std::string_view description{"Specify file to load"};
-    static constexpr bool             required{true};
-    using ValueType = std::filesystem::path;
-};
+using VerboseFlag = CLArgs::Flag<"--verbose,-v", "Enable verbose output", false>;
+using FileOption = CLArgs::Option<"--file", "FILE", "Specify file to load", true, std::filesystem::path>;
 
 TEST_CASE("Parse arguments", "[parse]")
 {
@@ -37,4 +25,10 @@ TEST_CASE("Parse arguments", "[parse]")
 
     CLArgs::Parser<VerboseFlag, FileOption> parser;
     REQUIRE_NOTHROW(parser.parse(argc, argv));
+
+    REQUIRE(parser.has_flag<VerboseFlag>());
+
+    const auto file = parser.get_option<FileOption>();
+    REQUIRE(file.has_value());
+    REQUIRE(file.value() == "test.txt");
 }
