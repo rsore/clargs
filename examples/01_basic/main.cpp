@@ -1,34 +1,20 @@
 #include <CLArgs/parser.hpp>
+#include <CLArgs/flag.hpp>
+#include <CLArgs/option.hpp>
 
 #include <filesystem>
 #include <sstream>
 #include <string_view>
 
-struct VerboseOption
-{
-    static constexpr std::string_view identifier{"--verbose"};
-    static constexpr std::string_view alias{"-v"};
-    static constexpr std::string_view description{"Enable verbose output"};
-    static constexpr bool             required{false};
-};
-
-struct FileOption
-{
-    static constexpr std::string_view identifier{"--file"};
-    static constexpr std::string_view value_hint{"FILE"};
-    static constexpr std::string_view description{"Specify file to load"};
-    static constexpr bool             required{true};
-    using ValueType = std::filesystem::path;
-};
-
-using RecursiveFlag = CLArgs::Flag<"--recursive", "-r", "Enable recursive travel", false>;
-
-using ConfigOption = CLArgs::Option<"--config", "-c", "<filepath>", "Specify config file", true, std::filesystem::path>;
+using VerboseFlag   = CLArgs::Flag<"--verbose,-v", "Enable verbose output", false>;
+using FileOption    = CLArgs::Option<"--file", "FILE", "Specify file to load", true, std::filesystem::path>;
+using RecursiveFlag = CLArgs::Flag<"--recursive,-r", "Enable recursive travel", false>;
+using ConfigOption  = CLArgs::Option<"--config,--configuration,-c", "<filepath>", "Specify config file", true, std::filesystem::path>;
 
 int
 main(int argc, char **argv)
 {
-    CLArgs::Parser<VerboseOption, FileOption, RecursiveFlag, ConfigOption> parser;
+    CLArgs::Parser<VerboseFlag, FileOption, RecursiveFlag, ConfigOption> parser;
     try
     {
         parser.parse(argc, argv);
@@ -40,8 +26,8 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    const bool has_verbose = parser.has_option<VerboseOption>();
-    std::cout << "Has option " << VerboseOption::identifier << ": " << has_verbose << "\n";
+    const bool has_verbose = parser.has_option<VerboseFlag>();
+    std::cout << "Has option " << VerboseFlag::identifiers[0] << ": " << std::boolalpha << has_verbose << "\n";
 
     if (const auto file = parser.get_option_value<FileOption>(); file.has_value())
     {

@@ -20,35 +20,10 @@
 namespace CLArgs
 {
     template <Parseable Parseable>
-    constexpr std::size_t identifier_length();
+    static consteval std::size_t identifier_length();
 
     template <Parseable This, Parseable... Rest>
-    static constexpr std::size_t max_identifier_length();
-
-    template <const StringLiteral Identifier, const StringLiteral Alias, const StringLiteral Description, const bool Required>
-    struct Flag
-    {
-        static constexpr std::string_view identifier{Identifier.value};
-        static constexpr std::string_view alias{Alias.value};
-        static constexpr std::string_view description{Description.value};
-        static constexpr bool             required{Required};
-    };
-
-    template <const StringLiteral Identifier,
-              const StringLiteral Alias,
-              const StringLiteral ValueHint,
-              const StringLiteral Description,
-              const bool          Required,
-              typename ValType>
-    struct Option
-    {
-        static constexpr std::string_view identifier{Identifier.value};
-        static constexpr std::string_view alias{Alias.value};
-        static constexpr std::string_view value_hint{ValueHint.value};
-        static constexpr std::string_view description{Description.value};
-        static constexpr bool             required{Required};
-        using ValueType = ValType;
-    };
+    static consteval std::size_t max_identifier_length();
 
     template <Parseable... Parseables>
     class Parser
@@ -136,31 +111,14 @@ CLArgs::Parser<Parseables...>::process_arg(std::vector<std::string_view> &all, s
 {
     std::string_view arg = *current;
 
-    bool found{false};
-    if (arg == This::identifier)
-    {
-        found = true;
-    }
-    else if constexpr (CmdHasAlias<This>)
-    {
-        if (arg == This::alias)
-        {
-            found = true;
-        }
-    }
-
+    const bool found = std::ranges::find(This::identifiers, arg) != This::identifiers.end();
     if (found)
     {
         const auto type_index = std::type_index(typeid(This));
         if (options_.contains(type_index))
         {
             std::stringstream ss;
-            ss << "Duplicate argument \"" << This::identifier;
-            if constexpr (CmdHasAlias<This>)
-            {
-                ss << " / " << This::alias;
-            }
-            ss << "\"";
+            ss << "Duplicate argument \"" << This::identifiers[0] << "\"";
             throw std::invalid_argument(ss.str());
         }
 
@@ -219,7 +177,7 @@ CLArgs::Parser<Parseables...>::validate_required_options() const
         if (!options_.contains(std::type_index(typeid(This))))
         {
             std::stringstream ss;
-            ss << "Expected required option \"" << This::identifier << "\"";
+            ss << "Expected required option \"" << This::identifiers[0] << "\"";
             throw std::invalid_argument(ss.str());
         }
     }
@@ -318,7 +276,7 @@ CLArgs::Parser<Parseables...>::append_args_to_usage(std::stringstream &ss)
         ss << '[';
     }
 
-    ss << This::identifier;
+    ss << This::identifiers[0];
 
     if constexpr (CmdOption<This>)
     {
@@ -343,10 +301,15 @@ CLArgs::Parser<Parseables...>::append_option_descriptions_to_usage(std::stringst
 {
     constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_length<This>() + 4;
 
-    ss << std::setw(2) << "" << This::identifier;
-    if constexpr (CmdHasAlias<This>)
+    ss << "  ";
+
+    for (auto iter = This::identifiers.begin(); iter != This::identifiers.end(); ++iter)
     {
-        ss << ", " << This::alias;
+        ss << *iter;
+        if (std::next(iter) != This::identifiers.end())
+        {
+            ss << ", ";
+        }
     }
 
     ss << std::setw(calculated_padding) << "";
@@ -370,21 +333,22 @@ CLArgs::Parser<Parseables...>::append_option_descriptions_to_usage(std::stringst
 }
 
 template <CLArgs::Parseable Parseable>
-constexpr std::size_t
+consteval std::size_t
 CLArgs::identifier_length()
 {
-    std::size_t length = Parseable::identifier.length();
-    if constexpr (CmdHasAlias<Parseable>)
+    std::size_t length{};
+
+    for (const auto identifier : Parseable::identifiers)
     {
-        constexpr std::size_t alias_length = Parseable::alias.length();
-        length += alias_length + 2; // + 2 to account for ", " between identifier and alias
+        length += identifier.length();
     }
+    length += (Parseable::identifiers.size() - 1) * 2; // Account for ", " between identifiers
 
     return length;
 }
 
 template <CLArgs::Parseable This, CLArgs::Parseable... Rest>
-constexpr std::size_t
+consteval std::size_t
 CLArgs::max_identifier_length()
 {
     std::size_t max_length = identifier_length<This>();

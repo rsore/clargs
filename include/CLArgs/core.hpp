@@ -10,7 +10,7 @@ namespace CLArgs
 {
     template <typename T>
     concept CmdFlag = requires {
-        { T::identifier } -> std::convertible_to<std::string_view>;
+        { T::identifiers } -> std::convertible_to<std::array<std::string_view, std::tuple_size_v<decltype(T::identifiers)>>>;
         { T::description } -> std::convertible_to<std::string_view>;
         { T::required } -> std::convertible_to<bool>;
     };
@@ -23,11 +23,6 @@ namespace CLArgs
 
     template <typename T>
     concept Parseable = CmdFlag<T> || CmdOption<T>;
-
-    template <typename T>
-    concept CmdHasAlias = requires {
-        { T::alias } -> std::convertible_to<std::string_view>;
-    };
 
     template <typename T, typename... Ts>
     concept IsPartOf = (std::is_same_v<T, Ts> || ...);
