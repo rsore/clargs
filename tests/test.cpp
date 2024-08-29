@@ -15,8 +15,8 @@ create_argc_argv(const std::array<const char *, N> &args)
     return std::make_pair(argc, argv);
 }
 
-using VerboseFlag = CLArgs::Flag<"--verbose,-v", "Enable verbose output", false>;
-using FileOption = CLArgs::Option<"--file", "FILE", "Specify file to load", true, std::filesystem::path>;
+using VerboseFlag = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
+using FileOption = CLArgs::Option<"--file", "FILE", "Specify file to load", std::filesystem::path>;
 
 TEST_CASE("Parse arguments", "[parse]")
 {

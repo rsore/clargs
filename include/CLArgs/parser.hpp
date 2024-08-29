@@ -58,12 +58,6 @@ namespace CLArgs
         void process_arg(std::vector<std::string_view> &, std::vector<std::string_view>::iterator &);
 
         template <Parseable This, Parseable... Rest>
-        void validate_required_options() const;
-
-        template <Parseable This, Parseable... Rest>
-        static constexpr void append_args_to_usage(std::stringstream &);
-
-        template <Parseable This, Parseable... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
 
         std::string_view                              program_;
@@ -98,8 +92,6 @@ CLArgs::Parser<Parseables...>::parse(int argc, char **argv)
         auto front = arguments.begin();
         process_arg<Parseables...>(arguments, front);
     }
-
-    validate_required_options<Parseables...>();
 
     has_successfully_parsed_args_ = true;
 }
@@ -168,35 +160,11 @@ CLArgs::Parser<Parseables...>::process_arg(std::vector<std::string_view> &all, s
 }
 
 template <CLArgs::Parseable... Parseables>
-template <CLArgs::Parseable This, CLArgs::Parseable... Rest>
-void
-CLArgs::Parser<Parseables...>::validate_required_options() const
-{
-    if constexpr (This::required)
-    {
-        if (!options_.contains(std::type_index(typeid(This))))
-        {
-            std::stringstream ss;
-            ss << "Expected required option \"" << This::identifiers[0] << "\"";
-            throw std::invalid_argument(ss.str());
-        }
-    }
-
-    if constexpr (sizeof...(Rest) > 0)
-    {
-        validate_required_options<Rest...>();
-    }
-}
-
-template <CLArgs::Parseable... Parseables>
 std::string
 CLArgs::Parser<Parseables...>::help() const noexcept
 {
     std::stringstream ss;
-    ss << "Usage: " << program_;
-    append_args_to_usage<Parseables...>(ss);
-    ss << '\n';
-
+    ss << "Usage: " << program_ << " [OPTIONS...]\n\n";
     ss << "Options:\n";
     append_option_descriptions_to_usage<Parseables...>(ss);
 
@@ -266,37 +234,6 @@ CLArgs::Parser<Parseables...>::check_invariant() const
 template <CLArgs::Parseable... Parseables>
 template <CLArgs::Parseable This, CLArgs::Parseable... Rest>
 constexpr void
-CLArgs::Parser<Parseables...>::append_args_to_usage(std::stringstream &ss)
-{
-    ss << ' ';
-
-    constexpr bool required = This::required;
-    if constexpr (!required)
-    {
-        ss << '[';
-    }
-
-    ss << This::identifiers[0];
-
-    if constexpr (CmdOption<This>)
-    {
-        ss << ' ' << This::value_hint;
-    }
-
-    if constexpr (!required)
-    {
-        ss << ']';
-    }
-
-    if constexpr (sizeof...(Rest) > 0)
-    {
-        append_args_to_usage<Rest...>(ss);
-    }
-}
-
-template <CLArgs::Parseable... Parseables>
-template <CLArgs::Parseable This, CLArgs::Parseable... Rest>
-constexpr void
 CLArgs::Parser<Parseables...>::append_option_descriptions_to_usage(std::stringstream &ss)
 {
     constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_length<This>() + 4;
@@ -312,19 +249,7 @@ CLArgs::Parser<Parseables...>::append_option_descriptions_to_usage(std::stringst
         }
     }
 
-    ss << std::setw(calculated_padding) << "";
-
-    constexpr std::string_view required_str = "REQUIRED";
-    if constexpr (This::required)
-    {
-        ss << required_str;
-    }
-    else
-    {
-        ss << std::setw(required_str.length()) << "";
-    }
-
-    ss << "  " << This::description << '\n';
+    ss << std::setw(calculated_padding) << "  " << This::description << '\n';
 
     if constexpr (sizeof...(Rest) > 0)
     {
