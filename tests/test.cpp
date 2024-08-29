@@ -35,6 +35,6 @@ TEST_CASE("Parse arguments", "[parse]")
     constexpr std::array args = {"program", "-v", "--file", "test.txt"};
     auto [argc, argv]         = create_argc_argv(args);
 
-    CLArgs::Parser<VerboseOption, FileOption> parser;
+    CLArgs::Parser<VerboseFlag, FileOption> parser;
     REQUIRE_NOTHROW(parser.parse(argc, argv));
 }

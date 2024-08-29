@@ -12,6 +12,8 @@ add_library(CLArgs INTERFACE
         include/CLArgs/misc.hpp
         include/CLArgs/platform.hpp
         include/CLArgs/from_string.hpp
+        include/CLArgs/flag.hpp
+        include/CLArgs/option.hpp
 )
 
 target_include_directories(CLArgs INTERFACE
@@ -21,7 +23,6 @@ target_include_directories(CLArgs INTERFACE
 option(CLARGS_BUILD_EXAMPLES "Build CLArgs examples" ON)
 
 if (${CLARGS_BUILD_EXAMPLES})
-    add_subdirectory(examples/hello)
     add_subdirectory(examples/01_basic)
 endif ()
 
