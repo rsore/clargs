@@ -5,14 +5,12 @@
 #include <filesystem>
 
 using VerboseFlag   = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
-using FileOption    = CLArgs::Option<"--file", "FILE", "Specify file to load", std::filesystem::path>;
-using RecursiveFlag = CLArgs::Flag<"--recursive,-r", "Enable recursive travel">;
 using ConfigOption  = CLArgs::Option<"--config,--configuration,-c", "<filepath>", "Specify config file", std::filesystem::path>;
 
 int
 main(int argc, char **argv)
 {
-    CLArgs::Parser<VerboseFlag, FileOption, RecursiveFlag, ConfigOption> parser;
+    CLArgs::Parser<VerboseFlag, ConfigOption> parser;
     try
     {
         parser.parse(argc, argv);
@@ -25,12 +23,7 @@ main(int argc, char **argv)
     }
 
     const bool has_verbose = parser.has_flag<VerboseFlag>();
-    std::cout << "Has option " << VerboseFlag::identifiers[0] << ": " << std::boolalpha << has_verbose << "\n";
-
-    if (const auto file = parser.get_option<FileOption>(); file.has_value())
-    {
-        std::cout << "File: " << file.value() << std::endl;
-    }
+    std::cout << "Has verbose option: " << std::boolalpha << has_verbose << "\n";
 
     if (const auto config = parser.get_option<ConfigOption>(); config.has_value())
     {
