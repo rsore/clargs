@@ -44,11 +44,11 @@ namespace CLArgs
         [[nodiscard]] std::filesystem::path program() const noexcept;
 
         template <CmdFlag Flag>
-        [[nodiscard]] bool has_option() const noexcept
+        [[nodiscard]] bool has_flag() const noexcept
             requires IsPartOf<Flag, Parseables...>;
 
         template <CmdOption Option>
-        [[nodiscard]] std::optional<typename Option::ValueType> get_option_value() const noexcept
+        [[nodiscard]] std::optional<typename Option::ValueType> get_option() const noexcept
             requires IsPartOf<Option, Parseables...>;
 
     private:
@@ -214,7 +214,7 @@ CLArgs::Parser<Parseables...>::program() const noexcept
 template <CLArgs::Parseable... Parseables>
 template <CLArgs::CmdFlag Flag>
 bool
-CLArgs::Parser<Parseables...>::has_option() const noexcept
+CLArgs::Parser<Parseables...>::has_flag() const noexcept
     requires IsPartOf<Flag, Parseables...>
 {
     check_invariant();
@@ -224,7 +224,7 @@ CLArgs::Parser<Parseables...>::has_option() const noexcept
 template <CLArgs::Parseable... Parseables>
 template <CLArgs::CmdOption Option>
 std::optional<typename Option::ValueType>
-CLArgs::Parser<Parseables...>::get_option_value() const noexcept
+CLArgs::Parser<Parseables...>::get_option() const noexcept
     requires IsPartOf<Option, Parseables...>
 {
     check_invariant();
@@ -245,7 +245,7 @@ CLArgs::Parser<Parseables...>::get_option_value() const noexcept
         // This exception should never be thrown as long as the implementation is correct.
         // The type validation is already done before inserting the element.
         // If this error occurs, there is an error with the library implementation.
-        std::cerr << "Error performing any_cast in CLargs::Parser::get_option_value() with" << '\n';
+        std::cerr << "Error performing any_cast in CLargs::Parser::get_option() with" << '\n';
         std::cerr << "  Option: \"" << typeid(Option).name() << "\"\n";
         std::cerr << "  ValueType: \"" << typeid(typename Option::ValueType).name() << "\"\n";
         std::cerr << "Returning nullopt as fallback" << std::endl;

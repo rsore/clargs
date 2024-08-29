@@ -26,15 +26,15 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    const bool has_verbose = parser.has_option<VerboseFlag>();
+    const bool has_verbose = parser.has_flag<VerboseFlag>();
     std::cout << "Has option " << VerboseFlag::identifiers[0] << ": " << std::boolalpha << has_verbose << "\n";
 
-    if (const auto file = parser.get_option_value<FileOption>(); file.has_value())
+    if (const auto file = parser.get_option<FileOption>(); file.has_value())
     {
         std::cout << "File: " << file.value() << std::endl;
     }
 
-    if (const auto config = parser.get_option_value<ConfigOption>(); config.has_value())
+    if (const auto config = parser.get_option<ConfigOption>(); config.has_value())
     {
         std::cout << "Config file: " << config.value() << std::endl;
     }
