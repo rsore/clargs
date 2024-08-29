@@ -7,12 +7,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(CLArgs INTERFACE
         include/CLArgs/parser.hpp
-        include/CLArgs/concepts.hpp
+        include/CLArgs/core.hpp
         include/CLArgs/singleton.hpp
         include/CLArgs/misc.hpp
         include/CLArgs/platform.hpp
         include/CLArgs/from_string.hpp
-        include/CLArgs/macro_api.hpp
+        include/CLArgs/flag.hpp
+        include/CLArgs/option.hpp
 )
 
 target_include_directories(CLArgs INTERFACE
@@ -22,8 +23,8 @@ target_include_directories(CLArgs INTERFACE
 option(CLARGS_BUILD_EXAMPLES "Build CLArgs examples" ON)
 
 if (${CLARGS_BUILD_EXAMPLES})
-    add_subdirectory(examples/hello)
     add_subdirectory(examples/01_basic)
+    add_subdirectory(examples/02_singleton)
 endif ()
 
 option(CLARGS_BUILD_TESTS "Build CLArgs tests" ON)

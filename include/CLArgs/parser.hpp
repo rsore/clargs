@@ -1,7 +1,7 @@
 #ifndef CLARGS_PARSER_HPP
 #define CLARGS_PARSER_HPP
 
-#include <CLArgs/concepts.hpp>
+#include <CLArgs/core.hpp>
 #include <CLArgs/from_string.hpp>
 #include <CLArgs/misc.hpp>
 
@@ -19,13 +19,13 @@
 
 namespace CLArgs
 {
-    template <CmdOption Option>
-    constexpr std::size_t identifier_length();
+    template <Parseable Parseable>
+    static consteval std::size_t identifier_length();
 
-    template <CmdOption Option, CmdOption... Rest>
-    static constexpr std::size_t max_identifier_length();
+    template <Parseable This, Parseable... Rest>
+    static consteval std::size_t max_identifier_length();
 
-    template <CmdOption... Options>
+    template <Parseable... Parseables>
     class Parser
     {
     public:
@@ -43,27 +43,21 @@ namespace CLArgs
 
         [[nodiscard]] std::filesystem::path program() const noexcept;
 
-        template <CmdOption Option>
-        [[nodiscard]] bool has_option() const noexcept
-            requires IsPartOf<Option, Options...>;
+        template <CmdFlag Flag>
+        [[nodiscard]] bool has_flag() const noexcept
+            requires IsPartOf<Flag, Parseables...>;
 
         template <CmdOption Option>
-        [[nodiscard]] std::optional<typename Option::ValueType> get_option_value() const noexcept
-            requires IsPartOf<Option, Options...> && CmdHasValue<Option>;
+        [[nodiscard]] std::optional<typename Option::ValueType> get_option() const noexcept
+            requires IsPartOf<Option, Parseables...>;
 
     private:
         void check_invariant() const;
 
-        template <CmdOption Option, CmdOption... Rest>
+        template <Parseable This, Parseable... Rest>
         void process_arg(std::vector<std::string_view> &, std::vector<std::string_view>::iterator &);
 
-        template <CmdOption Option, CmdOption... Rest>
-        void validate_required_options() const;
-
-        template <CmdOption Option, CmdOption... Rest>
-        static constexpr void append_args_to_usage(std::stringstream &);
-
-        template <CmdOption Option, CmdOption... Rest>
+        template <Parseable This, Parseable... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
 
         std::string_view                              program_;
@@ -71,13 +65,13 @@ namespace CLArgs
 
         bool has_successfully_parsed_args_{false};
 
-        static constexpr std::size_t max_identifier_length_{max_identifier_length<Options...>()};
+        static constexpr std::size_t max_identifier_length_{max_identifier_length<Parseables...>()};
     };
 } // namespace CLArgs
 
-template <CLArgs::CmdOption... Options>
+template <CLArgs::Parseable... Parseables>
 void
-CLArgs::Parser<Options...>::parse(int argc, char **argv)
+CLArgs::Parser<Parseables...>::parse(int argc, char **argv)
 {
     if (argv == nullptr || *argv == nullptr)
     {
@@ -96,50 +90,31 @@ CLArgs::Parser<Options...>::parse(int argc, char **argv)
     while (!arguments.empty())
     {
         auto front = arguments.begin();
-        process_arg<Options...>(arguments, front);
+        process_arg<Parseables...>(arguments, front);
     }
-
-    validate_required_options<Options...>();
 
     has_successfully_parsed_args_ = true;
 }
 
-template <CLArgs::CmdOption... Options>
-template <CLArgs::CmdOption Option, CLArgs::CmdOption... Rest>
+template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parseable This, CLArgs::Parseable... Rest>
 void
-CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view> &all, std::vector<std::string_view>::iterator &current)
+CLArgs::Parser<Parseables...>::process_arg(std::vector<std::string_view> &all, std::vector<std::string_view>::iterator &current)
 {
     std::string_view arg = *current;
 
-    bool found{false};
-    if (arg == Option::identifier)
-    {
-        found = true;
-    }
-    else if constexpr (CmdHasAlias<Option>)
-    {
-        if (arg == Option::alias)
-        {
-            found = true;
-        }
-    }
-
+    const bool found = std::ranges::find(This::identifiers, arg) != This::identifiers.end();
     if (found)
     {
-        const auto type_index = std::type_index(typeid(Option));
+        const auto type_index = std::type_index(typeid(This));
         if (options_.contains(type_index))
         {
             std::stringstream ss;
-            ss << "Duplicate argument \"" << Option::identifier;
-            if constexpr (CmdHasAlias<Option>)
-            {
-                ss << " / " << Option::alias;
-            }
-            ss << "\"";
+            ss << "Duplicate argument \"" << This::identifiers[0] << "\"";
             throw std::invalid_argument(ss.str());
         }
 
-        if constexpr (CmdHasValue<Option>)
+        if constexpr (CmdOption<This>)
         {
             auto value_iter = current + 1;
 
@@ -151,13 +126,13 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view> &all, std:
             }
             try
             {
-                const auto value     = from_string<typename Option::ValueType>(*value_iter);
-                options_[type_index] = std::make_any<typename Option::ValueType>(value);
+                const auto value     = from_string<typename This::ValueType>(*value_iter);
+                options_[type_index] = std::make_any<typename This::ValueType>(value);
             }
             catch (std::exception &e)
             {
                 std::stringstream ss;
-                ss << "Failed to parse \"" << *value_iter << "\" as type " << typeid(typename Option::ValueType).name() << " for option \""
+                ss << "Failed to parse \"" << *value_iter << "\" as type " << typeid(typename This::ValueType).name() << " for option \""
                    << arg << "\": " << e.what();
                 throw std::invalid_argument(ss.str());
             }
@@ -184,65 +159,41 @@ CLArgs::Parser<Options...>::process_arg(std::vector<std::string_view> &all, std:
     }
 }
 
-template <CLArgs::CmdOption... Options>
-template <CLArgs::CmdOption Option, CLArgs::CmdOption... Rest>
-void
-CLArgs::Parser<Options...>::validate_required_options() const
-{
-    if constexpr (Option::required)
-    {
-        if (!options_.contains(std::type_index(typeid(Option))))
-        {
-            std::stringstream ss;
-            ss << "Expected required option \"" << Option::identifier << "\"";
-            throw std::invalid_argument(ss.str());
-        }
-    }
-
-    if constexpr (sizeof...(Rest) > 0)
-    {
-        validate_required_options<Rest...>();
-    }
-}
-
-template <CLArgs::CmdOption... Options>
+template <CLArgs::Parseable... Parseables>
 std::string
-CLArgs::Parser<Options...>::help() const noexcept
+CLArgs::Parser<Parseables...>::help() const noexcept
 {
     std::stringstream ss;
-    ss << "Usage: " << program_;
-    append_args_to_usage<Options...>(ss);
-    ss << '\n';
-
+    ss << "Usage: " << program_ << " [OPTIONS...]\n\n";
     ss << "Options:\n";
-    append_option_descriptions_to_usage<Options...>(ss);
+    append_option_descriptions_to_usage<Parseables...>(ss);
 
     return ss.str();
 }
 
-template <CLArgs::CmdOption... Options>
+template <CLArgs::Parseable... Parseables>
 std::filesystem::path
-CLArgs::Parser<Options...>::program() const noexcept
+CLArgs::Parser<Parseables...>::program() const noexcept
 {
     check_invariant();
     return program_;
 }
 
-template <CLArgs::CmdOption... Options>
-template <CLArgs::CmdOption Option>
+template <CLArgs::Parseable... Parseables>
+template <CLArgs::CmdFlag Flag>
 bool
-CLArgs::Parser<Options...>::has_option() const noexcept
-    requires IsPartOf<Option, Options...>
+CLArgs::Parser<Parseables...>::has_flag() const noexcept
+    requires IsPartOf<Flag, Parseables...>
 {
     check_invariant();
-    return options_.contains(std::type_index(typeid(Option)));
+    return options_.contains(std::type_index(typeid(Flag)));
 }
 
-template <CLArgs::CmdOption... Options>
+template <CLArgs::Parseable... Parseables>
 template <CLArgs::CmdOption Option>
 std::optional<typename Option::ValueType>
-CLArgs::Parser<Options...>::get_option_value() const noexcept
-    requires IsPartOf<Option, Options...> && CmdHasValue<Option>
+CLArgs::Parser<Parseables...>::get_option() const noexcept
+    requires IsPartOf<Option, Parseables...>
 {
     check_invariant();
 
@@ -262,7 +213,7 @@ CLArgs::Parser<Options...>::get_option_value() const noexcept
         // This exception should never be thrown as long as the implementation is correct.
         // The type validation is already done before inserting the element.
         // If this error occurs, there is an error with the library implementation.
-        std::cerr << "Error performing any_cast in CLargs::Parser::get_option_value() with" << '\n';
+        std::cerr << "Error performing any_cast in CLargs::Parser::get_option() with" << '\n';
         std::cerr << "  Option: \"" << typeid(Option).name() << "\"\n";
         std::cerr << "  ValueType: \"" << typeid(typename Option::ValueType).name() << "\"\n";
         std::cerr << "Returning nullopt as fallback" << std::endl;
@@ -270,9 +221,9 @@ CLArgs::Parser<Options...>::get_option_value() const noexcept
     }
 }
 
-template <CLArgs::CmdOption... Options>
+template <CLArgs::Parseable... Parseables>
 void
-CLArgs::Parser<Options...>::check_invariant() const
+CLArgs::Parser<Parseables...>::check_invariant() const
 {
     CLARGS_ASSERT(has_successfully_parsed_args_,
                   "Have you called the parse() method yet? It must be called before any other method "
@@ -280,63 +231,25 @@ CLArgs::Parser<Options...>::check_invariant() const
                   "fix it.");
 }
 
-template <CLArgs::CmdOption... Options>
-template <CLArgs::CmdOption Option, CLArgs::CmdOption... Rest>
+template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parseable This, CLArgs::Parseable... Rest>
 constexpr void
-CLArgs::Parser<Options...>::append_args_to_usage(std::stringstream &ss)
+CLArgs::Parser<Parseables...>::append_option_descriptions_to_usage(std::stringstream &ss)
 {
-    ss << ' ';
+    constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_length<This>() + 4;
 
-    constexpr bool required = Option::required;
-    if constexpr (!required)
+    ss << "  ";
+
+    for (auto iter = This::identifiers.begin(); iter != This::identifiers.end(); ++iter)
     {
-        ss << '[';
+        ss << *iter;
+        if (std::next(iter) != This::identifiers.end())
+        {
+            ss << ", ";
+        }
     }
 
-    ss << Option::identifier;
-
-    if constexpr (CmdHasValue<Option>)
-    {
-        ss << ' ' << Option::value_hint;
-    }
-
-    if constexpr (!required)
-    {
-        ss << ']';
-    }
-
-    if constexpr (sizeof...(Rest) > 0)
-    {
-        append_args_to_usage<Rest...>(ss);
-    }
-}
-
-template <CLArgs::CmdOption... Options>
-template <CLArgs::CmdOption Option, CLArgs::CmdOption... Rest>
-constexpr void
-CLArgs::Parser<Options...>::append_option_descriptions_to_usage(std::stringstream &ss)
-{
-    constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_length<Option>() + 4;
-
-    ss << std::setw(2) << "" << Option::identifier;
-    if constexpr (CmdHasAlias<Option>)
-    {
-        ss << ", " << Option::alias;
-    }
-
-    ss << std::setw(calculated_padding) << "";
-
-    constexpr std::string_view required_str = "REQUIRED";
-    if constexpr (Option::required)
-    {
-        ss << required_str;
-    }
-    else
-    {
-        ss << std::setw(required_str.length()) << "";
-    }
-
-    ss << "  " << Option::description << '\n';
+    ss << std::setw(calculated_padding) << "  " << This::description << '\n';
 
     if constexpr (sizeof...(Rest) > 0)
     {
@@ -344,25 +257,26 @@ CLArgs::Parser<Options...>::append_option_descriptions_to_usage(std::stringstrea
     }
 }
 
-template <CLArgs::CmdOption Option>
-constexpr std::size_t
+template <CLArgs::Parseable Parseable>
+consteval std::size_t
 CLArgs::identifier_length()
 {
-    std::size_t length = Option::identifier.length();
-    if constexpr (CmdHasAlias<Option>)
+    std::size_t length{};
+
+    for (const auto identifier : Parseable::identifiers)
     {
-        constexpr std::size_t alias_length = Option::alias.length();
-        length += alias_length + 2; // + 2 to account for ", " between identifier and alias
+        length += identifier.length();
     }
+    length += (Parseable::identifiers.size() - 1) * 2; // Account for ", " between identifiers
 
     return length;
 }
 
-template <CLArgs::CmdOption Option, CLArgs::CmdOption... Rest>
-constexpr std::size_t
+template <CLArgs::Parseable This, CLArgs::Parseable... Rest>
+consteval std::size_t
 CLArgs::max_identifier_length()
 {
-    std::size_t max_length = identifier_length<Option>();
+    std::size_t max_length = identifier_length<This>();
 
     if constexpr (sizeof...(Rest) > 0)
     {
