@@ -19,4 +19,4 @@ jobs:
     - name: make
       run: cmake --build build --target tests -j${{ runner.cpu }}
     - name: run tests
-      run: ./build/tests/tests
+      run: ./build/bin/tests
