@@ -5,12 +5,11 @@
 
 namespace CLArgs
 {
-    template <const StringLiteral Identifiers, const StringLiteral Description, const bool Required>
+    template <const StringLiteral Identifiers, const StringLiteral Description>
     struct Flag
     {
         static constexpr auto             identifiers{array_from_delimited_string<Identifiers>()};
         static constexpr std::string_view description{Description.value};
-        static constexpr bool             required{Required};
 
         static_assert(identifiers.size() >= 1, "Must have at least one identifier");
     };

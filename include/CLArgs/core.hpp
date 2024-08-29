@@ -12,7 +12,6 @@ namespace CLArgs
     concept CmdFlag = requires {
         { T::identifiers } -> std::convertible_to<std::array<std::string_view, std::tuple_size_v<decltype(T::identifiers)>>>;
         { T::description } -> std::convertible_to<std::string_view>;
-        { T::required } -> std::convertible_to<bool>;
     };
 
     template <typename T>

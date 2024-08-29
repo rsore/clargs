@@ -4,10 +4,10 @@
 
 #include <filesystem>
 
-using VerboseFlag   = CLArgs::Flag<"--verbose,-v", "Enable verbose output", false>;
-using FileOption    = CLArgs::Option<"--file", "FILE", "Specify file to load", true, std::filesystem::path>;
-using RecursiveFlag = CLArgs::Flag<"--recursive,-r", "Enable recursive travel", false>;
-using ConfigOption  = CLArgs::Option<"--config,--configuration,-c", "<filepath>", "Specify config file", true, std::filesystem::path>;
+using VerboseFlag   = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
+using FileOption    = CLArgs::Option<"--file", "FILE", "Specify file to load", std::filesystem::path>;
+using RecursiveFlag = CLArgs::Flag<"--recursive,-r", "Enable recursive travel">;
+using ConfigOption  = CLArgs::Option<"--config,--configuration,-c", "<filepath>", "Specify config file", std::filesystem::path>;
 
 int
 main(int argc, char **argv)
