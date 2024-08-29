@@ -7,52 +7,38 @@ grand_parent: CLArgs
 
 # Basic
 
-In this example, we define two options: `VerboseOption` and `FileOption`. 
-These options demonstrate how to handle different types of command-line arguments using CLArgs.
+In this example, we define one flag and one option: `VerboseFlag` and `ConfigOption`.
 
-- `VerboseOption`: An optional flag that enables verbose output. It has an alias -v and a description that appears in the help menu.
-- `FileOption`: A required option that specifies the file to load. It has a value hint (FILE) and its value type 
-  is `std::filesystem::path`, so the parser will automatically create a path object from the provided file path.
+- `VerboseFlag`: Enables verbose output. It can be enabled either with "--verbose" or "-v". It has a description that appears in the help menu.
+- `ConfigOption`: Used to specify the path to a configuration file to load. It can be enabled either with "--configuration", "--config" or "-c". 
+  It has a value hint and description that appear in the help menu, and its value type is `std::filesystem::path`, so the parser will 
+  automatically create a path object from the provided file path.
 
 ## How It Works
 
-- Option Definition: Options are defined as structs with static constexpr members to specify their identifiers, descriptions, and other properties.
-- Parsing: The parse method of the CLArgs::Parser class handles all parsing, validation, and casting. 
-  If any issues occur (such as missing required options), exceptions are thrown with helpful error messages.
+- Definitions: Flags and options are defined as types by aliasing `CLArgs::Flag` and `CLArgs::Option`, and contain information about their identifiers, descriptions, value types etc.
+- Parsing: The parse method of the CLArgs::Parser class handles all parsing, validation, and object creation. 
+  If any issues occur, such as invalid input for the specified value type, exceptions are thrown with helpful error messages.
 - Error Handling: If an error occurs during parsing, the program catches the exception, prints an error message, and displays the help message.
-- Accessing Option Values: After successful parsing, you can check if options are present using `has_option<>()` 
-  and retrieve their values using `get_option_value<>()`. The value is returned as a `std::optional`, so you should check if it contains a value before using it.
+- Accessing Option Values: After successful parsing, you can check if flags are present using `has_flag<>()` 
+  and check for and retrieve option values using `get_option<>()`. The value is returned as a `std::optional`, so you should check if it contains a value before using it.
 
 ## Code example
 
 ```cpp
+#include <CLArgs/flag.hpp>
+#include <CLArgs/option.hpp>
 #include <CLArgs/parser.hpp>
 
 #include <filesystem>
-#include <sstream>
-#include <string_view>
 
-struct VerboseOption
-{
-    static constexpr std::string_view identifier{ "--verbose" };
-    static constexpr std::string_view alias{ "-v" };
-    static constexpr std::string_view description{ "Enable verbose output" };
-    static constexpr bool             required{ false };
-};
-
-struct FileOption
-{
-    static constexpr std::string_view identifier{ "--file" };
-    static constexpr std::string_view value_hint{ "FILE" };
-    static constexpr std::string_view description{ "Specify file to load" };
-    static constexpr bool             required{ true };
-    using ValueType = std::filesystem::path;
-};
+using VerboseFlag   = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
+using ConfigOption  = CLArgs::Option<"--config,--configuration,-c", "<filepath>", "Specify config file", std::filesystem::path>;
 
 int
 main(int argc, char **argv)
 {
-    CLArgs::Parser<VerboseOption, FileOption> parser;
+    CLArgs::Parser<VerboseFlag, ConfigOption> parser;
     try
     {
         parser.parse(argc, argv);
@@ -64,12 +50,12 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    const bool has_verbose = parser.has_option<VerboseOption>();
-    std::cout << "Has option " << VerboseOption::identifier << ": " << has_verbose << "\n";
+    const bool has_verbose = parser.has_flag<VerboseFlag>();
+    std::cout << "Has verbose option: " << std::boolalpha << has_verbose << "\n";
 
-    if (const auto file = parser.get_option_value<FileOption>(); file.has_value())
+    if (const auto config = parser.get_option<ConfigOption>(); config.has_value())
     {
-        std::cout << "File: " << file.value() << std::endl;
+        std::cout << "Config file: " << config.value() << std::endl;
     }
 
     return EXIT_SUCCESS;
@@ -80,18 +66,19 @@ main(int argc, char **argv)
 
 Once the application has been built you can run the application with the defined arguments:
 ```
-./basic --verbose --file filename.txt
+./basic -v --config conf.ini
 ```
 Alternatively:
 ```
-./basic -v --file filename.txt
+./basic --verbose -c conf.ini
 ```
-If you forget to supply a filename an error message will be displayed along with the help menu:
+If you omit the file path for the configuration option, an error message will be displayed along with the help menu:
 ```
-$ ./basic --verbose --file
-Error: Expected value for option "--file"
-Usage: ./basic [--verbose] --file FILE
+$ ./basic --configuration
+Error: Expected value for option "--configuration"
+Usage: ./basic [OPTIONS...]
+
 Options:
-  --verbose, -v              Enable verbose output
-  --file           REQUIRED  Specify file to load
+  --verbose, -v                 Enable verbose output
+  --configuration,--config-c    Specify config file
 ```
