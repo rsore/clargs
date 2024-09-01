@@ -1,7 +1,7 @@
 #ifndef CLARGS_SINGLETON_HPP
 #define CLARGS_SINGLETON_HPP
 
-#include <CLArgs/parser.hpp>
+#include "CLArgs/parser.hpp"
 
 namespace CLArgs
 {

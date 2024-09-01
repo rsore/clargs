@@ -1,6 +1,6 @@
-#include <CLArgs/flag.hpp>
-#include <CLArgs/option.hpp>
-#include <CLArgs/singleton.hpp>
+#include "CLArgs/flag.hpp"
+#include "CLArgs/option.hpp"
+#include "CLArgs/singleton.hpp"
 
 #include <filesystem>
 

@@ -1,7 +1,7 @@
 #ifndef CLARGS_ASSERT_HPP
 #define CLARGS_ASSERT_HPP
 
-#include <CLArgs/platform.hpp>
+#include "CLArgs/platform.hpp"
 
 #include <iostream>
 #include <source_location>
