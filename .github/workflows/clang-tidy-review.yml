@@ -13,11 +13,11 @@ jobs:
       uses: ZedThree/clang-tidy-review@v0.19.0
       id: review
       with:
-        build_dir: '${{github.workspace}}/build'
-        config_file: '${{github.workspace}}/.clang-tidy'
+        build_dir: '${GITHUB_WORKSPACE}/build'
+        config_file: '${GITHUB_WORKSPACE}/.clang-tidy'
         cmake_command: |
-          cmake -B ${{github.workspace}}/build -S ${{github.workspace}} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-                              -DCLARGS_BUILD_EXAMPLES=ON                                                   \
+          cmake -B ${GITHUB_WORKSPACE}/build -S ${GITHUB_WORKSPACE} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+                              -DCLARGS_BUILD_EXAMPLES=ON                                               \
                               -DCLARGS_BUILD_TESTS=ON
 
     - name: Upload review artifact
