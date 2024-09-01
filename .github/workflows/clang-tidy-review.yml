@@ -12,4 +12,12 @@ jobs:
     - uses: ZedThree/clang-tidy-review@v0.14.0
       id: review
       with:
+        clang_tidy_version: '18'
+        apt_packages: liblapack-dev
         cmake_command: cmake . -DCMAKE_EXPORT_COMPILE_COMMANDS=on
+
+    - uses: ZedThree/clang-tidy-review/upload@v0.14.0
+      id: upload-review
+
+    - if: steps.review.outputs.total_comments > 0
+      run: exit 1
