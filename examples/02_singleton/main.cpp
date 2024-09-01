@@ -4,9 +4,8 @@
 
 #include <filesystem>
 
-using VerboseFlag = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
-using ConfigOption =
-        CLArgs::Option<"--configuration,--config,-c", "FILEPATH", "Specify path to configuration file", std::filesystem::path>;
+using VerboseFlag  = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
+using ConfigOption = CLArgs::Option<"--configuration,--config,-c", "FILEPATH", "Specify path to configuration file", std::filesystem::path>;
 
 using Parser = CLArgs::ParserSingleton<VerboseFlag, ConfigOption>;
 
