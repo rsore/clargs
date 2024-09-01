@@ -12,9 +12,13 @@ jobs:
     - uses: ZedThree/clang-tidy-review@v0.14.0
       id: review
       with:
-        clang_tidy_version: '18'
-        apt_packages: liblapack-dev
-        cmake_command: cmake . -DCMAKE_EXPORT_COMPILE_COMMANDS=on
+        clang_tidy_version: 18
+        apt_packages: build-essential clang clang-format clang-tidy cmake
+        build_dir: build
+        config_file: ".clang-tidy"
+        cmake_command: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE" && \
+          cmake -B build -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DCMAKE_BUILD_TYPE=Debug
 
     - uses: ZedThree/clang-tidy-review/upload@v0.14.0
       id: upload-review
