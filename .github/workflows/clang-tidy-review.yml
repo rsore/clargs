@@ -13,7 +13,7 @@ jobs:
       id: review
       with:
         clang_tidy_version: 18
-        apt_packages: build-essential clang clang-format clang-tidy cmake
+        apt_packages: "build-essential, clang, clang-format, clang-tidy, cmake"
         build_dir: build
         config_file: ".clang-tidy"
         cmake_command: |
