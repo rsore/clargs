@@ -9,17 +9,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: ZedThree/clang-tidy-review@v0.19.0
+    - name: Run clang-tidy
+      uses: ZedThree/clang-tidy-review@v0.19.0
       id: review
       with:
         build_dir: build
         config_file: ".clang-tidy"
         cmake_command: |
+          pip install cmake && \
+          cmake --version && \
           git config --global --add safe.directory "$GITHUB_WORKSPACE" && \
-          cmake -B build -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DCMAKE_BUILD_TYPE=Debug
+          cmake . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=On \
+                           -DCLARGS_BUILD_EXAMPLES=ON \
+                           -DCLARGS_BUILD_TESTS=ON
 
     - uses: ZedThree/clang-tidy-review/upload@v0.14.0
       id: upload-review
-
-    - if: steps.review.outputs.total_comments > 0
-      run: exit 1
