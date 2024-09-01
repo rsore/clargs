@@ -16,10 +16,8 @@ jobs:
         build_dir: build
         config_file: ".clang-tidy"
         cmake_command: |
-          pip install cmake && \
-          cmake --version && \
           git config --global --add safe.directory "$GITHUB_WORKSPACE" && \
-          cmake . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=On \
+          cmake . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
                            -DCLARGS_BUILD_EXAMPLES=ON \
                            -DCLARGS_BUILD_TESTS=ON
 
