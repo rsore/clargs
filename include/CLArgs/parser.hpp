@@ -225,7 +225,7 @@ template <CLArgs::Parseable... Parseables>
 void
 CLArgs::Parser<Parseables...>::check_invariant() const
 {
-    CLArgs::_internal::assert(has_successfully_parsed_args_,
+    CLArgs::_internal::debug_assert(has_successfully_parsed_args_,
                               "Have you called the parse() method yet? It must be called before any other method "
                               "to ensure proper behaviour. If you don't, I will crash your application until you "
                               "fix it.");
