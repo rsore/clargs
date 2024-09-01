@@ -44,7 +44,6 @@ main(int argc, char **argv)
 For full examples, see the examples/ directory
 
 ## Error handling
-Static type-checking should ensure proper usage and disallow building with invalid or unsupported `ValueType`s. 
+Static type-checking ensures proper usage and prevents building with invalid or unsupported ValueTypes.
 
-All arguments are parsed, validated, cast and stored during the `parse` method and that is the only potential point of failure, meaning that if the application makes it past that function call with no
-exceptions, then everything should be fine.
+All arguments are parsed, validated, cast, and stored during the parse method. This is the only potential point of failure, meaning that if the application makes it past that function call with no exceptions, everything should be fine.
