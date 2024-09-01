@@ -4,8 +4,7 @@
 
 #include <filesystem>
 
-using VerboseFlag  = 
-    CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
+using VerboseFlag  = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
 using ConfigOption = CLArgs::Option<"--config,--configuration,-c", "<filepath>", "Specify config file", std::filesystem::path>;
 
 int
