@@ -1,9 +1,9 @@
 #ifndef CLARGS_PARSER_HPP
 #define CLARGS_PARSER_HPP
 
+#include <CLArgs/assert.hpp>
 #include <CLArgs/core.hpp>
 #include <CLArgs/from_string.hpp>
-#include <CLArgs/misc.hpp>
 
 #include <algorithm>
 #include <any>
@@ -225,10 +225,10 @@ template <CLArgs::Parseable... Parseables>
 void
 CLArgs::Parser<Parseables...>::check_invariant() const
 {
-    CLARGS_ASSERT(has_successfully_parsed_args_,
-                  "Have you called the parse() method yet? It must be called before any other method "
-                  "to ensure proper behaviour. If you don't, I will crash your application until you "
-                  "fix it.");
+    CLArgs::_internal::debug_assert(has_successfully_parsed_args_,
+                                    "Have you called the parse() method yet? It must be called before any other method "
+                                    "to ensure proper behaviour. If you don't, I will crash your application until you "
+                                    "fix it.");
 }
 
 template <CLArgs::Parseable... Parseables>

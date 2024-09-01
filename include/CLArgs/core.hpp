@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <concepts>
+#include <iostream>
 #include <string_view>
 
 namespace CLArgs
