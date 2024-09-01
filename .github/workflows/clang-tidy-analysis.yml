@@ -1,0 +1,32 @@
+name: static-code-analysis
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate compile_commands.json
+        uses: lukka/run-cmake@v3
+        with:
+          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+          cmakeListsTxtPath: '${{github.workspace}}/CMakeLists.txt'
+          buildDirectory: '${{github.workspace}}/sca_build'
+          cmakeAppendedArgs: >-
+            -G Ninja
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          buildWithCMakeArgs: >-
+            --target CLArgs
+
+      - name: Run clang-tidy
+        uses: ZedThree/clang-tidy-review@v0.19.0
+        with:
+          build_dir: 'sca_build'
+          config_file: '.clang-tidy'
+          split_workflow: true
+
+      - uses: ZedThree/clang-tidy-review/upload@v0.19.0
