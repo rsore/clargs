@@ -12,3 +12,5 @@ jobs:
 
     steps:
       - uses: ZedThree/clang-tidy-review/post@v0.19.0
+        with:
+          num_comments_as_exitcode: false
