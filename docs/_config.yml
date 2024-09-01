@@ -2,7 +2,7 @@ title: CLArgs Documentation
 description: The documentation for the CLArgs command-line argument parsing library.
 theme: just-the-docs
 
-url: https://rubensorensen.github.io/clargs/
+url: https://rsore.github.io/clargs/
 
 aux_links:
-  Template Repository: https://github.com/rubensorensen/clargs
+  Github Repository: https://github.com/rsore/clargs
