@@ -10,7 +10,7 @@ using ConfigOption = CLArgs::Option<"--config,--configuration,-c", "<filepath>",
 int
 main(int argc, char **argv)
 {
-    int s = 3;
+    int                                       s = 3;
     CLArgs::Parser<VerboseFlag, ConfigOption> parser;
     try
     {
