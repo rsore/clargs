@@ -5,6 +5,7 @@
 #include <array>
 #include <concepts>
 #include <string_view>
+#include <iostream>
 
 namespace CLArgs
 {
