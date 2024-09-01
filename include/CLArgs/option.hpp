@@ -5,10 +5,7 @@
 
 namespace CLArgs
 {
-    template <const StringLiteral Identifiers,
-              const StringLiteral ValueHint,
-              const StringLiteral Description,
-              typename ValType>
+    template <const StringLiteral Identifiers, const StringLiteral ValueHint, const StringLiteral Description, typename ValType>
     struct Option
     {
         static constexpr auto             identifiers{array_from_delimited_string<Identifiers>()};
