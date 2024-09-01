@@ -13,8 +13,8 @@ jobs:
       uses: ZedThree/clang-tidy-review@v0.19.0
       id: review
       with:
-        build_dir: build
-        clang_tidy_checks: ""
+        build_dir: 'build'
+        config_file: '.clang-tidy'
         cmake_command: |
           cmake -B build -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
                               -DCLARGS_BUILD_EXAMPLES=ON         \
