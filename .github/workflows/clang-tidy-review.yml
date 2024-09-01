@@ -14,12 +14,12 @@ jobs:
       id: review
       with:
         build_dir: build
-        config_file: ".clang-tidy"
+        clang_tidy_checks: ""
         cmake_command: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE" && \
-          cmake . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-                           -DCLARGS_BUILD_EXAMPLES=ON \
-                           -DCLARGS_BUILD_TESTS=ON
+          cmake -B build -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+                              -DCLARGS_BUILD_EXAMPLES=ON         \
+                              -DCLARGS_BUILD_TESTS=ON
 
-    - uses: ZedThree/clang-tidy-review/upload@v0.14.0
+    - name: Upload review artifact
+      uses: ZedThree/clang-tidy-review/upload@v0.14.0
       id: upload-review
