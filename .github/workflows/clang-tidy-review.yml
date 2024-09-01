@@ -12,7 +12,6 @@ jobs:
     - uses: ZedThree/clang-tidy-review@v0.14.0
       id: review
       with:
-        clang_tidy_version: 18
         build_dir: build
         config_file: ".clang-tidy"
         cmake_command: |
