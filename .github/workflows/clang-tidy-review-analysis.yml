@@ -1,4 +1,4 @@
-name: clang-tidy-review
+name: static-code-analysis
 on:
   pull_request:
     branches: [ "main" ]
@@ -28,6 +28,7 @@ jobs:
       with:
         build_dir: 'sca_build'
         config_file: '.clang-tidy'
+        split_workflow: true
 
     - name: Upload review artifact
       uses: ZedThree/clang-tidy-review/upload@v0.19.0
