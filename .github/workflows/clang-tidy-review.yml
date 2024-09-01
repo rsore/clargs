@@ -16,7 +16,6 @@ jobs:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: '${{github.workspace}}/CMakeLists.txt'
         buildDirectory: '${{github.workspace}}/sca_build'
-        cmakeBuildType: Debug
         cmakeAppendedArgs: >-
           -G Ninja
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
