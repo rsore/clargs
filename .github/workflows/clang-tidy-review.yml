@@ -9,17 +9,25 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Generate compile_commands.json
+      uses: lukka/run-cmake@v3
+      with:
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        cmakeListsTxtPath: '${{github.workspace}}/CMakeLists.txt'
+        buildDirectory: '${{github.workspace}}/sca_build'
+        cmakeBuildType: Debug
+        cmakeAppendedArgs: >-
+          -G Ninja
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
     - name: Run clang-tidy
       uses: ZedThree/clang-tidy-review@v0.19.0
       id: review
       with:
-        build_dir: 'build'
+        build_dir: 'sca_build'
         config_file: '.clang-tidy'
-        cmake_command: |
-          cmake -B build -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-                              -DCLARGS_BUILD_EXAMPLES=ON         \
-                              -DCLARGS_BUILD_TESTS=ON
 
     - name: Upload review artifact
-      uses: ZedThree/clang-tidy-review/upload@v0.14.0
+      uses: ZedThree/clang-tidy-review/upload@v0.19.0
       id: upload-review
