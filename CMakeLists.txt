@@ -9,7 +9,7 @@ add_library(CLArgs INTERFACE
         include/CLArgs/parser.hpp
         include/CLArgs/core.hpp
         include/CLArgs/singleton.hpp
-        include/CLArgs/misc.hpp
+        include/CLArgs/assert.hpp
         include/CLArgs/platform.hpp
         include/CLArgs/from_string.hpp
         include/CLArgs/flag.hpp
