@@ -1,7 +1,7 @@
 #ifndef CLARGS_FLAG_HPP
 #define CLARGS_FLAG_HPP
 
-#include <CLArgs/core.hpp>
+#include <CLArgs/string_literal.hpp>
 
 namespace CLArgs
 {
