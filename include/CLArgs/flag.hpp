@@ -5,6 +5,12 @@
 
 namespace CLArgs
 {
+    template <typename T>
+    concept CmdFlag = requires {
+        { T::identifiers } -> std::convertible_to<std::array<std::string_view, std::tuple_size_v<decltype(T::identifiers)>>>;
+        { T::description } -> std::convertible_to<std::string_view>;
+    };
+
     template <const StringLiteral Identifiers, const StringLiteral Description>
     struct Flag
     {
