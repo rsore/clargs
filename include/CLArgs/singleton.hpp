@@ -5,10 +5,10 @@
 
 namespace CLArgs
 {
-    template <Parseable... Parseables>
+    template <Parsable... Parsables>
     class ParserSingleton
     {
-        using ArgumentParser = Parser<Parseables...>;
+        using ArgumentParser = Parser<Parsables...>;
 
     public:
         static void parse(int, char **);
@@ -19,11 +19,11 @@ namespace CLArgs
 
         template <CmdFlag Flag>
         static bool has_flag() noexcept
-            requires CLArgs::IsPartOf<Flag, Parseables...>;
+            requires CLArgs::IsPartOf<Flag, Parsables...>;
 
         template <CmdOption Option>
         std::optional<typename Option::ValueType> static get_option() noexcept
-            requires CLArgs::IsPartOf<Option, Parseables...>;
+            requires CLArgs::IsPartOf<Option, Parsables...>;
 
     private:
         ParserSingleton() = default;
@@ -37,41 +37,41 @@ namespace CLArgs
     };
 } // namespace CLArgs
 
-template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parsable... Parsables>
 void
-CLArgs::ParserSingleton<Parseables...>::parse(int argc, char **argv)
+CLArgs::ParserSingleton<Parsables...>::parse(int argc, char **argv)
 {
     get_instance().parse(argc, argv);
 }
 
-template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parsable... Parsables>
 std::string
-CLArgs::ParserSingleton<Parseables...>::help() noexcept
+CLArgs::ParserSingleton<Parsables...>::help() noexcept
 {
     return get_instance().help();
 }
 
-template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parsable... Parsables>
 std::filesystem::path
-CLArgs::ParserSingleton<Parseables...>::program() noexcept
+CLArgs::ParserSingleton<Parsables...>::program() noexcept
 {
     return get_instance().program();
 }
 
-template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parsable... Parsables>
 template <CLArgs::CmdFlag Flag>
 bool
-CLArgs::ParserSingleton<Parseables...>::has_flag() noexcept
-    requires CLArgs::IsPartOf<Flag, Parseables...>
+CLArgs::ParserSingleton<Parsables...>::has_flag() noexcept
+    requires CLArgs::IsPartOf<Flag, Parsables...>
 {
     return get_instance().template has_flag<Flag>();
 }
 
-template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parsable... Parsables>
 template <CLArgs::CmdOption Option>
 std::optional<typename Option::ValueType>
-CLArgs::ParserSingleton<Parseables...>::get_option() noexcept
-    requires CLArgs::IsPartOf<Option, Parseables...>
+CLArgs::ParserSingleton<Parsables...>::get_option() noexcept
+    requires CLArgs::IsPartOf<Option, Parsables...>
 {
     return get_instance().template get_option<Option>();
 }
