@@ -1,10 +1,10 @@
 #ifndef CLARGS_STRING_LITERAL_HPP
 #define CLARGS_STRING_LITERAL_HPP
 
-#include <cstdint>
-#include <string_view>
 #include <algorithm>
 #include <array>
+#include <cstdint>
+#include <string_view>
 
 namespace CLArgs
 {
@@ -18,7 +18,7 @@ namespace CLArgs
 
     template <StringLiteral str, char delimiter = ','>
     [[nodiscard]] consteval auto array_from_delimited_string();
-}
+} // namespace CLArgs
 
 
 template <std::size_t N>

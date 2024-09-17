@@ -21,12 +21,6 @@
 
 namespace CLArgs
 {
-    template <Parsable Parsable>
-    static consteval std::size_t identifier_length();
-
-    template <Parsable This, Parsable... Rest>
-    static consteval std::size_t max_identifier_length();
-
     template <Parsable... Parsables>
     class Parser
     {
@@ -62,13 +56,12 @@ namespace CLArgs
         template <Parsable This, Parsable... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
 
-        std::string_view program_;
-
+        std::string_view             program_;
         ValueContainer<Parsables...> values_{};
 
         bool has_successfully_parsed_args_{false};
 
-        static constexpr std::size_t max_identifier_length_{max_identifier_length<Parsables...>()};
+        static constexpr std::size_t max_identifier_length_{max_identifier_list_length<Parsables...>()};
     };
 } // namespace CLArgs
 
@@ -218,7 +211,7 @@ template <CLArgs::Parsable This, CLArgs::Parsable... Rest>
 constexpr void
 CLArgs::Parser<Parsables...>::append_option_descriptions_to_usage(std::stringstream &ss)
 {
-    constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_length<This>() + 4;
+    constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_list_length<This>() + 4;
 
     ss << "  ";
 
@@ -237,35 +230,6 @@ CLArgs::Parser<Parsables...>::append_option_descriptions_to_usage(std::stringstr
     {
         append_option_descriptions_to_usage<Rest...>(ss);
     }
-}
-
-template <CLArgs::Parsable Parsable>
-consteval std::size_t
-CLArgs::identifier_length()
-{
-    std::size_t length{};
-
-    for (const auto identifier : Parsable::identifiers)
-    {
-        length += identifier.length();
-    }
-    length += (Parsable::identifiers.size() - 1) * 2; // Account for ", " between identifiers
-
-    return length;
-}
-
-template <CLArgs::Parsable This, CLArgs::Parsable... Rest>
-consteval std::size_t
-CLArgs::max_identifier_length()
-{
-    std::size_t max_length = identifier_length<This>();
-
-    if constexpr (sizeof...(Rest) > 0)
-    {
-        max_length = std::max(max_length, max_identifier_length<Rest...>());
-    }
-
-    return max_length;
 }
 
 #endif
