@@ -6,29 +6,74 @@
 #include <CLArgs/from_string.hpp>
 
 #include <algorithm>
-#include <any>
+#include <array>
+#include <concepts>
 #include <cstddef>
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <optional>
 #include <sstream>
-#include <typeindex>
-#include <unordered_map>
+#include <tuple>
+#include <variant>
 #include <vector>
 
 namespace CLArgs
 {
-    template <typename T>
-    concept Parseable = CmdFlag<T> || CmdOption<T>;
+    template <typename T, typename Variant>
+    struct PrependTypeToVariant;
 
-    template <Parseable Parseable>
+    template <typename T, typename... Ts>
+    struct PrependTypeToVariant<T, std::variant<Ts...>>
+    {
+        using Type = std::variant<T, Ts...>;
+    };
+
+    template <typename... Ts>
+    struct UniquelyFilteredVariantImpl;
+
+    template <typename T, typename... Ts>
+    struct UniquelyFilteredVariantImpl<T, Ts...>
+    {
+        using Type = std::conditional_t<IsPartOf<T, Ts...>,
+                                        typename UniquelyFilteredVariantImpl<Ts...>::Type,
+                                        typename PrependTypeToVariant<T, typename UniquelyFilteredVariantImpl<Ts...>::Type>::Type>;
+    };
+
+    template <>
+    struct UniquelyFilteredVariantImpl<>
+    {
+        using Type = std::variant<>;
+    };
+
+    template <typename... Ts>
+    using UniquelyFilteredVariant = typename UniquelyFilteredVariantImpl<Ts...>::Type;
+
+    template <typename T, typename Tuple>
+    struct TupleTypeIndex;
+
+    template <typename T, typename... Types>
+    struct TupleTypeIndex<T, std::tuple<T, Types...>>
+    {
+        static constexpr std::size_t value{0};
+    };
+
+    template <typename T, typename U, typename... Types>
+    struct TupleTypeIndex<T, std::tuple<U, Types...>>
+    {
+        static constexpr std::size_t value = 1 + TupleTypeIndex<T, std::tuple<Types...>>::value;
+    };
+
+    template <typename T>
+    concept Parsable = CmdFlag<T> || CmdOption<T>;
+
+    template <Parsable Parsable>
     static consteval std::size_t identifier_length();
 
-    template <Parseable This, Parseable... Rest>
+    template <Parsable This, Parsable... Rest>
     static consteval std::size_t max_identifier_length();
 
-    template <Parseable... Parseables>
+    template <Parsable... Parsables>
     class Parser
     {
     public:
@@ -48,38 +93,50 @@ namespace CLArgs
 
         template <CmdFlag Flag>
         [[nodiscard]] bool has_flag() const noexcept
-            requires IsPartOf<Flag, Parseables...>;
+            requires IsPartOf<Flag, Parsables...>;
 
         template <CmdOption Option>
-        [[nodiscard]] std::optional<typename Option::ValueType> get_option() const noexcept
-            requires IsPartOf<Option, Parseables...>;
+        [[nodiscard]] const std::optional<typename Option::ValueType> &get_option() const noexcept
+            requires IsPartOf<Option, Parsables...>;
 
     private:
+        template <Parsable T>
+        static consteval std::size_t index_of_type();
+
+        template <Parsable T>
+        void set_value(const typename T::ValueType &);
+
+        template <Parsable T>
+        [[nodiscard]] const std::optional<typename T::ValueType> &get_value() const;
+
         void check_invariant() const;
 
-        template <Parseable This, Parseable... Rest>
+        template <Parsable This, Parsable... Rest>
         void process_arg(std::vector<std::string_view> &, std::vector<std::string_view>::iterator &);
 
-        template <Parseable This, Parseable... Rest>
+        template <Parsable This, Parsable... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
 
-        std::string_view                              program_;
-        std::unordered_map<std::type_index, std::any> options_;
+        std::string_view program_;
+
+        std::array<UniquelyFilteredVariant<std::optional<typename Parsables::ValueType>...>, sizeof...(Parsables)> values_;
 
         bool has_successfully_parsed_args_{false};
 
-        static constexpr std::size_t max_identifier_length_{max_identifier_length<Parseables...>()};
+        static constexpr std::size_t max_identifier_length_{max_identifier_length<Parsables...>()};
     };
 } // namespace CLArgs
 
-template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parsable... Parsables>
 void
-CLArgs::Parser<Parseables...>::parse(int argc, char **argv)
+CLArgs::Parser<Parsables...>::parse(int argc, char **argv)
 {
     if (argv == nullptr || *argv == nullptr)
     {
         throw std::invalid_argument("Passing nullptr to Parser::parse() is not allowed");
     }
+
+    ((values_[index_of_type<Parsables>()] = std::optional<typename Parsables::ValueType>{std::nullopt}), ...);
 
     program_ = *argv++;
     argc -= 1;
@@ -93,24 +150,23 @@ CLArgs::Parser<Parseables...>::parse(int argc, char **argv)
     while (!arguments.empty())
     {
         auto front = arguments.begin();
-        process_arg<Parseables...>(arguments, front);
+        process_arg<Parsables...>(arguments, front);
     }
 
     has_successfully_parsed_args_ = true;
 }
 
-template <CLArgs::Parseable... Parseables>
-template <CLArgs::Parseable This, CLArgs::Parseable... Rest>
+template <CLArgs::Parsable... Parsables>
+template <CLArgs::Parsable This, CLArgs::Parsable... Rest>
 void
-CLArgs::Parser<Parseables...>::process_arg(std::vector<std::string_view> &all, std::vector<std::string_view>::iterator &current)
+CLArgs::Parser<Parsables...>::process_arg(std::vector<std::string_view> &all, std::vector<std::string_view>::iterator &current)
 {
     std::string_view arg = *current;
 
     const bool found = std::ranges::find(This::identifiers, arg) != This::identifiers.end();
     if (found)
     {
-        const auto type_index = std::type_index(typeid(This));
-        if (options_.contains(type_index))
+        if (get_value<This>() != std::nullopt)
         {
             std::stringstream ss;
             ss << "Duplicate argument \"" << This::identifiers[0] << "\"";
@@ -129,8 +185,8 @@ CLArgs::Parser<Parseables...>::process_arg(std::vector<std::string_view> &all, s
             }
             try
             {
-                const auto value     = from_string<typename This::ValueType>(*value_iter);
-                options_[type_index] = std::make_any<typename This::ValueType>(value);
+                const auto value = from_string<typename This::ValueType>(*value_iter);
+                set_value<This>(value);
             }
             catch (std::exception &e)
             {
@@ -143,7 +199,7 @@ CLArgs::Parser<Parseables...>::process_arg(std::vector<std::string_view> &all, s
         }
         else
         {
-            options_[type_index] = std::any{};
+            set_value<This>(true);
             all.erase(current);
         }
     }
@@ -162,71 +218,77 @@ CLArgs::Parser<Parseables...>::process_arg(std::vector<std::string_view> &all, s
     }
 }
 
-template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parsable... Parsables>
 std::string
-CLArgs::Parser<Parseables...>::help() const noexcept
+CLArgs::Parser<Parsables...>::help() const noexcept
 {
     std::stringstream ss;
     ss << "Usage: " << program_ << " [OPTIONS...]\n\n";
     ss << "Options:\n";
-    append_option_descriptions_to_usage<Parseables...>(ss);
+    append_option_descriptions_to_usage<Parsables...>(ss);
 
     return ss.str();
 }
 
-template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parsable... Parsables>
 std::filesystem::path
-CLArgs::Parser<Parseables...>::program() const noexcept
+CLArgs::Parser<Parsables...>::program() const noexcept
 {
     check_invariant();
     return program_;
 }
 
-template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parsable... Parsables>
 template <CLArgs::CmdFlag Flag>
 bool
-CLArgs::Parser<Parseables...>::has_flag() const noexcept
-    requires IsPartOf<Flag, Parseables...>
+CLArgs::Parser<Parsables...>::has_flag() const noexcept
+    requires IsPartOf<Flag, Parsables...>
 {
     check_invariant();
-    return options_.contains(std::type_index(typeid(Flag)));
+    const auto opt    = get_value<Flag>();
+    const bool result = opt.has_value() && (opt.value() == true);
+    return result;
 }
 
-template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parsable... Parsables>
 template <CLArgs::CmdOption Option>
-std::optional<typename Option::ValueType>
-CLArgs::Parser<Parseables...>::get_option() const noexcept
-    requires IsPartOf<Option, Parseables...>
+const std::optional<typename Option::ValueType> &
+CLArgs::Parser<Parsables...>::get_option() const noexcept
+    requires IsPartOf<Option, Parsables...>
 {
     check_invariant();
-
-    const auto it = options_.find(std::type_index(typeid(Option)));
-    if (it == options_.end())
-    {
-        return std::nullopt;
-    }
-
-    try
-    {
-        const auto result = std::any_cast<typename Option::ValueType>(it->second);
-        return result;
-    }
-    catch (std::bad_any_cast &)
-    {
-        // This exception should never be thrown as long as the implementation is correct.
-        // The type validation is already done before inserting the element.
-        // If this error occurs, there is an error with the library implementation.
-        std::cerr << "Error performing any_cast in CLargs::Parser::get_option() with" << '\n';
-        std::cerr << "  Option: \"" << typeid(Option).name() << "\"\n";
-        std::cerr << "  ValueType: \"" << typeid(typename Option::ValueType).name() << "\"\n";
-        std::cerr << "Returning nullopt as fallback" << std::endl;
-        return std::nullopt;
-    }
+    return get_value<Option>();
 }
 
-template <CLArgs::Parseable... Parseables>
+template <CLArgs::Parsable... Parsables>
+template <CLArgs::Parsable T>
+consteval std::size_t
+CLArgs::Parser<Parsables...>::index_of_type()
+{
+    return TupleTypeIndex<T, std::tuple<Parsables...>>::value;
+}
+
+template <CLArgs::Parsable... Parsables>
+template <CLArgs::Parsable T>
 void
-CLArgs::Parser<Parseables...>::check_invariant() const
+CLArgs::Parser<Parsables...>::set_value(const typename T::ValueType &value)
+{
+    constexpr std::size_t index = index_of_type<T>();
+    values_[index]              = std::optional<typename T::ValueType>{value};
+}
+
+template <CLArgs::Parsable... Parsables>
+template <CLArgs::Parsable T>
+const std::optional<typename T::ValueType> &
+CLArgs::Parser<Parsables...>::get_value() const
+{
+    constexpr std::size_t index = index_of_type<T>();
+    return std::get<std::optional<typename T::ValueType>>(values_[index]);
+}
+
+template <CLArgs::Parsable... Parsables>
+void
+CLArgs::Parser<Parsables...>::check_invariant() const
 {
     CLArgs::_internal::debug_assert(has_successfully_parsed_args_,
                                     "Have you called the parse() method yet? It must be called before any other method "
@@ -234,10 +296,10 @@ CLArgs::Parser<Parseables...>::check_invariant() const
                                     "fix it.");
 }
 
-template <CLArgs::Parseable... Parseables>
-template <CLArgs::Parseable This, CLArgs::Parseable... Rest>
+template <CLArgs::Parsable... Parsables>
+template <CLArgs::Parsable This, CLArgs::Parsable... Rest>
 constexpr void
-CLArgs::Parser<Parseables...>::append_option_descriptions_to_usage(std::stringstream &ss)
+CLArgs::Parser<Parsables...>::append_option_descriptions_to_usage(std::stringstream &ss)
 {
     constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_length<This>() + 4;
 
@@ -260,22 +322,22 @@ CLArgs::Parser<Parseables...>::append_option_descriptions_to_usage(std::stringst
     }
 }
 
-template <CLArgs::Parseable Parseable>
+template <CLArgs::Parsable Parsable>
 consteval std::size_t
 CLArgs::identifier_length()
 {
     std::size_t length{};
 
-    for (const auto identifier : Parseable::identifiers)
+    for (const auto identifier : Parsable::identifiers)
     {
         length += identifier.length();
     }
-    length += (Parseable::identifiers.size() - 1) * 2; // Account for ", " between identifiers
+    length += (Parsable::identifiers.size() - 1) * 2; // Account for ", " between identifiers
 
     return length;
 }
 
-template <CLArgs::Parseable This, CLArgs::Parseable... Rest>
+template <CLArgs::Parsable This, CLArgs::Parsable... Rest>
 consteval std::size_t
 CLArgs::max_identifier_length()
 {
