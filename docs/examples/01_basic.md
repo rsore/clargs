@@ -26,8 +26,6 @@ In this example, we define one flag and one option: `VerboseFlag` and `ConfigOpt
 ## Code example
 
 ```cpp
-#include <CLArgs/flag.hpp>
-#include <CLArgs/option.hpp>
 #include <CLArgs/parser.hpp>
 
 #include <filesystem>

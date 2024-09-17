@@ -1,5 +1,3 @@
-#include <CLArgs/flag.hpp>
-#include <CLArgs/option.hpp>
 #include <CLArgs/parser.hpp>
 
 #include <filesystem>
@@ -21,6 +19,8 @@ main(int argc, char **argv)
         std::cerr << parser.help() << std::endl;
         return EXIT_FAILURE;
     }
+
+    std::cout << "Program: " << parser.program() << std::endl;
 
     const bool has_verbose = parser.has_flag<VerboseFlag>();
     std::cout << "Has verbose option: " << std::boolalpha << has_verbose << "\n";
