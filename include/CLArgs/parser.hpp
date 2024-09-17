@@ -19,6 +19,9 @@
 
 namespace CLArgs
 {
+    template <typename T>
+    concept Parseable = CmdFlag<T> || CmdOption<T>;
+
     template <Parseable Parseable>
     static consteval std::size_t identifier_length();
 

@@ -3,8 +3,18 @@
 
 #include <CLArgs/core.hpp>
 
+#include <concepts>
+
 namespace CLArgs
 {
+    template <typename T>
+    concept CmdOption = requires {
+        { T::identifiers } -> std::convertible_to<std::array<std::string_view, std::tuple_size_v<decltype(T::identifiers)>>>;
+        { T::description } -> std::convertible_to<std::string_view>;
+        { T::value_hint } -> std::convertible_to<std::string_view>;
+        typename T::ValueType;
+    };
+
     template <const StringLiteral Identifiers, const StringLiteral ValueHint, const StringLiteral Description, typename ValType>
     struct Option
     {
