@@ -12,9 +12,6 @@ add_library(CLArgs INTERFACE
         include/CLArgs/assert.hpp
         include/CLArgs/platform.hpp
         include/CLArgs/from_string.hpp
-        include/CLArgs/flag.hpp
-        include/CLArgs/option.hpp
-        include/CLArgs/string_literal.hpp
         include/CLArgs/value_container.hpp
 )
 

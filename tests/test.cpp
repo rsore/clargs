@@ -1,7 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include <CLArgs/flag.hpp>
-#include <CLArgs/option.hpp>
 #include <CLArgs/parser.hpp>
 
 #include <array>

@@ -6,17 +6,10 @@
 #include <CLArgs/from_string.hpp>
 #include <CLArgs/value_container.hpp>
 
-#include <algorithm>
-#include <array>
-#include <concepts>
 #include <cstddef>
-#include <filesystem>
-#include <iomanip>
 #include <iostream>
 #include <optional>
 #include <sstream>
-#include <tuple>
-#include <variant>
 #include <vector>
 
 namespace CLArgs
@@ -37,7 +30,7 @@ namespace CLArgs
 
         [[nodiscard]] std::string help() const noexcept;
 
-        [[nodiscard]] std::filesystem::path program() const noexcept;
+        [[nodiscard]] std::string_view program() const noexcept;
 
         template <CmdFlag Flag>
         [[nodiscard]] bool has_flag() const noexcept
@@ -167,7 +160,7 @@ CLArgs::Parser<Parsables...>::help() const noexcept
 }
 
 template <CLArgs::Parsable... Parsables>
-std::filesystem::path
+std::string_view
 CLArgs::Parser<Parsables...>::program() const noexcept
 {
     check_invariant();
