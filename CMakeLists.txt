@@ -12,8 +12,7 @@ add_library(CLArgs INTERFACE
         include/CLArgs/assert.hpp
         include/CLArgs/platform.hpp
         include/CLArgs/from_string.hpp
-        include/CLArgs/flag.hpp
-        include/CLArgs/option.hpp
+        include/CLArgs/value_container.hpp
 )
 
 target_include_directories(CLArgs INTERFACE

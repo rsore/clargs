@@ -4,29 +4,12 @@
 #include <algorithm>
 #include <array>
 #include <concepts>
+#include <cstdint>
 #include <iostream>
 #include <string_view>
 
 namespace CLArgs
 {
-    template <typename T>
-    concept CmdFlag = requires {
-        { T::identifiers } -> std::convertible_to<std::array<std::string_view, std::tuple_size_v<decltype(T::identifiers)>>>;
-        { T::description } -> std::convertible_to<std::string_view>;
-    };
-
-    template <typename T>
-    concept CmdOption = CmdFlag<T> && requires {
-        { T::value_hint } -> std::convertible_to<std::string_view>;
-        typename T::ValueType;
-    };
-
-    template <typename T>
-    concept Parseable = CmdFlag<T> || CmdOption<T>;
-
-    template <typename T, typename... Ts>
-    concept IsPartOf = (std::is_same_v<T, Ts> || ...);
-
     template <std::size_t N>
     struct StringLiteral
     {
@@ -37,6 +20,57 @@ namespace CLArgs
 
     template <StringLiteral str, char delimiter = ','>
     [[nodiscard]] consteval auto array_from_delimited_string();
+
+    template <typename T>
+    concept CmdFlag = requires {
+        { T::identifiers } -> std::convertible_to<std::array<std::string_view, std::tuple_size_v<decltype(T::identifiers)>>>;
+        { T::description } -> std::convertible_to<std::string_view>;
+
+        typename T::ValueType;
+        requires std::is_same_v<typename T::ValueType, bool>;
+    };
+
+    template <const StringLiteral Identifiers, const StringLiteral Description>
+    struct Flag
+    {
+        static constexpr auto             identifiers{array_from_delimited_string<Identifiers>()};
+        static constexpr std::string_view description{Description.value};
+
+        using ValueType = bool;
+
+        static_assert(identifiers.size() >= 1, "Must have at least one identifier");
+    };
+
+    template <typename T>
+    concept CmdOption = requires {
+        { T::identifiers } -> std::convertible_to<std::array<std::string_view, std::tuple_size_v<decltype(T::identifiers)>>>;
+        { T::description } -> std::convertible_to<std::string_view>;
+        { T::value_hint } -> std::convertible_to<std::string_view>;
+        typename T::ValueType;
+    };
+
+    template <const StringLiteral Identifiers, const StringLiteral ValueHint, const StringLiteral Description, typename ValType>
+    struct Option
+    {
+        static constexpr auto             identifiers{array_from_delimited_string<Identifiers>()};
+        static constexpr std::string_view value_hint{ValueHint.value};
+        static constexpr std::string_view description{Description.value};
+        using ValueType = ValType;
+
+        static_assert(identifiers.size() >= 1, "Must have at least one identifier");
+    };
+
+    template <typename T>
+    concept Parsable = CmdFlag<T> || CmdOption<T>;
+
+    template <typename T, typename... Ts>
+    concept IsPartOf = (std::is_same_v<T, Ts> || ...);
+
+    template <Parsable Parsable>
+    static consteval std::size_t identifier_list_length();
+
+    template <Parsable This, Parsable... Rest>
+    static consteval std::size_t max_identifier_list_length();
 } // namespace CLArgs
 
 template <std::size_t N>
@@ -78,6 +112,35 @@ CLArgs::array_from_delimited_string()
     }
 
     return result;
+}
+
+template <CLArgs::Parsable Parsable>
+consteval std::size_t
+CLArgs::identifier_list_length()
+{
+    std::size_t length{};
+
+    for (const auto identifier : Parsable::identifiers)
+    {
+        length += identifier.length();
+    }
+    length += (Parsable::identifiers.size() - 1) * 2; // Account for ", " between identifiers
+
+    return length;
+}
+
+template <CLArgs::Parsable This, CLArgs::Parsable... Rest>
+consteval std::size_t
+CLArgs::max_identifier_list_length()
+{
+    std::size_t max_length = identifier_list_length<This>();
+
+    if constexpr (sizeof...(Rest) > 0)
+    {
+        max_length = std::max(max_length, max_identifier_list_length<Rest...>());
+    }
+
+    return max_length;
 }
 
 #endif
