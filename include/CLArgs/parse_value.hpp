@@ -1,5 +1,5 @@
-#ifndef CLARGS_FROM_STRING_HPP
-#define CLARGS_FROM_STRING_HPP
+#ifndef CLARGS_PARSE_VALUE_HPP
+#define CLARGS_PARSE_VALUE_HPP
 
 #include <exception>
 #include <filesystem>
@@ -9,12 +9,12 @@
 namespace CLArgs
 {
     template <typename T>
-    T from_string(std::string_view);
+    T parse_value(std::string_view);
 }
 
 template <>
 inline int
-CLArgs::from_string<int>(const std::string_view sv)
+CLArgs::parse_value<int>(const std::string_view sv)
 {
     if (sv.empty())
     {
@@ -26,7 +26,7 @@ CLArgs::from_string<int>(const std::string_view sv)
 
 template <>
 inline unsigned int
-CLArgs::from_string<unsigned int>(const std::string_view sv)
+CLArgs::parse_value<unsigned int>(const std::string_view sv)
 {
     if (sv.empty())
     {
@@ -39,7 +39,7 @@ CLArgs::from_string<unsigned int>(const std::string_view sv)
 
 template <>
 inline long
-CLArgs::from_string<long>(const std::string_view sv)
+CLArgs::parse_value<long>(const std::string_view sv)
 {
     if (sv.empty())
     {
@@ -51,7 +51,7 @@ CLArgs::from_string<long>(const std::string_view sv)
 
 template <>
 inline unsigned long
-CLArgs::from_string<unsigned long>(const std::string_view sv)
+CLArgs::parse_value<unsigned long>(const std::string_view sv)
 {
     if (sv.empty())
     {
@@ -63,7 +63,7 @@ CLArgs::from_string<unsigned long>(const std::string_view sv)
 
 template <>
 inline long long
-CLArgs::from_string<long long>(const std::string_view sv)
+CLArgs::parse_value<long long>(const std::string_view sv)
 {
     if (sv.empty())
     {
@@ -75,7 +75,7 @@ CLArgs::from_string<long long>(const std::string_view sv)
 
 template <>
 inline unsigned long long
-CLArgs::from_string<unsigned long long>(const std::string_view sv)
+CLArgs::parse_value<unsigned long long>(const std::string_view sv)
 {
     if (sv.empty())
     {
@@ -87,7 +87,7 @@ CLArgs::from_string<unsigned long long>(const std::string_view sv)
 
 template <>
 inline float
-CLArgs::from_string<float>(const std::string_view sv)
+CLArgs::parse_value<float>(const std::string_view sv)
 {
     if (sv.empty())
     {
@@ -99,7 +99,7 @@ CLArgs::from_string<float>(const std::string_view sv)
 
 template <>
 inline double
-CLArgs::from_string<double>(const std::string_view sv)
+CLArgs::parse_value<double>(const std::string_view sv)
 {
     if (sv.empty())
     {
@@ -111,7 +111,7 @@ CLArgs::from_string<double>(const std::string_view sv)
 
 template <>
 inline long double
-CLArgs::from_string<long double>(const std::string_view sv)
+CLArgs::parse_value<long double>(const std::string_view sv)
 {
     if (sv.empty())
     {
@@ -123,7 +123,7 @@ CLArgs::from_string<long double>(const std::string_view sv)
 
 template <>
 inline char
-CLArgs::from_string<char>(const std::string_view sv)
+CLArgs::parse_value<char>(const std::string_view sv)
 {
     if (sv.empty())
     {
@@ -141,7 +141,7 @@ CLArgs::from_string<char>(const std::string_view sv)
 
 template <>
 inline std::string
-CLArgs::from_string<std::string>(const std::string_view sv)
+CLArgs::parse_value<std::string>(const std::string_view sv)
 {
     if (sv.empty())
     {
@@ -153,7 +153,7 @@ CLArgs::from_string<std::string>(const std::string_view sv)
 
 template <>
 inline bool
-CLArgs::from_string<bool>(const std::string_view sv)
+CLArgs::parse_value<bool>(const std::string_view sv)
 {
     if (sv.empty())
     {
@@ -175,7 +175,7 @@ CLArgs::from_string<bool>(const std::string_view sv)
 
 template <>
 inline std::filesystem::path
-CLArgs::from_string<std::filesystem::path>(const std::string_view sv)
+CLArgs::parse_value<std::filesystem::path>(const std::string_view sv)
 {
     if (sv.empty())
     {
