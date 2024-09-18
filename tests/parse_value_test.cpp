@@ -88,3 +88,68 @@ TEMPLATE_TEST_CASE("parse_value() verifies formatting",
     REQUIRE_THROWS(CLArgs::parse_value<TestType>("12.34"));
     REQUIRE_THROWS(CLArgs::parse_value<TestType>("@!#$"));
 }
+
+TEMPLATE_TEST_CASE("parse_value() can parse hexadecimal values for unsigned types",
+                   "[parse_value]",
+                   short,
+                   int,
+                   long,
+                   long long,
+                   std::int16_t,
+                   std::int32_t,
+                   std::int64_t,
+                   unsigned short,
+                   unsigned int,
+                   unsigned long,
+                   unsigned long long,
+                   std::uint16_t,
+                   std::uint32_t,
+                   std::uint64_t,
+                   std::size_t)
+{
+
+    if constexpr (std::is_unsigned_v<TestType>)
+    {
+        REQUIRE(CLArgs::parse_value<TestType>("0xFF") == 255);
+        REQUIRE(CLArgs::parse_value<TestType>("0XFF") == 255);
+    }
+    else
+    {
+        REQUIRE_THROWS(CLArgs::parse_value<TestType>("0xFF"));
+        REQUIRE_THROWS(CLArgs::parse_value<TestType>("0XFF"));
+    }
+    REQUIRE_THROWS(CLArgs::parse_value<TestType>("0x"));
+    REQUIRE_THROWS(CLArgs::parse_value<TestType>("0X"));
+}
+
+TEMPLATE_TEST_CASE("parse_value() can parse binary values for unsigned types",
+                   "[parse_value]",
+                   short,
+                   int,
+                   long,
+                   long long,
+                   std::int16_t,
+                   std::int32_t,
+                   std::int64_t,
+                   unsigned short,
+                   unsigned int,
+                   unsigned long,
+                   unsigned long long,
+                   std::uint16_t,
+                   std::uint32_t,
+                   std::uint64_t,
+                   std::size_t)
+{
+    if constexpr (std::is_unsigned_v<TestType>)
+    {
+        REQUIRE(CLArgs::parse_value<TestType>("0b100") == 4);
+        REQUIRE(CLArgs::parse_value<TestType>("0B100") == 4);
+    }
+    else
+    {
+        REQUIRE_THROWS(CLArgs::parse_value<TestType>("0b100"));
+        REQUIRE_THROWS(CLArgs::parse_value<TestType>("0B100"));
+    }
+    REQUIRE_THROWS(CLArgs::parse_value<TestType>("0b"));
+    REQUIRE_THROWS(CLArgs::parse_value<TestType>("0B"));
+}
