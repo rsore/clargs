@@ -1,6 +1,8 @@
 #ifndef CLARGS_PARSE_VALUE_HPP
 #define CLARGS_PARSE_VALUE_HPP
 
+#include <charconv>
+#include <concepts>
 #include <exception>
 #include <filesystem>
 #include <sstream>
@@ -10,6 +12,52 @@ namespace CLArgs
 {
     template <typename T>
     T parse_value(std::string_view);
+
+    template <std::integral T>
+    T parse_value(std::string_view)
+        requires(!std::is_same_v<T, bool> && !std::is_same_v<T, char>);
+} // namespace CLArgs
+
+
+template <std::integral T>
+T
+CLArgs::parse_value(const std::string_view sv)
+    requires(!std::is_same_v<T, bool> && !std::is_same_v<T, char>)
+{
+    if (sv.empty())
+    {
+        throw std::invalid_argument("sv cannot be empty");
+    }
+
+    T value{};
+
+    const auto *first    = sv.data();
+    const auto *last     = first + sv.size();
+    const auto [ptr, ec] = std::from_chars(first, last, value);
+
+    const auto throw_with_error = [sv](const std::string_view error_msg)
+    {
+        const std::string error = "Was not able to parse \"" + std::string(sv) + "\" as type \"" + typeid(T).name() + "\": " + error_msg.data();
+        throw std::invalid_argument(error);
+    };
+
+    if (ec == std::errc::invalid_argument)
+    {
+        throw_with_error("Invalid format");
+    }
+
+    if (ec == std::errc::result_out_of_range)
+    {
+        throw_with_error("Number out of range");
+    }
+
+    if (ptr != last)
+    {
+        const std::string error_msg = "Invalid character at '" + std::string(1, *ptr) + '\'';
+        throw_with_error(error_msg);
+    }
+
+    return value;
 }
 
 template <>
