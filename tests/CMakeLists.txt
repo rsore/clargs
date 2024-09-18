@@ -18,7 +18,8 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
-add_executable(tests test.cpp)
+add_executable(tests test.cpp
+        parse_value_test.cpp)
 target_link_libraries(tests PRIVATE
         CLArgs
         Catch2::Catch2WithMain
