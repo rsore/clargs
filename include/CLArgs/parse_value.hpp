@@ -1,10 +1,13 @@
 #ifndef CLARGS_PARSE_VALUE_HPP
 #define CLARGS_PARSE_VALUE_HPP
 
+#include <algorithm>
+#include <array>
 #include <charconv>
 #include <concepts>
 #include <exception>
 #include <filesystem>
+#include <iostream>
 #include <sstream>
 #include <string_view>
 
@@ -29,33 +32,55 @@ CLArgs::parse_value(const std::string_view sv)
         throw std::invalid_argument("sv cannot be empty");
     }
 
-    T value{};
+    const auto [first, last, base] = [sv]
+    {
+        if constexpr (std::is_unsigned_v<T>)
+        {
+            if (constexpr std::array hex_prefixes{"0x", "0X"};
+                std::any_of(hex_prefixes.begin(), hex_prefixes.end(), [sv](const auto &prefix) { return sv.starts_with(prefix); }))
+            {
+                return std::make_tuple(sv.data() + 2, sv.data() + sv.length(), 16);
+            }
 
-    const auto *first    = sv.data();
-    const auto *last     = first + sv.size();
-    const auto [ptr, ec] = std::from_chars(first, last, value);
+            if (constexpr std::array binary_prefixes{"0b", "0B"};
+                std::any_of(binary_prefixes.begin(), binary_prefixes.end(), [sv](const auto &prefix) { return sv.starts_with(prefix); }))
+            {
+                return std::make_tuple(sv.data() + 2, sv.data() + sv.length(), 2);
+            }
+        }
+        return std::make_tuple(sv.data(), sv.data() + sv.length(), 10);
+    }();
 
     const auto throw_with_error = [sv](const std::string_view error_msg)
     {
-        const std::string error = "Was not able to parse \"" + std::string(sv) + "\" as type \"" + typeid(T).name() + "\": " + error_msg.data();
+        const std::string error =
+                "Was not able to parse \"" + std::string(sv) + "\" as type \"" + typeid(T).name() + "\": " + error_msg.data();
         throw std::invalid_argument(error);
     };
 
-    if (ec == std::errc::invalid_argument)
+    const T value = [first, last, base, &throw_with_error]
     {
-        throw_with_error("Invalid format");
-    }
+        T val{};
+        const auto [ptr, ec] = std::from_chars(first, last, val, base);
 
-    if (ec == std::errc::result_out_of_range)
-    {
-        throw_with_error("Number out of range");
-    }
+        if (ec == std::errc::invalid_argument)
+        {
+            throw_with_error("Invalid format");
+        }
 
-    if (ptr != last)
-    {
-        const std::string error_msg = "Invalid character at '" + std::string(1, *ptr) + '\'';
-        throw_with_error(error_msg);
-    }
+        if (ec == std::errc::result_out_of_range)
+        {
+            throw_with_error("Number out of range");
+        }
+
+        if (ptr != last)
+        {
+            const std::string error_msg = "Invalid character at '" + std::string(1, *ptr) + '\'';
+            throw_with_error(error_msg);
+        }
+
+        return val;
+    }();
 
     return value;
 }
