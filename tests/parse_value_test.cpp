@@ -1,10 +1,17 @@
-#include <catch2/catch_template_test_macros.hpp>
-#include <catch2/matchers/catch_matchers_floating_point.hpp>
-
 #include <CLArgs/parse_value.hpp>
 
+#include <catch2/catch_template_test_macros.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
+
+#include <cstddef>
 #include <cstdint>
-#include <ranges>
+#include <filesystem>
+#include <limits>
+#include <string>
+#include <string_view>
+#include <type_traits>
 
 TEMPLATE_TEST_CASE("parse_value() can parse all integer types",
                    "[parse_value]",
@@ -65,8 +72,12 @@ TEMPLATE_TEST_CASE("parse_value() performs integer bounds checking",
     {
         CHECK_THROWS_AS(CLArgs::parse_value<TestType>(std::to_string(static_cast<std::int64_t>(std::numeric_limits<TestType>::min()) - 1)),
                         CLArgs::ParseValueException<TestType>);
+        CHECK_THROWS_AS(CLArgs::parse_value<TestType>(std::to_string(std::numeric_limits<std::int64_t>::min())),
+                        CLArgs::ParseValueException<TestType>);
     }
     CHECK_THROWS_AS(CLArgs::parse_value<TestType>(std::to_string(static_cast<std::uint64_t>(std::numeric_limits<TestType>::max()) + 1)),
+                    CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>(std::to_string(std::numeric_limits<std::uint64_t>::max())),
                     CLArgs::ParseValueException<TestType>);
 }
 
@@ -238,6 +249,8 @@ TEST_CASE("parse_value() can parse characters", "[parse_value]")
 {
     CHECK_THROWS_AS(CLArgs::parse_value<char>(""), CLArgs::ParseValueException<char>);
 
+    CHECK(std::is_same_v<decltype(CLArgs::parse_value<char>("a")), char>);
+
     CHECK(CLArgs::parse_value<char>("a") == 'a');
     CHECK(CLArgs::parse_value<char>("Z") == 'Z');
     CHECK(CLArgs::parse_value<char>("1") == '1');
@@ -258,6 +271,8 @@ TEST_CASE("parse_value() can parse characters", "[parse_value]")
 TEST_CASE("parse_value() can parse boolean values", "[parse_value]")
 {
     CHECK_THROWS_AS(CLArgs::parse_value<bool>(""), CLArgs::ParseValueException<bool>);
+
+    CHECK(std::is_same_v<decltype(CLArgs::parse_value<bool>("true")), bool>);
 
     CHECK(CLArgs::parse_value<bool>("true") == true);
     CHECK(CLArgs::parse_value<bool>("True") == true);
@@ -284,4 +299,50 @@ TEST_CASE("parse_value() can parse boolean values", "[parse_value]")
     CHECK(CLArgs::parse_value<bool>("0") == false);
 
     CHECK_THROWS_AS(CLArgs::parse_value<bool>("enable"), CLArgs::ParseValueException<bool>);
+}
+
+TEST_CASE("parse_value() can parse strings", "[parse_value]")
+{
+    CHECK_THROWS_AS(CLArgs::parse_value<std::string>(""), CLArgs::ParseValueException<std::string>);
+
+    CHECK(std::is_same_v<decltype(CLArgs::parse_value<std::string>("foo")), std::string>);
+
+    CHECK_THAT(CLArgs::parse_value<std::string>("Hello world"), Catch::Matchers::Equals("Hello world"));
+    CHECK_THAT(CLArgs::parse_value<std::string>("Foo"), Catch::Matchers::Equals("Foo"));
+    CHECK_THAT(CLArgs::parse_value<std::string>("    Bar"), Catch::Matchers::Equals("    Bar"));
+    CHECK_THAT(CLArgs::parse_value<std::string>("Baz  "), Catch::Matchers::Equals("Baz  "));
+}
+
+TEST_CASE("parse_value() can parse strings views", "[parse_value]")
+{
+    CHECK_THROWS_AS(CLArgs::parse_value<std::string_view>(""), CLArgs::ParseValueException<std::string_view>);
+
+    CHECK(std::is_same_v<decltype(CLArgs::parse_value<std::string_view>("bar")), std::string_view>);
+
+    CHECK(CLArgs::parse_value<std::string_view>("Hello world") == "Hello world");
+    CHECK(CLArgs::parse_value<std::string_view>("Foo") == "Foo");
+    CHECK(CLArgs::parse_value<std::string_view>("    Bar") == "    Bar");
+    CHECK(CLArgs::parse_value<std::string_view>("Baz  ") == "Baz  ");
+}
+
+TEST_CASE("parse_value() can parse filesystem paths", "[parse_value]")
+{
+    CHECK_THROWS_AS(CLArgs::parse_value<std::filesystem::path>(""), CLArgs::ParseValueException<std::filesystem::path>);
+
+    CHECK(std::is_same_v<decltype(CLArgs::parse_value<std::filesystem::path>("hello.txt")), std::filesystem::path>);
+
+    CHECK(CLArgs::parse_value<std::filesystem::path>("/home/user/testfile.txt") == std::filesystem::path("/home/user/testfile.txt"));
+    CHECK(CLArgs::parse_value<std::filesystem::path>("/var/log/system.log") == std::filesystem::path("/var/log/system.log"));
+    CHECK(CLArgs::parse_value<std::filesystem::path>("./nginx/nginx.conf") == std::filesystem::path("./nginx/nginx.conf"));
+    CHECK(CLArgs::parse_value<std::filesystem::path>("../bin/python3") == std::filesystem::path("../bin/python3"));
+
+    CHECK(CLArgs::parse_value<std::filesystem::path>("C:/Program Files/MyApp/config.json") ==
+          std::filesystem::path("C:/Program Files/MyApp/config.json"));
+    CHECK(CLArgs::parse_value<std::filesystem::path>("D:/Projects/Code/main.py") == std::filesystem::path("D:/Projects/Code/main.py"));
+    CHECK(CLArgs::parse_value<std::filesystem::path>("./Users/JohnDoe/Documents/resume.docx") ==
+          std::filesystem::path("./Users/JohnDoe/Documents/resume.docx"));
+    CHECK(CLArgs::parse_value<std::filesystem::path>("../Media/Videos/vacation_clip.mp4") ==
+          std::filesystem::path("../Media/Videos/vacation_clip.mp4"));
+    CHECK(CLArgs::parse_value<std::filesystem::path>("//ServerName/SharedFolder/backup_2024.zip") ==
+          std::filesystem::path("//ServerName/SharedFolder/backup_2024.zip"));
 }

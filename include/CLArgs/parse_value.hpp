@@ -15,7 +15,6 @@
 
 namespace CLArgs
 {
-
     template <typename T>
     T parse_value(std::string_view);
 
@@ -191,18 +190,6 @@ CLArgs::parse_value<char>(const std::string_view sv)
 }
 
 template <>
-inline std::string
-CLArgs::parse_value<std::string>(const std::string_view sv)
-{
-    if (sv.empty())
-    {
-        throw std::invalid_argument("sv cannot be empty");
-    }
-
-    return std::string(sv);
-}
-
-template <>
 inline bool
 CLArgs::parse_value<bool>(const std::string_view sv)
 {
@@ -241,15 +228,39 @@ CLArgs::parse_value<bool>(const std::string_view sv)
 }
 
 template <>
+inline std::string
+CLArgs::parse_value<std::string>(const std::string_view sv)
+{
+    if (sv.empty())
+    {
+        throw ParseValueException<std::string>(sv, "String cannot be empty");
+    }
+
+    return std::string(sv);
+}
+
+template <>
+inline std::string_view
+CLArgs::parse_value<std::string_view>(const std::string_view sv)
+{
+    if (sv.empty())
+    {
+        throw ParseValueException<std::string_view>(sv, "String cannot be empty");
+    }
+
+    return sv.data();
+}
+
+template <>
 inline std::filesystem::path
 CLArgs::parse_value<std::filesystem::path>(const std::string_view sv)
 {
     if (sv.empty())
     {
-        throw std::invalid_argument("sv cannot be empty");
+        throw ParseValueException<std::filesystem::path>(sv, "String cannot be empty");
     }
 
-    return sv;
+    return {sv};
 }
 
 template <typename T>
@@ -331,6 +342,20 @@ constexpr std::string_view
 CLArgs::pretty_string_of_type<char>()
 {
     return "char";
+}
+
+template <>
+constexpr std::string_view
+CLArgs::pretty_string_of_type<std::string>()
+{
+    return "string";
+}
+
+template <>
+constexpr std::string_view
+CLArgs::pretty_string_of_type<std::filesystem::path>()
+{
+    return "filesystem path";
 }
 
 #endif
