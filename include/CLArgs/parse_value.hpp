@@ -23,6 +23,9 @@ namespace CLArgs
         requires(!std::is_same_v<T, bool> && !std::is_same_v<T, char>);
 
     template <typename T>
+    constexpr std::string_view pretty_string_of_type();
+
+    template <typename T>
     class ParseValueException final : public std::invalid_argument
     {
     public:
@@ -39,7 +42,7 @@ template <typename T>
 CLArgs::ParseValueException<T>::ParseValueException(const std::string_view user_string, const std::string_view error_msg)
     : std::invalid_argument("")
 {
-    what_ = std::string("Was not able to parse \"") + user_string.data() + "\" as type \"" + typeid(T).name() + "\": " + error_msg.data();
+    what_ = std::string("Was not able to parse \"") + user_string.data() + "\" as type \"" + pretty_string_of_type<T>().data() + "\": " + error_msg.data();
 }
 
 template <typename T>
@@ -219,6 +222,20 @@ CLArgs::parse_value<std::filesystem::path>(const std::string_view sv)
     }
 
     return sv;
+}
+
+template <typename T>
+constexpr std::string_view
+CLArgs::pretty_string_of_type()
+{
+    return typeid(T).name();
+}
+
+template <>
+constexpr std::string_view
+CLArgs::pretty_string_of_type<bool>()
+{
+    return "bool";
 }
 
 #endif
