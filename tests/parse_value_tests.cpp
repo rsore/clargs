@@ -336,13 +336,13 @@ TEST_CASE("parse_value() can parse filesystem paths", "[parse_value]")
     CHECK(CLArgs::parse_value<std::filesystem::path>("./nginx/nginx.conf") == std::filesystem::path("./nginx/nginx.conf"));
     CHECK(CLArgs::parse_value<std::filesystem::path>("../bin/python3") == std::filesystem::path("../bin/python3"));
 
-    CHECK(CLArgs::parse_value<std::filesystem::path>("C:/Program Files/MyApp/config.json") ==
+    CHECK(CLArgs::parse_value<std::filesystem::path>("C:\\Program Files\\MyApp\\config.json") ==
           std::filesystem::path("C:/Program Files/MyApp/config.json"));
-    CHECK(CLArgs::parse_value<std::filesystem::path>("D:/Projects/Code/main.py") == std::filesystem::path("D:/Projects/Code/main.py"));
-    CHECK(CLArgs::parse_value<std::filesystem::path>("./Users/JohnDoe/Documents/resume.docx") ==
+    CHECK(CLArgs::parse_value<std::filesystem::path>("D:\\Projects\\Code\\main.py") == std::filesystem::path("D:/Projects/Code/main.py"));
+    CHECK(CLArgs::parse_value<std::filesystem::path>(".\\Users\\JohnDoe\\Documents\\resume.docx") ==
           std::filesystem::path("./Users/JohnDoe/Documents/resume.docx"));
-    CHECK(CLArgs::parse_value<std::filesystem::path>("../Media/Videos/vacation_clip.mp4") ==
+    CHECK(CLArgs::parse_value<std::filesystem::path>("..\\Media\\Videos\\vacation_clip.mp4") ==
           std::filesystem::path("../Media/Videos/vacation_clip.mp4"));
-    CHECK(CLArgs::parse_value<std::filesystem::path>("//ServerName/SharedFolder/backup_2024.zip") ==
+    CHECK(CLArgs::parse_value<std::filesystem::path>("//ServerName\\SharedFolder\\backup_2024.zip") ==
           std::filesystem::path("//ServerName/SharedFolder/backup_2024.zip"));
 }
