@@ -13,14 +13,28 @@
 
 namespace CLArgs
 {
+
     template <typename T>
     T parse_value(std::string_view);
 
     template <std::integral T>
     T parse_value(std::string_view)
         requires(!std::is_same_v<T, bool> && !std::is_same_v<T, char>);
+
+
+    namespace _internal
+    {
+        template <typename T>
+        constexpr std::string generate_parsing_error_message(std::string_view user_string, std::string_view error_msg);
+    }
 } // namespace CLArgs
 
+template <typename T>
+constexpr std::string
+CLArgs::_internal::generate_parsing_error_message(const std::string_view user_string, const std::string_view error_msg)
+{
+    return std::string("Was not able to parse \"") + user_string.data() + "\" as type \"" + typeid(T).name() + "\": " + error_msg.data();
+}
 
 template <std::integral T>
 T
@@ -51,32 +65,25 @@ CLArgs::parse_value(const std::string_view sv)
         return std::make_tuple(sv.data(), sv.data() + sv.length(), 10);
     }();
 
-    const auto throw_with_error = [sv](const std::string_view error_msg)
-    {
-        const std::string error =
-                "Was not able to parse \"" + std::string(sv) + "\" as type \"" + typeid(T).name() + "\": " + error_msg.data();
-        throw std::invalid_argument(error);
-    };
-
-    const T value = [first, last, base, &throw_with_error]
+    const T value = [first, last, base, sv]
     {
         T val{};
         const auto [ptr, ec] = std::from_chars(first, last, val, base);
 
         if (ec == std::errc::invalid_argument)
         {
-            throw_with_error("Invalid format");
+            throw std::invalid_argument(_internal::generate_parsing_error_message<T>(sv, "Invalid format"));
         }
 
         if (ec == std::errc::result_out_of_range)
         {
-            throw_with_error("Number out of range");
+            throw std::invalid_argument(_internal::generate_parsing_error_message<T>(sv, "Number out of range"));
         }
 
         if (ptr != last)
         {
-            const std::string error_msg = "Invalid character at '" + std::string(1, *ptr) + '\'';
-            throw_with_error(error_msg);
+            const std::string error_msg = std::string("Invalid character at '") + *ptr + '\'';
+            throw std::invalid_argument(_internal::generate_parsing_error_message<T>(sv, error_msg));
         }
 
         return val;
