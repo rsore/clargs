@@ -25,6 +25,10 @@ namespace CLArgs
     template <typename T>
     constexpr std::string_view pretty_string_of_type();
 
+    template <std::integral T>
+    constexpr std::string_view pretty_string_of_type()
+        requires(!std::is_same_v<T, bool> && !std::is_same_v<T, char>);
+
     template <typename T>
     class ParseValueException final : public std::invalid_argument
     {
@@ -42,7 +46,8 @@ template <typename T>
 CLArgs::ParseValueException<T>::ParseValueException(const std::string_view user_string, const std::string_view error_msg)
     : std::invalid_argument("")
 {
-    what_ = std::string("Was not able to parse \"") + user_string.data() + "\" as type \"" + pretty_string_of_type<T>().data() + "\": " + error_msg.data();
+    what_ = std::string("Unable to parse \"") + user_string.data() + "\" as type \"" + pretty_string_of_type<T>().data() +
+            "\": " + error_msg.data();
 }
 
 template <typename T>
@@ -59,7 +64,7 @@ CLArgs::parse_value(const std::string_view sv)
 {
     if (sv.empty())
     {
-        throw std::invalid_argument("sv cannot be empty");
+        throw ParseValueException<T>(sv, "String cannot be empty");
     }
 
     const auto [first, last, base] = [sv]
@@ -150,15 +155,14 @@ CLArgs::parse_value<char>(const std::string_view sv)
 {
     if (sv.empty())
     {
-        throw std::invalid_argument("sv cannot be empty");
+        throw ParseValueException<char>(sv, "String cannot be empty");
     }
 
     if (sv.length() != 1)
     {
-        std::stringstream ss;
-        ss << "Expected exactly one character, got \"" << sv << "\" (" << sv.length() << " characters";
-        throw std::invalid_argument(ss.str());
+        throw ParseValueException<char>(sv, "Expected exactly one character");
     }
+
     return sv[0];
 }
 
@@ -180,7 +184,7 @@ CLArgs::parse_value<bool>(const std::string_view sv)
 {
     if (sv.empty())
     {
-        throw std::invalid_argument("sv cannot be empty");
+        throw ParseValueException<bool>(sv, "String cannot be empty");
     }
 
     const auto any_matches_case_insensitive = []<StringLiteral... potential_matches>(const std::string_view to_check)
@@ -231,11 +235,57 @@ CLArgs::pretty_string_of_type()
     return typeid(T).name();
 }
 
+template <std::integral T>
+constexpr std::string_view
+CLArgs::pretty_string_of_type()
+    requires(!std::is_same_v<T, bool> && !std::is_same_v<T, char>)
+{
+    if constexpr (std::is_unsigned_v<T>)
+    {
+        switch (sizeof(T))
+        {
+            case 1:
+                return "8-bit unsigned integer";
+            case 2:
+                return "16-bit unsigned integer";
+            case 4:
+                return "32-bit unsigned integer";
+            case 8:
+                return "64-bit unsigned integer";
+            default:
+                return "unsigned integer (unknown size)";
+        }
+    }
+    else
+    {
+        switch (sizeof(T))
+        {
+            case 1:
+                return "8-bit signed integer";
+            case 2:
+                return "16-bit signed integer";
+            case 4:
+                return "32-bit signed integer";
+            case 8:
+                return "64-bit signed integer";
+            default:
+                return "signed integer (unknown size)";
+        }
+    }
+}
+
 template <>
 constexpr std::string_view
 CLArgs::pretty_string_of_type<bool>()
 {
     return "bool";
+}
+
+template <>
+constexpr std::string_view
+CLArgs::pretty_string_of_type<char>()
+{
+    return "char";
 }
 
 #endif
