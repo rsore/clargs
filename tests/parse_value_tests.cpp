@@ -196,7 +196,7 @@ TEMPLATE_TEST_CASE("parse_value() can parse all floating-point types", "[parse_v
     CHECK_THAT(CLArgs::parse_value<TestType>(".123"), Catch::Matchers::WithinRel(0.123, 0.001));
 }
 
-TEST_CASE("parse_value() performs floating-point bounds checking", "[parse_value]")
+TEST_CASE("parse_value() performs floating-point bounds checking", "[parse_value], [!nonportable]")
 {
     REQUIRE_THAT(CLArgs::parse_value<float>(std::to_string(std::numeric_limits<float>::lowest())),
                  Catch::Matchers::WithinRel(std::numeric_limits<float>::lowest()));
