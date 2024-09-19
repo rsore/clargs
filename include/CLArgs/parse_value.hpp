@@ -21,19 +21,31 @@ namespace CLArgs
     T parse_value(std::string_view)
         requires(!std::is_same_v<T, bool> && !std::is_same_v<T, char>);
 
-
-    namespace _internal
+    template <typename T>
+    class ParseValueException final : public std::invalid_argument
     {
-        template <typename T>
-        constexpr std::string generate_parsing_error_message(std::string_view user_string, std::string_view error_msg);
-    }
+    public:
+        explicit ParseValueException(std::string_view user_string, std::string_view error_msg);
+
+        [[nodiscard]] const char *what() const noexcept override;
+
+    private:
+        std::string what_;
+    };
 } // namespace CLArgs
 
 template <typename T>
-constexpr std::string
-CLArgs::_internal::generate_parsing_error_message(const std::string_view user_string, const std::string_view error_msg)
+CLArgs::ParseValueException<T>::ParseValueException(const std::string_view user_string, const std::string_view error_msg)
+    : std::invalid_argument("")
 {
-    return std::string("Was not able to parse \"") + user_string.data() + "\" as type \"" + typeid(T).name() + "\": " + error_msg.data();
+    what_ = std::string("Was not able to parse \"") + user_string.data() + "\" as type \"" + typeid(T).name() + "\": " + error_msg.data();
+}
+
+template <typename T>
+const char *
+CLArgs::ParseValueException<T>::what() const noexcept
+{
+    return what_.c_str();
 }
 
 template <std::integral T>
@@ -72,18 +84,18 @@ CLArgs::parse_value(const std::string_view sv)
 
         if (ec == std::errc::invalid_argument)
         {
-            throw std::invalid_argument(_internal::generate_parsing_error_message<T>(sv, "Invalid format"));
+            throw ParseValueException<T>(sv, "Invalid format");
         }
 
         if (ec == std::errc::result_out_of_range)
         {
-            throw std::invalid_argument(_internal::generate_parsing_error_message<T>(sv, "Number out of range"));
+            throw ParseValueException<T>(sv, "Number out of range");
         }
 
         if (ptr != last)
         {
             const std::string error_msg = std::string("Invalid character at '") + *ptr + '\'';
-            throw std::invalid_argument(_internal::generate_parsing_error_message<T>(sv, error_msg));
+            throw ParseValueException<T>(sv, error_msg);
         }
 
         return val;
