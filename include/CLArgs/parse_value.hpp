@@ -1,6 +1,8 @@
 #ifndef CLARGS_PARSE_VALUE_HPP
 #define CLARGS_PARSE_VALUE_HPP
 
+#include <CLArgs/core.hpp>
+
 #include <algorithm>
 #include <array>
 #include <charconv>
@@ -178,17 +180,33 @@ CLArgs::parse_value<bool>(const std::string_view sv)
         throw std::invalid_argument("sv cannot be empty");
     }
 
-    if (sv == "true" || sv == "True" || sv == "TRUE" || sv == "1")
+    const auto any_matches_case_insensitive = []<StringLiteral... potential_matches>(const std::string_view to_check)
+    {
+        using Container = std::array<std::string_view, sizeof...(potential_matches)>;
+        constexpr Container potential_matches_container{potential_matches.value...};
+        return std::any_of(potential_matches_container.begin(),
+                           potential_matches_container.end(),
+                           [to_check](const auto &potential_match)
+                           {
+                               return std::equal(to_check.begin(),
+                                                 to_check.end(),
+                                                 potential_match.begin(),
+                                                 potential_match.end(),
+                                                 [](const char a, const char b) { return std::tolower(a) == std::tolower(b); });
+                           });
+    };
+
+    if (any_matches_case_insensitive.operator()<"true", "yes", "y", "1">(sv))
     {
         return true;
     }
 
-    if (sv == "false" || sv == "False" || sv == "FALSE" || sv == "0")
+    if (any_matches_case_insensitive.operator()<"false", "no", "n", "0">(sv))
     {
         return false;
     }
 
-    throw std::invalid_argument(R"(Valid bool values are "true", "True", "TRUE", "1", "false", "False", "FALSE" and "0")");
+    throw ParseValueException<bool>(sv, "Invalid format");
 }
 
 template <>
