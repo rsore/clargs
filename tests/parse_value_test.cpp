@@ -1,4 +1,5 @@
 #include <catch2/catch_template_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include <CLArgs/parse_value.hpp>
 
@@ -69,7 +70,7 @@ TEMPLATE_TEST_CASE("parse_value() performs integer bounds checking",
                     CLArgs::ParseValueException<TestType>);
 }
 
-TEMPLATE_TEST_CASE("parse_value() verifies formatting",
+TEMPLATE_TEST_CASE("parse_value() verifies formatting for integer types",
                    "[parse_value]",
                    short,
                    int,
@@ -168,6 +169,92 @@ TEMPLATE_TEST_CASE("parse_value() can parse binary values for unsigned types",
     CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0B"), CLArgs::ParseValueException<TestType>);
 }
 
+TEMPLATE_TEST_CASE("parse_value() can parse all floating-point types", "[parse_value]", float, double, long double)
+{
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>(""), CLArgs::ParseValueException<TestType>);
+
+    CHECK(std::is_same_v<decltype(CLArgs::parse_value<TestType>("0.0")), TestType>);
+
+    CHECK_THAT(CLArgs::parse_value<TestType>("0.0"), Catch::Matchers::WithinRel(0.0, 0.001));
+    CHECK_THAT(CLArgs::parse_value<TestType>("0.5"), Catch::Matchers::WithinRel(0.5, 0.001));
+    CHECK_THAT(CLArgs::parse_value<TestType>("123"), Catch::Matchers::WithinRel(123.0, 0.001));
+    CHECK_THAT(CLArgs::parse_value<TestType>("0000"), Catch::Matchers::WithinRel(0.0, 0.001));
+    CHECK_THAT(CLArgs::parse_value<TestType>("0000.000"), Catch::Matchers::WithinRel(0.0, 0.001));
+    CHECK_THAT(CLArgs::parse_value<TestType>("0010.010"), Catch::Matchers::WithinRel(10.01, 0.001));
+    CHECK_THAT(CLArgs::parse_value<TestType>("-3.1415"), Catch::Matchers::WithinRel(-3.1415, 0.001));
+    CHECK_THAT(CLArgs::parse_value<TestType>(".123"), Catch::Matchers::WithinRel(0.123, 0.001));
+}
+
+TEST_CASE("parse_value() performs floating-point bounds checking", "[parse_value]")
+{
+    REQUIRE_THAT(CLArgs::parse_value<float>(std::to_string(std::numeric_limits<float>::lowest())),
+                 Catch::Matchers::WithinRel(std::numeric_limits<float>::lowest()));
+
+    REQUIRE_THAT(CLArgs::parse_value<float>(std::to_string(std::numeric_limits<float>::max())),
+                 Catch::Matchers::WithinRel(std::numeric_limits<float>::max()));
+
+    if constexpr (sizeof(long double) > sizeof(float)) // NOLINT
+    {
+        CHECK_THROWS_AS(CLArgs::parse_value<float>(std::to_string(std::numeric_limits<long double>::lowest())),
+                        CLArgs::ParseValueException<float>);
+        CHECK_THROWS_AS(CLArgs::parse_value<float>(std::to_string(std::numeric_limits<long double>::max())),
+                        CLArgs::ParseValueException<float>);
+    }
+}
+
+TEMPLATE_TEST_CASE("parse_value() verifies formatting for floating-point types", "[parse_value]", float, double, long double)
+{
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>(""), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("   "), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>(" 123.0"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("123.3 "), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("abc"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("12abc34"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("12..34"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("@!#$"), CLArgs::ParseValueException<TestType>);
+}
+
+TEMPLATE_TEST_CASE("parse_value() cannot parse hexadecimal values for floating-point numbers", "[parse_value]", float, double, long double)
+{
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0x"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0X"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0xFF"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0XFF"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0x1A.3"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0X4E.C"), CLArgs::ParseValueException<TestType>);
+}
+
+TEMPLATE_TEST_CASE("parse_value() cannot parse binary values for floating-point numbers", "[parse_value]", float, double, long double)
+{
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0b"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0B"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0b010"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0B1101"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0b01.1001"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0b1001.0110"), CLArgs::ParseValueException<TestType>);
+}
+
+TEST_CASE("parse_value() can parse characters", "[parse_value]")
+{
+    CHECK_THROWS_AS(CLArgs::parse_value<char>(""), CLArgs::ParseValueException<char>);
+
+    CHECK(CLArgs::parse_value<char>("a") == 'a');
+    CHECK(CLArgs::parse_value<char>("Z") == 'Z');
+    CHECK(CLArgs::parse_value<char>("1") == '1');
+    CHECK(CLArgs::parse_value<char>("@") == '@');
+    CHECK(CLArgs::parse_value<char>(" ") == ' ');
+    CHECK(CLArgs::parse_value<char>("\n") == '\n');
+    CHECK(CLArgs::parse_value<char>("\t") == '\t');
+
+    CHECK_THROWS_AS(CLArgs::parse_value<char>("ab"), CLArgs::ParseValueException<char>);
+    CHECK_THROWS_AS(CLArgs::parse_value<char>("123"), CLArgs::ParseValueException<char>);
+    CHECK_THROWS_AS(CLArgs::parse_value<char>("abc"), CLArgs::ParseValueException<char>);
+    CHECK_THROWS_AS(CLArgs::parse_value<char>("  "), CLArgs::ParseValueException<char>);
+
+    CHECK_THROWS_AS(CLArgs::parse_value<char>("\0"), CLArgs::ParseValueException<char>);
+    CHECK_THROWS_AS(CLArgs::parse_value<char>("\0\0"), CLArgs::ParseValueException<char>);
+}
+
 TEST_CASE("parse_value() can parse boolean values", "[parse_value]")
 {
     CHECK_THROWS_AS(CLArgs::parse_value<bool>(""), CLArgs::ParseValueException<bool>);
@@ -197,25 +284,4 @@ TEST_CASE("parse_value() can parse boolean values", "[parse_value]")
     CHECK(CLArgs::parse_value<bool>("0") == false);
 
     CHECK_THROWS_AS(CLArgs::parse_value<bool>("enable"), CLArgs::ParseValueException<bool>);
-}
-
-TEST_CASE("parse_value() can parse characters", "[parse_value]")
-{
-    CHECK_THROWS_AS(CLArgs::parse_value<char>(""), CLArgs::ParseValueException<char>);
-
-    CHECK(CLArgs::parse_value<char>("a") == 'a');
-    CHECK(CLArgs::parse_value<char>("Z") == 'Z');
-    CHECK(CLArgs::parse_value<char>("1") == '1');
-    CHECK(CLArgs::parse_value<char>("@") == '@');
-    CHECK(CLArgs::parse_value<char>(" ") == ' ');
-    CHECK(CLArgs::parse_value<char>("\n") == '\n');
-    CHECK(CLArgs::parse_value<char>("\t") == '\t');
-
-    CHECK_THROWS_AS(CLArgs::parse_value<char>("ab"), CLArgs::ParseValueException<char>);
-    CHECK_THROWS_AS(CLArgs::parse_value<char>("123"), CLArgs::ParseValueException<char>);
-    CHECK_THROWS_AS(CLArgs::parse_value<char>("abc"), CLArgs::ParseValueException<char>);
-    CHECK_THROWS_AS(CLArgs::parse_value<char>("  "), CLArgs::ParseValueException<char>);
-
-    CHECK_THROWS_AS(CLArgs::parse_value<char>("\0"), CLArgs::ParseValueException<char>);
-    CHECK_THROWS_AS(CLArgs::parse_value<char>("\0\0"), CLArgs::ParseValueException<char>);
 }

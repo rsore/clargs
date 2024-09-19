@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <charconv>
+#include <cmath>
 #include <concepts>
 #include <exception>
 #include <filesystem>
@@ -22,12 +23,18 @@ namespace CLArgs
     T parse_value(std::string_view)
         requires(!std::is_same_v<T, bool> && !std::is_same_v<T, char>);
 
+    template <std::floating_point T>
+    T parse_value(std::string_view);
+
     template <typename T>
     constexpr std::string_view pretty_string_of_type();
 
     template <std::integral T>
     constexpr std::string_view pretty_string_of_type()
         requires(!std::is_same_v<T, bool> && !std::is_same_v<T, char>);
+
+    template <std::floating_point T>
+    constexpr std::string_view pretty_string_of_type();
 
     template <typename T>
     class ParseValueException final : public std::invalid_argument
@@ -113,40 +120,57 @@ CLArgs::parse_value(const std::string_view sv)
     return value;
 }
 
-template <>
-inline float
-CLArgs::parse_value<float>(const std::string_view sv)
+
+template <std::floating_point T>
+T
+CLArgs::parse_value(const std::string_view sv)
 {
     if (sv.empty())
     {
-        throw std::invalid_argument("sv cannot be empty");
+        throw ParseValueException<T>(sv, "String cannot be empty");
     }
 
-    return std::stof(sv.data());
-}
-
-template <>
-inline double
-CLArgs::parse_value<double>(const std::string_view sv)
-{
-    if (sv.empty())
+    if (constexpr std::array hex_prefixes{"0x", "0X"};
+        std::any_of(hex_prefixes.begin(), hex_prefixes.end(), [sv](const auto &prefix) { return sv.starts_with(prefix); }))
     {
-        throw std::invalid_argument("sv cannot be empty");
+        throw ParseValueException<T>(sv, "Hexadecimal formatting is not supported");
     }
 
-    return std::stod(sv.data());
-}
-
-template <>
-inline long double
-CLArgs::parse_value<long double>(const std::string_view sv)
-{
-    if (sv.empty())
+    if (constexpr std::array binary_prefixes{"0b", "0B"};
+        std::any_of(binary_prefixes.begin(), binary_prefixes.end(), [sv](const auto &prefix) { return sv.starts_with(prefix); }))
     {
-        throw std::invalid_argument("sv cannot be empty");
+        throw ParseValueException<T>(sv, "Binary formatting is not supported");
     }
 
-    return std::stold(sv.data());
+
+    const T value = [sv]
+    {
+        const auto *first = sv.data();
+        const auto  last  = sv.data() + sv.length();
+
+        T val{};
+        const auto [ptr, ec] = std::from_chars(first, last, val);
+
+        if (ec == std::errc::invalid_argument)
+        {
+            throw ParseValueException<T>(sv, "Invalid format");
+        }
+
+        if (ec == std::errc::result_out_of_range)
+        {
+            throw ParseValueException<T>(sv, "Number out of range");
+        }
+
+        if (ptr != last)
+        {
+            const std::string error_msg = std::string("Invalid character at '") + *ptr + '\'';
+            throw ParseValueException<T>(sv, error_msg);
+        }
+
+        return val;
+    }();
+
+    return value;
 }
 
 template <>
@@ -253,7 +277,7 @@ CLArgs::pretty_string_of_type()
             case 8:
                 return "64-bit unsigned integer";
             default:
-                return "unsigned integer (unknown size)";
+                return "unsigned integer";
         }
     }
     else
@@ -269,8 +293,29 @@ CLArgs::pretty_string_of_type()
             case 8:
                 return "64-bit signed integer";
             default:
-                return "signed integer (unknown size)";
+                return "signed integer";
         }
+    }
+}
+
+template <std::floating_point T>
+constexpr std::string_view
+CLArgs::pretty_string_of_type()
+{
+    switch (sizeof(T))
+    {
+        case 4:
+            return "32-bit floating-point number";
+        case 8:
+            return "64-bit floating-point number";
+        case 10:
+            return "80-bit floating-point number";
+        case 12:
+            return "96-bit floating-point number";
+        case 16:
+            return "128-bit floating-point number";
+        default:
+            return "floating-point number";
     }
 }
 
