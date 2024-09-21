@@ -6,9 +6,9 @@
 
 # CLArgs
 
-Command-line argument parser written in C++20.
+This library is a modern C++ (C++20) command-line argument parser designed with a focus on type safety, compile-time validation, and runtime performance. Unlike many other libraries, it avoids macros, dynamic allocation, type-erasure, and expensive runtime operations, ensuring a lightweight and efficient experience.
 
-Uses C++20 concepts and constraints to handle command-line argument parsing with static type-checking.
+At its core, this parser ensures that all argument types are validated and parsed at compile-time, minimizing the chances of runtime errors. Once parsing is complete, retrieving values is as simple as a constant-time array lookup, meaning that all command-line options are available as strongly-typed values with zero overhead.
 
 ## Example usage
 
