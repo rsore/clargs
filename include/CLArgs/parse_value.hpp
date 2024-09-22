@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <charconv>
+#include <chrono>
 #include <cmath>
 #include <concepts>
 #include <exception>
@@ -26,6 +27,15 @@ namespace CLArgs
     T parse_value(std::string_view);
 
     template <typename T>
+    concept StdChronoDuration = requires {
+        typename T::rep;
+        typename T::period;
+    } && std::is_same_v<T, std::chrono::duration<typename T::rep, typename T::period>>;
+
+    template <StdChronoDuration T>
+    T parse_value(std::string_view);
+
+    template <typename T>
     constexpr std::string_view pretty_string_of_type();
 
     template <std::integral T>
@@ -33,6 +43,9 @@ namespace CLArgs
         requires(!std::is_same_v<T, bool> && !std::is_same_v<T, char>);
 
     template <std::floating_point T>
+    constexpr std::string_view pretty_string_of_type();
+
+    template <StdChronoDuration T>
     constexpr std::string_view pretty_string_of_type();
 
     template <typename T>
@@ -263,6 +276,28 @@ CLArgs::parse_value<std::filesystem::path>(const std::string_view sv)
     return {sv};
 }
 
+template <CLArgs::StdChronoDuration T>
+T
+CLArgs::parse_value(const std::string_view sv)
+{
+    if (sv.empty())
+    {
+        throw ParseValueException<T>(sv, "String cannot be empty");
+    }
+
+    using UnderlyingValueType = typename T::rep;
+
+    try
+    {
+        const UnderlyingValueType value = parse_value<UnderlyingValueType>(sv);
+        return T{std::move(value)};
+    }
+    catch (const ParseValueException<UnderlyingValueType> &e)
+    {
+        throw ParseValueException<T>(sv, std::move(e.what()));
+    }
+}
+
 template <typename T>
 constexpr std::string_view
 CLArgs::pretty_string_of_type()
@@ -338,6 +373,54 @@ constexpr std::string_view
 CLArgs::pretty_string_of_type<std::filesystem::path>()
 {
     return "filesystem path";
+}
+
+template <CLArgs::StdChronoDuration T>
+constexpr std::string_view
+CLArgs::pretty_string_of_type()
+{
+    if constexpr (std::is_same_v<typename T::period, std::chrono::seconds::period>)
+    {
+        return "seconds";
+    }
+    else if constexpr (std::is_same_v<typename T::period, std::chrono::milliseconds::period>)
+    {
+        return "milliseconds";
+    }
+    else if constexpr (std::is_same_v<typename T::period, std::chrono::microseconds::period>)
+    {
+        return "microseconds";
+    }
+    else if constexpr (std::is_same_v<typename T::period, std::chrono::nanoseconds::period>)
+    {
+        return "nanoseconds";
+    }
+    else if constexpr (std::is_same_v<typename T::period, std::chrono::minutes::period>)
+    {
+        return "minutes";
+    }
+    else if constexpr (std::is_same_v<typename T::period, std::chrono::hours::period>)
+    {
+        return "hours";
+    }
+    else if constexpr (std::is_same_v<typename T::period, std::chrono::days::period>)
+    {
+        return "days";
+    }
+    else if constexpr (std::is_same_v<typename T::period, std::chrono::weeks::period>)
+    {
+        return "weeks";
+    }
+    else if constexpr (std::is_same_v<typename T::period, std::chrono::months::period>)
+    {
+        return "months";
+    }
+    else if constexpr (std::is_same_v<typename T::period, std::chrono::years::period>)
+    {
+        return "years";
+    }
+
+    return "duration";
 }
 
 #endif
