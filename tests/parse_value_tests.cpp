@@ -346,3 +346,66 @@ TEST_CASE("parse_value() can parse filesystem paths", "[parse_value]")
     CHECK(CLArgs::parse_value<std::filesystem::path>("//ServerName\\SharedFolder\\backup_2024.zip") ==
           std::filesystem::path("//ServerName/SharedFolder/backup_2024.zip"));
 }
+
+TEMPLATE_TEST_CASE("parse_value() can parse std::chrono::duration types",
+                   "[parse_value]",
+                   std::chrono::nanoseconds,
+                   std::chrono::microseconds,
+                   std::chrono::milliseconds,
+                   std::chrono::seconds,
+                   std::chrono::minutes,
+                   std::chrono::hours,
+                   std::chrono::days,
+                   std::chrono::weeks,
+                   std::chrono::months,
+                   std::chrono::years,
+                   std::chrono::duration<float>,
+                   std::chrono::duration<double>,
+                   std::chrono::duration<long double>,
+                   std::chrono::duration<std::uint8_t>,
+                   std::chrono::duration<std::uint16_t>,
+                   std::chrono::duration<std::uint32_t>,
+                   std::chrono::duration<std::uint64_t>,
+                   std::chrono::duration<std::int8_t>,
+                   std::chrono::duration<std::int16_t>,
+                   std::chrono::duration<std::int32_t>,
+                   std::chrono::duration<std::int64_t>)
+{
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>(""), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>(" "), CLArgs::ParseValueException<TestType>);
+
+    CHECK(std::is_same_v<decltype(CLArgs::parse_value<TestType>("1")), TestType>);
+
+    CHECK(CLArgs::parse_value<TestType>("1") == TestType{1});
+    CHECK(CLArgs::parse_value<TestType>("23") == TestType{23});
+
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("abc"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>(" 20"), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>("10 "), CLArgs::ParseValueException<TestType>);
+    CHECK_THROWS_AS(CLArgs::parse_value<TestType>(" 50 "), CLArgs::ParseValueException<TestType>);
+
+    if constexpr (std::floating_point<typename TestType::rep>)
+    {
+        CHECK(CLArgs::parse_value<TestType>("1.5") == TestType{1.5});
+    }
+    else
+    {
+        CHECK_THROWS_AS(CLArgs::parse_value<TestType>("1.5"), CLArgs::ParseValueException<TestType>);
+    }
+
+    if constexpr (std::is_signed_v<typename TestType::rep>)
+    {
+        CHECK(CLArgs::parse_value<TestType>("-1") == TestType{-1});
+        CHECK(CLArgs::parse_value<TestType>("-23") == TestType{-23});
+    }
+    else
+    {
+        CHECK_THROWS_AS(CLArgs::parse_value<TestType>("-1") == TestType{-1}, CLArgs::ParseValueException<TestType>);
+        CHECK_THROWS_AS(CLArgs::parse_value<TestType>("-23") == TestType{-23}, CLArgs::ParseValueException<TestType>);
+    }
+
+    if constexpr (std::is_integral_v<typename TestType::rep>)
+    {
+        CHECK_THROWS_AS(CLArgs::parse_value<TestType>("9999999999999999999999999999999999999999"), CLArgs::ParseValueException<TestType>);
+    }
+}
