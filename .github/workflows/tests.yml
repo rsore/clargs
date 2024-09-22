@@ -17,6 +17,6 @@ jobs:
     - name: configure
       run: mkdir build && cmake -Bbuild -S. -DCMAKE_BUILD_TYPE=Debug
     - name: make
-      run: cmake --build build --target tests -j${{ runner.cpu }}
+      run: cmake --build build --target CLArgsTests -j${{ runner.cpu }}
     - name: run tests
-      run: ./build/bin/tests
+      run: ./build/tests/CLArgsTests
