@@ -275,37 +275,19 @@ constexpr std::string_view
 CLArgs::pretty_string_of_type()
     requires(!std::is_same_v<T, bool> && !std::is_same_v<T, char>)
 {
-    if constexpr (std::is_unsigned_v<T>)
+    constexpr bool is_unsigned = std::is_unsigned_v<T>;
+    switch (sizeof(T))
     {
-        switch (sizeof(T))
-        {
-            case 1:
-                return "8-bit unsigned integer";
-            case 2:
-                return "16-bit unsigned integer";
-            case 4:
-                return "32-bit unsigned integer";
-            case 8:
-                return "64-bit unsigned integer";
-            default:
-                return "unsigned integer";
-        }
-    }
-    else
-    {
-        switch (sizeof(T))
-        {
-            case 1:
-                return "8-bit signed integer";
-            case 2:
-                return "16-bit signed integer";
-            case 4:
-                return "32-bit signed integer";
-            case 8:
-                return "64-bit signed integer";
-            default:
-                return "signed integer";
-        }
+        case 1:
+            return is_unsigned ? "8-bit unsigned integer" : "8-bit signed integer";
+        case 2:
+            return is_unsigned ? "16-bit unsigned integer" : "16-bit signed integer";
+        case 4:
+            return is_unsigned ? "32-bit unsigned integer" : "32-bit signed integer";
+        case 8:
+            return is_unsigned ? "64-bit unsigned integer" : "64-bit signed integer";
+        default:
+            return is_unsigned ? "unsigned integer" : "signed integer";
     }
 }
 
