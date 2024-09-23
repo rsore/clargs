@@ -400,8 +400,8 @@ TEMPLATE_TEST_CASE("parse_value() can parse std::chrono::duration types",
     }
     else
     {
-        CHECK_THROWS_AS(CLArgs::parse_value<TestType>("-1") == TestType{-1}, CLArgs::ParseValueException<TestType>);
-        CHECK_THROWS_AS(CLArgs::parse_value<TestType>("-23") == TestType{-23}, CLArgs::ParseValueException<TestType>);
+        CHECK_THROWS_AS(CLArgs::parse_value<TestType>("-1"), CLArgs::ParseValueException<TestType>);
+        CHECK_THROWS_AS(CLArgs::parse_value<TestType>("-23"), CLArgs::ParseValueException<TestType>);
     }
 
     if constexpr (std::is_integral_v<typename TestType::rep>)
