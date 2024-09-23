@@ -3,7 +3,7 @@
 
 #include <CLArgs/assert.hpp>
 #include <CLArgs/core.hpp>
-#include <CLArgs/from_string.hpp>
+#include <CLArgs/parse_value.hpp>
 #include <CLArgs/value_container.hpp>
 
 #include <cstddef>
@@ -114,7 +114,7 @@ CLArgs::Parser<Parsables...>::process_arg(std::vector<std::string_view> &all, st
             }
             try
             {
-                const auto value = from_string<typename This::ValueType>(*value_iter);
+                const auto value = parse_value<typename This::ValueType>(*value_iter);
                 values_.template set_value<This>(value);
             }
             catch (std::exception &e)

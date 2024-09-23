@@ -10,7 +10,7 @@ namespace CLArgs::_internal
     #ifndef NOMINMAX
         #define NOMINMAX
     #endif
-    #include <debugapi.h>
+    #include <windows.h>
 inline void
 CLArgs::_internal::debug_break()
 {
