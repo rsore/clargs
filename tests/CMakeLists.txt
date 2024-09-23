@@ -14,6 +14,12 @@ add_executable(CLArgsTests
         parse_value_tests.cpp
 )
 
+target_compile_options(CLArgsTests PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
+
 target_link_libraries(CLArgsTests PRIVATE
         CLArgs
         Catch2::Catch2WithMain
