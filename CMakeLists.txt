@@ -11,7 +11,7 @@ add_library(CLArgs INTERFACE
         include/CLArgs/singleton.hpp
         include/CLArgs/assert.hpp
         include/CLArgs/platform.hpp
-        include/CLArgs/from_string.hpp
+        include/CLArgs/parse_value.hpp
         include/CLArgs/value_container.hpp
 )
 
