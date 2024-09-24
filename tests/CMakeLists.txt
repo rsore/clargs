@@ -12,6 +12,8 @@ FetchContent_MakeAvailable(Catch2)
 add_executable(CLArgsTests
         parser_tests.cpp
         parse_value_tests.cpp
+        argument_queue_tests.cpp
+        test_utils.hpp
 )
 
 target_compile_options(CLArgsTests PRIVATE

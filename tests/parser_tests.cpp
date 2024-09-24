@@ -1,17 +1,7 @@
-#include <catch2/catch_test_macros.hpp>
-
 #include <CLArgs/parser.hpp>
+#include "test_utils.hpp"
 
-#include <array>
-
-template <std::size_t N>
-std::pair<int, char **>
-create_argc_argv(const std::array<const char *, N> &args)
-{
-    const int argc = static_cast<int>(N);
-    char    **argv = const_cast<char **>(args.data());
-    return std::make_pair(argc, argv);
-}
+#include <catch2/catch_test_macros.hpp>
 
 using VerboseFlag = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
 using FileOption  = CLArgs::Option<"--file", "FILE", "Specify file to load", std::filesystem::path>;
@@ -19,7 +9,7 @@ using FileOption  = CLArgs::Option<"--file", "FILE", "Specify file to load", std
 TEST_CASE("Parse arguments", "[parse]")
 {
     constexpr std::array args = {"program", "-v", "--file", "test.txt"};
-    auto [argc, argv]         = create_argc_argv(args);
+    auto [argc, argv]         = CLArgs::Testing::create_argc_argv_from_array(args);
 
     CLArgs::Parser<VerboseFlag, FileOption> parser;
     REQUIRE_NOTHROW(parser.parse(argc, argv));
