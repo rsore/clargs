@@ -126,4 +126,3 @@ TEST_CASE("ArgumentQueue tracks emptiness", "[ArgumentQueue]")
         REQUIRE_THROWS(std::ignore = queue.dequeue());
     }
 }
-
