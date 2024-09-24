@@ -30,15 +30,6 @@ TEST_CASE("ArgumentQueue can report the current size", "[ArgumentQueue]")
 
 TEST_CASE("ArgumentQueue throws when invalid arguments are passed", "[ArgumentQueue]")
 {
-    SECTION("argc cannot be less than 0")
-    {
-        constexpr std::array args{"foo", "bar", "baz"};
-        auto [_, argv] = CLArgs::Testing::create_argc_argv_from_array(args);
-
-        CHECK_THROWS(CLArgs::ArgumentQueue(-1, argv));
-        CHECK_THROWS(CLArgs::ArgumentQueue(-5, argv));
-    }
-
     SECTION("argv cannot be nullptr")
     {
         constexpr std::array args{"foo", "bar", "baz"};
@@ -73,6 +64,17 @@ TEST_CASE("Can get front element of ArgumentQueue", "[ArgumentQueue]")
 
             CHECK(queue.front() == "bar");
         }
+    }
+
+    SECTION("Checking front() several times will return the same value")
+    {
+        constexpr std::array<const char *, 3> args{"foo", "bar", "baz"};
+        auto [argc, argv] = CLArgs::Testing::create_argc_argv_from_array(args);
+        CLArgs::ArgumentQueue queue(argc, argv);
+
+        CHECK(queue.front() == "foo");
+        CHECK(queue.front() == "foo");
+        CHECK(queue.front() == "foo");
     }
 }
 

@@ -1,6 +1,7 @@
 #ifndef CLARGS_ARGUMENT_QUEUE_HPP
 #define CLARGS_ARGUMENT_QUEUE_HPP
 
+#include <algorithm>
 #include <span>
 #include <stdexcept>
 #include <string_view>
@@ -10,7 +11,7 @@ namespace CLArgs
     class ArgumentQueue
     {
     public:
-        ArgumentQueue(int argc, char **argv);
+        ArgumentQueue(std::size_t argument_count, char **arguments);
 
         [[nodiscard]] std::size_t size() const noexcept;
         [[nodiscard]] bool        empty() const noexcept;
@@ -24,27 +25,17 @@ namespace CLArgs
     };
 } // namespace CLArgs
 
-inline CLArgs::ArgumentQueue::ArgumentQueue(int argc, char **argv)
+inline CLArgs::ArgumentQueue::ArgumentQueue(const std::size_t argument_count, char **arguments) : arguments_(arguments, argument_count)
 {
-    if (argc < 0)
+    if (arguments == nullptr)
     {
-        throw std::invalid_argument("Cannot parse value less than 0 to ArgumentQueue constructor");
+        throw std::invalid_argument("Cannot pass nullptr as arguments to ArgumentQueue constructor");
     }
 
-    if (argv == nullptr)
+    if (std::any_of(arguments_.begin(), arguments_.end(), [](const char *arg) { return arg == nullptr; }))
     {
-        throw std::invalid_argument("Cannot pass nullptr as argv to ArgumentQueue constructor");
+        throw std::invalid_argument("None of the strings passed in arguments array to ArgumentQueue constructor can be nullptr");
     }
-
-    for (std::size_t i{}; i < static_cast<std::size_t>(argc); ++i)
-    {
-        if (argv[i] == nullptr)
-        {
-            throw std::invalid_argument("None of the strings passed in argv array to ArgumentQueue constructor can be nullptr");
-        }
-    }
-
-    arguments_ = std::span(argv, static_cast<std::size_t>(argc));
 }
 
 inline std::size_t
