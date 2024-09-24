@@ -13,6 +13,7 @@ add_library(CLArgs INTERFACE
         include/CLArgs/platform.hpp
         include/CLArgs/parse_value.hpp
         include/CLArgs/value_container.hpp
+        include/CLArgs/argument_queue.hpp
 )
 
 target_include_directories(CLArgs INTERFACE
