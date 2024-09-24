@@ -13,6 +13,6 @@ namespace CLArgs::Testing
         char    **argv = const_cast<char **>(args.data());
         return std::make_pair(argc, argv);
     }
-}
+} // namespace CLArgs::Testing
 
 #endif

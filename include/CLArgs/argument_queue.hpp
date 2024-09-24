@@ -1,6 +1,7 @@
 #ifndef CLARGS_ARGUMENT_QUEUE_HPP
 #define CLARGS_ARGUMENT_QUEUE_HPP
 
+#include <span>
 #include <stdexcept>
 #include <string_view>
 
@@ -18,10 +19,8 @@ namespace CLArgs
         [[nodiscard]] std::string_view dequeue();
 
     private:
-        std::size_t cursor_{0};
-
-        std::size_t number_of_arguments_{0};
-        char      **arguments_{nullptr};
+        std::span<char *> arguments_{};
+        std::size_t       cursor_{0};
     };
 } // namespace CLArgs
 
@@ -45,14 +44,13 @@ inline CLArgs::ArgumentQueue::ArgumentQueue(int argc, char **argv)
         }
     }
 
-    number_of_arguments_ = static_cast<std::size_t>(argc);
-    arguments_           = argv;
+    arguments_ = std::span(argv, static_cast<std::size_t>(argc));
 }
 
 inline std::size_t
 CLArgs::ArgumentQueue::size() const noexcept
 {
-    return number_of_arguments_ - cursor_;
+    return arguments_.size() - cursor_;
 }
 
 inline bool
