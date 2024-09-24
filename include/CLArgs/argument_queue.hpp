@@ -1,8 +1,8 @@
 #ifndef CLARGS_ARGUMENT_QUEUE_HPP
 #define CLARGS_ARGUMENT_QUEUE_HPP
 
-#include <string_view>
 #include <stdexcept>
+#include <string_view>
 
 namespace CLArgs
 {
@@ -11,19 +11,21 @@ namespace CLArgs
     public:
         ArgumentQueue(int argc, char **argv);
 
-        [[nodiscard]] bool
-            empty() const noexcept;
+        [[nodiscard]] std::size_t size() const noexcept;
+        [[nodiscard]] bool        empty() const noexcept;
+
+        [[nodiscard]] std::string_view front();
+        [[nodiscard]] std::string_view dequeue();
 
     private:
         std::size_t cursor_{0};
 
         std::size_t number_of_arguments_{0};
-        char **arguments_{nullptr};
+        char      **arguments_{nullptr};
     };
-}
+} // namespace CLArgs
 
-inline
-CLArgs::ArgumentQueue::ArgumentQueue(int argc, char **argv)
+inline CLArgs::ArgumentQueue::ArgumentQueue(int argc, char **argv)
 {
     if (argc < 0)
     {
@@ -44,13 +46,41 @@ CLArgs::ArgumentQueue::ArgumentQueue(int argc, char **argv)
     }
 
     number_of_arguments_ = static_cast<std::size_t>(argc);
-    arguments_ = argv;
+    arguments_           = argv;
+}
+
+inline std::size_t
+CLArgs::ArgumentQueue::size() const noexcept
+{
+    return number_of_arguments_ - cursor_;
 }
 
 inline bool
 CLArgs::ArgumentQueue::empty() const noexcept
 {
-    return (cursor_ == number_of_arguments_);
+    return size() == 0;
+}
+
+inline std::string_view
+CLArgs::ArgumentQueue::front()
+{
+    if (empty())
+    {
+        throw std::logic_error("Cannot call front() on empty ArgumentQueue, consider checking emptiness first using empty()");
+    }
+
+    return {arguments_[cursor_]};
+}
+
+inline std::string_view
+CLArgs::ArgumentQueue::dequeue()
+{
+    if (empty())
+    {
+        throw std::logic_error("Cannot call dequeue() on empty ArgumentQueue, consider checking emptiness first using empty()");
+    }
+
+    return {arguments_[cursor_++]};
 }
 
 #endif
