@@ -35,6 +35,14 @@ TEST_CASE("ArgumentQueue can report the current size", "[ArgumentQueue]")
 
 TEST_CASE("ArgumentQueue throws when invalid arguments are passed", "[ArgumentQueue]")
 {
+    SECTION("argc cannot be less than 0")
+    {
+        auto [_, argv] = CLArgs::Testing::create_argc_argv_from_array(std::array{"foo", "bar", "baz"});
+
+        CHECK_THROWS(CLArgs::ArgumentQueue(-1, argv));
+        CHECK_THROWS(CLArgs::ArgumentQueue(-5, argv));
+    }
+
     SECTION("argv cannot be nullptr")
     {
         auto [argc, _] = CLArgs::Testing::create_argc_argv_from_array(std::array{"foo", "bar", "baz"});

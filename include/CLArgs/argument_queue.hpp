@@ -13,7 +13,7 @@ namespace CLArgs
     class ArgumentQueue
     {
     public:
-        ArgumentQueue(std::size_t argument_count, char **arguments);
+        ArgumentQueue(int argc, char **argv);
 
         [[nodiscard]] std::size_t size() const noexcept;
         [[nodiscard]] bool        empty() const noexcept;
@@ -30,16 +30,23 @@ namespace CLArgs
     };
 } // namespace CLArgs
 
-inline CLArgs::ArgumentQueue::ArgumentQueue(const std::size_t argument_count, char **arguments) : arguments_(arguments, argument_count)
+inline CLArgs::ArgumentQueue::ArgumentQueue(const int argc, char **argv)
 {
-    if (arguments == nullptr)
+    if (argc < 0)
     {
-        throw std::invalid_argument("Cannot pass nullptr as arguments to ArgumentQueue constructor");
+        throw std::invalid_argument("Cannot pass a negative value as argc to ArgumentQueue destructor");
     }
+
+    if (argv == nullptr)
+    {
+        throw std::invalid_argument("Cannot pass nullptr as argv to ArgumentQueue constructor");
+    }
+
+    arguments_ = std::span(argv, static_cast<std::size_t>(argc));
 
     if (std::any_of(arguments_.begin(), arguments_.end(), [](const char *arg) { return arg == nullptr; }))
     {
-        throw std::invalid_argument("None of the strings passed in arguments array to ArgumentQueue constructor can be nullptr");
+        throw std::invalid_argument("None of the strings passed in argv array to ArgumentQueue constructor can be nullptr");
     }
 }
 
