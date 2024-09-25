@@ -13,24 +13,24 @@ namespace CLArgs
     class ArgumentQueue
     {
     public:
-        ArgumentQueue(int argc, char **argv);
+        ArgumentQueue(int argc, const char *const *argv);
 
         [[nodiscard]] std::size_t size() const noexcept;
         [[nodiscard]] bool        empty() const noexcept;
 
-        [[nodiscard]] std::string_view front();
+        [[nodiscard]] std::string_view front() const;
 
         [[nodiscard]] std::string_view dequeue();
         template <std::size_t N>
         [[nodiscard]] std::array<std::string_view, N> dequeue();
 
     private:
-        std::span<char *> arguments_{};
-        std::size_t       cursor_{0};
+        std::span<const char *const> arguments_{};
+        std::size_t                  cursor_{0};
     };
 } // namespace CLArgs
 
-inline CLArgs::ArgumentQueue::ArgumentQueue(const int argc, char **argv)
+inline CLArgs::ArgumentQueue::ArgumentQueue(const int argc, const char *const *const argv)
 {
     if (argc < 0)
     {
@@ -44,7 +44,7 @@ inline CLArgs::ArgumentQueue::ArgumentQueue(const int argc, char **argv)
 
     arguments_ = std::span(argv, static_cast<std::size_t>(argc));
 
-    if (std::any_of(arguments_.begin(), arguments_.end(), [](const char *arg) { return arg == nullptr; }))
+    if (std::any_of(arguments_.begin(), arguments_.end(), [](const char *const arg) { return arg == nullptr; }))
     {
         throw std::invalid_argument("None of the strings passed in argv array to ArgumentQueue constructor can be nullptr");
     }
@@ -63,7 +63,7 @@ CLArgs::ArgumentQueue::empty() const noexcept
 }
 
 inline std::string_view
-CLArgs::ArgumentQueue::front()
+CLArgs::ArgumentQueue::front() const
 {
     if (empty())
     {

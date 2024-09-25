@@ -133,7 +133,6 @@ TEST_CASE("ArgumentQueue tracks emptiness", "[ArgumentQueue]")
     }
 }
 
-
 TEST_CASE("ArgumentQueue supports dequeuing multiple elements", "[ArgumentQueue]")
 {
     auto [argc, argv] = CLArgs::Testing::create_argc_argv_from_array(std::array{"foo", "bar", "baz", "qux", "quux", "corge"});
