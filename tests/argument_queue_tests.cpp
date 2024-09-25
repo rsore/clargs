@@ -159,3 +159,29 @@ TEST_CASE("ArgumentQueue supports dequeuing multiple elements", "[ArgumentQueue]
         CHECK(first3 == std::array{"foo"sv, "bar"sv, "baz"sv});
     }
 }
+
+TEST_CASE("ArgumentQueue is iterable", "[ArgumentQueue]")
+{
+    constexpr std::array args{"foo", "bar", "baz"};
+    auto [argc, argv] = CLArgs::Testing::create_argc_argv_from_array(args);
+    CLArgs::ArgumentQueue queue(argc, argv);
+
+    REQUIRE(queue.size() == 3);
+    REQUIRE(queue.front() == "foo");
+
+    // Range-based for loop should properly use iterators
+    for (const auto &arg : queue)
+    {
+        CHECK(std::is_same_v<std::decay_t<decltype(arg)>, std::string_view>);
+        CHECK(std::find(args.begin(), args.end(), arg) != args.end());
+    }
+
+    // STL algorithms should be supported, using the iterator type
+    CHECK(std::all_of(queue.begin(),
+                      queue.end(),
+                      [&args](const std::string_view &arg) { return std::find(args.begin(), args.end(), arg) != args.end(); }));
+
+    CHECK(queue.size() == 3);
+    CHECK(queue.front() == "foo");
+
+}
