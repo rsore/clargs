@@ -16,6 +16,14 @@ namespace CLArgs
         class Iterator;
 
     public:
+        using value_type      = std::string_view;
+        using reference       = std::string_view &;
+        using const_reference = const std::string_view &;
+        using iterator        = Iterator;
+        using const_iterator  = const Iterator;
+        using difference_type = std::ptrdiff_t;
+        using size_type       = std::size_t;
+
         ArgumentQueue(int argc, const char *const *argv);
 
         [[nodiscard]] std::size_t size() const noexcept;
@@ -23,9 +31,9 @@ namespace CLArgs
 
         [[nodiscard]] std::string_view front() const;
 
-        [[nodiscard]] std::string_view dequeue();
+        std::string_view dequeue();
         template <std::size_t N>
-        [[nodiscard]] std::array<std::string_view, N> dequeue();
+        std::array<std::string_view, N> dequeue();
 
         [[nodiscard]] Iterator begin() const;
         [[nodiscard]] Iterator end() const;
@@ -58,6 +66,7 @@ namespace CLArgs
         const CLArgs::ArgumentQueue &queue_;
         std::size_t                  cursor_;
     };
+
 } // namespace CLArgs
 
 inline CLArgs::ArgumentQueue::ArgumentQueue(const int argc, const char *const *const argv)
