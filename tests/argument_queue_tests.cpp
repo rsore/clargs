@@ -183,5 +183,4 @@ TEST_CASE("ArgumentQueue is iterable", "[ArgumentQueue]")
 
     CHECK(queue.size() == 3);
     CHECK(queue.front() == "foo");
-
 }

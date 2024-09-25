@@ -26,3 +26,5 @@ target_link_libraries(CLArgsTests PRIVATE
         CLArgs
         Catch2::Catch2WithMain
 )
+
+add_subdirectory(benchmark)
