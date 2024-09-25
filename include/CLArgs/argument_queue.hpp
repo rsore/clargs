@@ -2,6 +2,8 @@
 #define CLARGS_ARGUMENT_QUEUE_HPP
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
 #include <span>
 #include <stdexcept>
 #include <string_view>
@@ -17,7 +19,10 @@ namespace CLArgs
         [[nodiscard]] bool        empty() const noexcept;
 
         [[nodiscard]] std::string_view front();
+
         [[nodiscard]] std::string_view dequeue();
+        template <std::size_t N>
+        [[nodiscard]] std::array<std::string_view, N> dequeue();
 
     private:
         std::span<char *> arguments_{};
@@ -70,6 +75,21 @@ CLArgs::ArgumentQueue::dequeue()
     }
 
     return {arguments_[cursor_++]};
+}
+
+template <std::size_t N>
+std::array<std::string_view, N>
+CLArgs::ArgumentQueue::dequeue()
+{
+    if (size() < N)
+    {
+        throw std::logic_error("Attempted to dequeue more elements in ArgumentQueue than there are in the queue, consider checking size "
+                               "first using size()");
+    }
+
+    std::array<std::string_view, N> arr{};
+    std::ranges::generate(arr, [this] { return dequeue(); });
+    return arr;
 }
 
 #endif
