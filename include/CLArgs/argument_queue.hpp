@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <iterator>
 #include <span>
 #include <stdexcept>
 #include <string_view>
@@ -12,6 +13,8 @@ namespace CLArgs
 {
     class ArgumentQueue
     {
+        class Iterator;
+
     public:
         ArgumentQueue(int argc, const char *const *argv);
 
@@ -24,9 +27,36 @@ namespace CLArgs
         template <std::size_t N>
         [[nodiscard]] std::array<std::string_view, N> dequeue();
 
+        [[nodiscard]] Iterator begin() const;
+        [[nodiscard]] Iterator end() const;
+
     private:
         std::span<const char *const> arguments_{};
         std::size_t                  cursor_{0};
+    };
+
+    class ArgumentQueue::Iterator
+    {
+    public:
+        using value_type        = std::string_view;
+        using difference_type   = std::ptrdiff_t;
+        using pointer           = value_type *; // Add pointer type
+        using reference         = value_type &; // Add reference type
+        using iterator_category = std::forward_iterator_tag;
+
+        Iterator(const ArgumentQueue &queue, std::size_t cursor);
+
+        [[nodiscard]] value_type operator*() const;
+
+        Iterator &operator++();
+        Iterator  operator++(int);
+
+        [[nodiscard]] bool operator==(const Iterator &other) const;
+        [[nodiscard]] bool operator!=(const Iterator &other) const;
+
+    private:
+        const CLArgs::ArgumentQueue &queue_;
+        std::size_t                  cursor_;
     };
 } // namespace CLArgs
 
@@ -97,6 +127,55 @@ CLArgs::ArgumentQueue::dequeue()
     std::array<std::string_view, N> arr{};
     std::ranges::generate(arr, [this] { return dequeue(); });
     return arr;
+}
+
+CLArgs::ArgumentQueue::Iterator
+CLArgs::ArgumentQueue::begin() const
+{
+    return {*this, cursor_};
+}
+
+CLArgs::ArgumentQueue::Iterator
+CLArgs::ArgumentQueue::end() const
+{
+    return {*this, arguments_.size()};
+}
+
+CLArgs::ArgumentQueue::Iterator::Iterator(const ArgumentQueue &queue, const std::size_t cursor) : queue_(queue), cursor_{cursor}
+{
+}
+
+CLArgs::ArgumentQueue::Iterator::value_type
+CLArgs::ArgumentQueue::Iterator::operator*() const
+{
+    return {queue_.arguments_[cursor_]};
+}
+
+CLArgs::ArgumentQueue::Iterator &
+CLArgs::ArgumentQueue::Iterator::operator++()
+{
+    ++cursor_;
+    return *this;
+}
+
+CLArgs::ArgumentQueue::Iterator
+CLArgs::ArgumentQueue::Iterator::operator++(int)
+{
+    Iterator tmp = *this;
+    ++(*this);
+    return tmp;
+}
+
+bool
+CLArgs::ArgumentQueue::Iterator::operator==(const Iterator &other) const
+{
+    return (&queue_ == &other.queue_) && (cursor_ == other.cursor_);
+}
+
+bool
+CLArgs::ArgumentQueue::Iterator::operator!=(const Iterator &other) const
+{
+    return !(*this == other);
 }
 
 #endif
