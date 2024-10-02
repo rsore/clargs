@@ -115,12 +115,12 @@ CLArgs::Parser<Parsables...>::process_arg(auto &all_args)
                    << arg << "\": " << e.what();
                 throw std::invalid_argument(ss.str());
             }
-            all_args = all_args | std::views::drop(2);
+            all_args = std::views::drop(all_args, 2);
         }
         else
         {
             values_.template set_value<This>(true);
-            all_args = all_args | std::views::drop(1);
+            all_args = std::views::drop(all_args, 1);
         }
     }
     else
