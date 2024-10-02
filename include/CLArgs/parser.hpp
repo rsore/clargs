@@ -7,10 +7,9 @@
 #include <CLArgs/value_container.hpp>
 
 #include <cstddef>
-#include <iostream>
 #include <optional>
+#include <ranges>
 #include <sstream>
-#include <vector>
 
 namespace CLArgs
 {
@@ -44,7 +43,7 @@ namespace CLArgs
         void check_invariant() const;
 
         template <Parsable This, Parsable... Rest>
-        void process_arg(std::vector<std::string_view> &, std::vector<std::string_view>::iterator &);
+        void process_arg(auto &all_args);
 
         template <Parsable This, Parsable... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
@@ -70,16 +69,9 @@ CLArgs::Parser<Parsables...>::parse(int argc, char **argv)
     program_ = *argv++;
     argc -= 1;
 
-    std::vector<std::string_view> arguments(argc);
-    for (int i{}; i < argc; ++i)
+    for (auto arguments = std::views::counted(argv, argc); !arguments.empty();)
     {
-        arguments[i] = argv[i];
-    }
-
-    while (!arguments.empty())
-    {
-        auto front = arguments.begin();
-        process_arg<Parsables...>(arguments, front);
+        process_arg<Parsables...>(arguments);
     }
 
     has_successfully_parsed_args_ = true;
@@ -88,12 +80,11 @@ CLArgs::Parser<Parsables...>::parse(int argc, char **argv)
 template <CLArgs::Parsable... Parsables>
 template <CLArgs::Parsable This, CLArgs::Parsable... Rest>
 void
-CLArgs::Parser<Parsables...>::process_arg(std::vector<std::string_view> &all, std::vector<std::string_view>::iterator &current)
+CLArgs::Parser<Parsables...>::process_arg(auto &all_args)
 {
-    std::string_view arg = *current;
+    const auto all_args_as_sv = all_args | std::views::transform([](const char *c_str) { return std::string_view{c_str}; });
 
-    const bool found = std::ranges::find(This::identifiers, arg) != This::identifiers.end();
-    if (found)
+    if (const auto arg = all_args_as_sv.front(); std::ranges::find(This::identifiers, arg) != This::identifiers.end())
     {
         if (values_.template get_value<This>() != std::nullopt)
         {
@@ -104,39 +95,39 @@ CLArgs::Parser<Parsables...>::process_arg(std::vector<std::string_view> &all, st
 
         if constexpr (CmdOption<This>)
         {
-            auto value_iter = current + 1;
-
-            if (value_iter == all.end())
+            if (all_args.size() <= 1)
             {
                 std::stringstream ss;
                 ss << "Expected value for option \"" << arg << "\"";
                 throw std::invalid_argument(ss.str());
             }
+
+            const auto value_arg = all_args_as_sv[1];
             try
             {
-                const auto value = parse_value<typename This::ValueType>(*value_iter);
+                const auto value = parse_value<typename This::ValueType>(value_arg);
                 values_.template set_value<This>(value);
             }
             catch (std::exception &e)
             {
                 std::stringstream ss;
-                ss << "Failed to parse \"" << *value_iter << "\" as type " << typeid(typename This::ValueType).name() << " for option \""
+                ss << "Failed to parse \"" << value_arg << "\" as type " << typeid(typename This::ValueType).name() << " for option \""
                    << arg << "\": " << e.what();
                 throw std::invalid_argument(ss.str());
             }
-            all.erase(current, value_iter + 1);
+            all_args = all_args | std::views::drop(2);
         }
         else
         {
             values_.template set_value<This>(true);
-            all.erase(current);
+            all_args = all_args | std::views::drop(1);
         }
     }
     else
     {
         if constexpr (sizeof...(Rest) > 0)
         {
-            process_arg<Rest...>(all, current);
+            process_arg<Rest...>(all_args);
         }
         else
         {
