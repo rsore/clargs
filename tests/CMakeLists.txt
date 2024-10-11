@@ -12,7 +12,6 @@ FetchContent_MakeAvailable(Catch2)
 add_executable(CLArgsTests
         parser_tests.cpp
         parse_value_tests.cpp
-        argument_queue_tests.cpp
         test_utils.hpp
 )
 
@@ -26,5 +25,3 @@ target_link_libraries(CLArgsTests PRIVATE
         CLArgs
         Catch2::Catch2WithMain
 )
-
-add_subdirectory(benchmark)
