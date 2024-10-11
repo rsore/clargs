@@ -18,8 +18,8 @@ namespace CLArgs
     class Parser
     {
     public:
-         Parser() noexcept = default;
-        ~Parser()          = default;
+        Parser() noexcept = default;
+        ~Parser()         = default;
 
         Parser(const Parser &)  = delete;
         Parser(const Parser &&) = delete;
