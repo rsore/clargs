@@ -10,6 +10,7 @@
 #include <optional>
 #include <ranges>
 #include <sstream>
+#include <string_view>
 
 namespace CLArgs
 {
