@@ -43,7 +43,7 @@ namespace CLArgs
         void check_invariant() const;
 
         template <Parsable This, Parsable... Rest>
-        void process_arg(auto &all_args);
+        void parse_arg(auto &remaining_args);
 
         template <Parsable This, Parsable... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
@@ -69,9 +69,9 @@ CLArgs::Parser<Parsables...>::parse(int argc, char **argv)
     program_ = *argv++;
     argc -= 1;
 
-    for (auto arguments = std::views::counted(argv, argc); !arguments.empty();)
+    for (auto remaining_args = std::views::counted(argv, argc); !remaining_args.empty();)
     {
-        process_arg<Parsables...>(arguments);
+        parse_arg<Parsables...>(remaining_args);
     }
 
     has_successfully_parsed_args_ = true;
@@ -80,12 +80,14 @@ CLArgs::Parser<Parsables...>::parse(int argc, char **argv)
 template <CLArgs::Parsable... Parsables>
 template <CLArgs::Parsable This, CLArgs::Parsable... Rest>
 void
-CLArgs::Parser<Parsables...>::process_arg(auto &all_args)
+CLArgs::Parser<Parsables...>::parse_arg(auto &remaining_args)
 {
-    const auto all_args_as_sv = all_args | std::views::transform([](const char *c_str) { return std::string_view{c_str}; });
+    const auto arg = remaining_args.front();
 
-    if (const auto arg = all_args_as_sv.front(); std::ranges::find(This::identifiers, arg) != This::identifiers.end())
+    if (std::ranges::find(This::identifiers, arg) != This::identifiers.end())
     {
+        remaining_args = std::views::drop(remaining_args, 1);
+
         if (values_.template get_value<This>() != std::nullopt)
         {
             std::stringstream ss;
@@ -93,16 +95,26 @@ CLArgs::Parser<Parsables...>::process_arg(auto &all_args)
             throw std::invalid_argument(ss.str());
         }
 
-        if constexpr (CmdOption<This>)
+        // This assertion is here for future-proofing. If the definition of
+        // Parsable is updated, this logic must also be updated
+        static_assert(CmdFlag<This> || CmdOption<This>);
+
+        if constexpr (CmdFlag<This>)
         {
-            if (all_args.size() <= 1)
+            values_.template set_value<This>(true);
+        }
+        else if constexpr (CmdOption<This>)
+        {
+            if (remaining_args.empty())
             {
                 std::stringstream ss;
                 ss << "Expected value for option \"" << arg << "\"";
                 throw std::invalid_argument(ss.str());
             }
 
-            const auto value_arg = all_args_as_sv[1];
+            const auto value_arg = remaining_args.front();
+            remaining_args       = std::views::drop(remaining_args, 1);
+
             try
             {
                 const auto value = parse_value<typename This::ValueType>(value_arg);
@@ -111,30 +123,23 @@ CLArgs::Parser<Parsables...>::process_arg(auto &all_args)
             catch (std::exception &e)
             {
                 std::stringstream ss;
-                ss << "Failed to parse \"" << value_arg << "\" as type " << typeid(typename This::ValueType).name() << " for option \""
-                   << arg << "\": " << e.what();
+                ss << "Failed to parse value for option \"" << arg << "\": " << e.what();
                 throw std::invalid_argument(ss.str());
             }
-            all_args = std::views::drop(all_args, 2);
         }
-        else
-        {
-            values_.template set_value<This>(true);
-            all_args = std::views::drop(all_args, 1);
-        }
+
+        return;
+    }
+
+    if constexpr (sizeof...(Rest) > 0)
+    {
+        parse_arg<Rest...>(remaining_args);
     }
     else
     {
-        if constexpr (sizeof...(Rest) > 0)
-        {
-            process_arg<Rest...>(all_args);
-        }
-        else
-        {
-            std::stringstream ss;
-            ss << "Unknown option \"" << arg << "\"";
-            throw std::invalid_argument(ss.str());
-        }
+        std::stringstream ss;
+        ss << "Unknown option \"" << arg << "\"";
+        throw std::invalid_argument(ss.str());
     }
 }
 
