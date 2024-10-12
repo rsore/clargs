@@ -419,8 +419,10 @@ CLArgs::pretty_string_of_type()
     {
         return "years";
     }
-
-    return "duration";
+    else
+    {
+        return "duration";
+    }
 }
 
 #endif
