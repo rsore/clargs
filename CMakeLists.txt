@@ -20,12 +20,11 @@ target_include_directories(CLArgs INTERFACE
 )
 
 option(CLARGS_BUILD_EXAMPLES "Build CLArgs examples" ON)
+option(CLARGS_BUILD_TESTS "Build CLArgs tests" ON)
 
 if (${CLARGS_BUILD_EXAMPLES})
     add_subdirectory(examples)
 endif ()
-
-option(CLARGS_BUILD_TESTS "Build CLArgs tests" ON)
 
 if (${CLARGS_BUILD_TESTS})
     add_subdirectory(tests/)

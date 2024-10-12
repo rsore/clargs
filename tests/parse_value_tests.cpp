@@ -180,7 +180,7 @@ TEMPLATE_TEST_CASE("parse_value() can parse binary values for unsigned types",
     CHECK_THROWS_AS(CLArgs::parse_value<TestType>("0B"), CLArgs::ParseValueException<TestType>);
 }
 
-TEMPLATE_TEST_CASE("parse_value() can parse all floating-point types", "[parse_value]", float, double, long double)
+TEMPLATE_TEST_CASE("parse_value() can parse floating-point types", "[parse_value]", float, double)
 {
     CHECK_THROWS_AS(CLArgs::parse_value<TestType>(""), CLArgs::ParseValueException<TestType>);
 

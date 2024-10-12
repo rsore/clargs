@@ -7,10 +7,10 @@
 #include <CLArgs/value_container.hpp>
 
 #include <cstddef>
-#include <iostream>
 #include <optional>
+#include <ranges>
 #include <sstream>
-#include <vector>
+#include <string_view>
 
 namespace CLArgs
 {
@@ -19,6 +19,7 @@ namespace CLArgs
     {
     public:
         Parser() noexcept = default;
+        ~Parser()         = default;
 
         Parser(const Parser &)  = delete;
         Parser(const Parser &&) = delete;
@@ -44,7 +45,7 @@ namespace CLArgs
         void check_invariant() const;
 
         template <Parsable This, Parsable... Rest>
-        void process_arg(std::vector<std::string_view> &, std::vector<std::string_view>::iterator &);
+        void parse_arg(auto &remaining_args);
 
         template <Parsable This, Parsable... Rest>
         static constexpr void append_option_descriptions_to_usage(std::stringstream &);
@@ -70,16 +71,9 @@ CLArgs::Parser<Parsables...>::parse(int argc, char **argv)
     program_ = *argv++;
     argc -= 1;
 
-    std::vector<std::string_view> arguments(argc);
-    for (int i{}; i < argc; ++i)
+    for (auto remaining_args = std::views::counted(argv, argc); !remaining_args.empty();)
     {
-        arguments[i] = argv[i];
-    }
-
-    while (!arguments.empty())
-    {
-        auto front = arguments.begin();
-        process_arg<Parsables...>(arguments, front);
+        parse_arg<Parsables...>(remaining_args);
     }
 
     has_successfully_parsed_args_ = true;
@@ -88,13 +82,14 @@ CLArgs::Parser<Parsables...>::parse(int argc, char **argv)
 template <CLArgs::Parsable... Parsables>
 template <CLArgs::Parsable This, CLArgs::Parsable... Rest>
 void
-CLArgs::Parser<Parsables...>::process_arg(std::vector<std::string_view> &all, std::vector<std::string_view>::iterator &current)
+CLArgs::Parser<Parsables...>::parse_arg(auto &remaining_args)
 {
-    std::string_view arg = *current;
+    const auto arg = remaining_args.front();
 
-    const bool found = std::ranges::find(This::identifiers, arg) != This::identifiers.end();
-    if (found)
+    if (std::ranges::find(This::identifiers, arg) != This::identifiers.end())
     {
+        remaining_args = std::views::drop(remaining_args, 1);
+
         if (values_.template get_value<This>() != std::nullopt)
         {
             std::stringstream ss;
@@ -102,48 +97,51 @@ CLArgs::Parser<Parsables...>::process_arg(std::vector<std::string_view> &all, st
             throw std::invalid_argument(ss.str());
         }
 
-        if constexpr (CmdOption<This>)
-        {
-            auto value_iter = current + 1;
+        // This assertion is here for future-proofing. If the definition of
+        // Parsable is updated, this logic must also be updated
+        static_assert(CmdFlag<This> || CmdOption<This>);
 
-            if (value_iter == all.end())
+        if constexpr (CmdFlag<This>)
+        {
+            values_.template set_value<This>(true);
+        }
+        else if constexpr (CmdOption<This>)
+        {
+            if (remaining_args.empty())
             {
                 std::stringstream ss;
                 ss << "Expected value for option \"" << arg << "\"";
                 throw std::invalid_argument(ss.str());
             }
+
+            const auto value_arg = remaining_args.front();
+            remaining_args       = std::views::drop(remaining_args, 1);
+
             try
             {
-                const auto value = parse_value<typename This::ValueType>(*value_iter);
+                const auto value = parse_value<typename This::ValueType>(value_arg);
                 values_.template set_value<This>(value);
             }
             catch (std::exception &e)
             {
                 std::stringstream ss;
-                ss << "Failed to parse \"" << *value_iter << "\" as type " << typeid(typename This::ValueType).name() << " for option \""
-                   << arg << "\": " << e.what();
+                ss << "Failed to parse value for option \"" << arg << "\": " << e.what();
                 throw std::invalid_argument(ss.str());
             }
-            all.erase(current, value_iter + 1);
         }
-        else
-        {
-            values_.template set_value<This>(true);
-            all.erase(current);
-        }
+
+        return;
+    }
+
+    if constexpr (sizeof...(Rest) > 0)
+    {
+        parse_arg<Rest...>(remaining_args);
     }
     else
     {
-        if constexpr (sizeof...(Rest) > 0)
-        {
-            process_arg<Rest...>(all, current);
-        }
-        else
-        {
-            std::stringstream ss;
-            ss << "Unknown option \"" << arg << "\"";
-            throw std::invalid_argument(ss.str());
-        }
+        std::stringstream ss;
+        ss << "Unknown option \"" << arg << "\"";
+        throw std::invalid_argument(ss.str());
     }
 }
 
