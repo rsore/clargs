@@ -4,8 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <concepts>
-#include <cstdint>
-#include <iostream>
+#include <cstddef>
 #include <string_view>
 
 namespace CLArgs
@@ -65,6 +64,37 @@ namespace CLArgs
 
     template <typename T, typename... Ts>
     concept IsPartOf = (std::is_same_v<T, Ts> || ...);
+
+    template <typename...>
+    struct AllUnique : std::true_type
+    {
+    };
+
+    template <typename First, typename... Rest>
+    struct AllUnique<First, Rest...> : std::conditional_t<IsPartOf<First, Rest...>, std::false_type, AllUnique<Rest...>>
+    {
+    };
+
+    template <typename... Ts>
+    inline constexpr bool AllUnique_v = AllUnique<Ts...>::value;
+
+    template <typename T, typename Tuple>
+    struct TupleTypeIndex;
+
+    template <typename T, typename... Types>
+    struct TupleTypeIndex<T, std::tuple<T, Types...>>
+    {
+        static constexpr std::size_t value{0};
+    };
+
+    template <typename T, typename U, typename... Types>
+    struct TupleTypeIndex<T, std::tuple<U, Types...>>
+    {
+        static constexpr std::size_t value = 1 + TupleTypeIndex<T, std::tuple<Types...>>::value;
+    };
+
+    template <typename T, typename Tuple>
+    inline constexpr std::size_t TupleTypeIndex_v = TupleTypeIndex<T, Tuple>::value;
 
     template <Parsable Parsable>
     static consteval std::size_t identifier_list_length();
