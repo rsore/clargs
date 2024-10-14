@@ -8,12 +8,20 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: [ubuntu-24.04]
     
     steps:
     - uses: actions/checkout@v4
-    - name: install dependencies
-      run: sudo apt-get install build-essential libssl-dev -y
+    - name: Update apt repository
+      run: sudo apt-get update -y
+    - name: install basic dependencies
+      run: sudo apt-get install build-essential libssl-dev
+    - name: Install gcc14 and make it the default compiler
+      run: |
+        sudo add-apt-repository universe
+        sudo apt update -qq
+        sudo apt install -y gcc-14 g++-14 libpcre3 liblapack-dev
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 60 --slave /usr/bin/g++ g++ /usr/bin/g++-14
     - name: configure
       run: mkdir build && cmake -Bbuild -S. -DCMAKE_BUILD_TYPE=Debug
     - name: make

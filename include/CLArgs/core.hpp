@@ -4,8 +4,8 @@
 #include <algorithm>
 #include <array>
 #include <concepts>
-#include <cstdint>
-#include <iostream>
+#include <cstddef>
+#include <ranges>
 #include <string_view>
 
 namespace CLArgs
@@ -66,6 +66,37 @@ namespace CLArgs
     template <typename T, typename... Ts>
     concept IsPartOf = (std::is_same_v<T, Ts> || ...);
 
+    template <typename...>
+    struct AllUnique : std::true_type
+    {
+    };
+
+    template <typename First, typename... Rest>
+    struct AllUnique<First, Rest...> : std::conditional_t<IsPartOf<First, Rest...>, std::false_type, AllUnique<Rest...>>
+    {
+    };
+
+    template <typename... Ts>
+    inline constexpr bool AllUnique_v = AllUnique<Ts...>::value;
+
+    template <typename T, typename Tuple>
+    struct TupleTypeIndex;
+
+    template <typename T, typename... Types>
+    struct TupleTypeIndex<T, std::tuple<T, Types...>>
+    {
+        static constexpr std::size_t value{0};
+    };
+
+    template <typename T, typename U, typename... Types>
+    struct TupleTypeIndex<T, std::tuple<U, Types...>>
+    {
+        static constexpr std::size_t value = 1 + TupleTypeIndex<T, std::tuple<Types...>>::value;
+    };
+
+    template <typename T, typename Tuple>
+    inline constexpr std::size_t TupleTypeIndex_v = TupleTypeIndex<T, Tuple>::value;
+
     template <Parsable Parsable>
     static consteval std::size_t identifier_list_length();
 
@@ -93,23 +124,13 @@ CLArgs::array_from_delimited_string()
     constexpr char consecutive_delimiters[] = {delimiter, delimiter, '\0'};
     static_assert(strv.find(consecutive_delimiters) == std::string_view::npos, "consecutive delimiters are not allowed");
 
-    std::array<std::string_view, std::ranges::count(strv, delimiter) + 1> result{};
+    constexpr std::size_t                       segment_count = std::ranges::count(strv, delimiter) + 1;
+    std::array<std::string_view, segment_count> result{};
 
-    auto       start       = strv.begin();
-    const auto end         = strv.end();
-    auto       result_iter = result.begin();
-
-    for (auto iter = start; iter != end; ++iter)
-    {
-        if (const auto next = std::next(iter); *iter == delimiter || next == end)
-        {
-            const auto first = start;
-            const auto last  = (*iter == delimiter) ? iter : next;
-            *result_iter     = std::string_view{first, last};
-            start            = next;
-            result_iter += 1;
-        }
-    }
+    std::ranges::transform(std::views::split(strv, delimiter),
+                           result.begin(),
+                           [](const auto &segment)
+                           { return std::string_view{segment.begin(), static_cast<std::size_t>(std::ranges::distance(segment))}; });
 
     return result;
 }

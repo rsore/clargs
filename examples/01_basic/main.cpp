@@ -29,6 +29,10 @@ main(int argc, char **argv)
     {
         std::cout << "Config file: " << config.value() << std::endl;
     }
+    else
+    {
+        std::cout << "No config file provided." << std::endl;
+    }
 
     return EXIT_SUCCESS;
 }
