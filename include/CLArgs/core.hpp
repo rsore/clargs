@@ -129,8 +129,11 @@ CLArgs::array_from_delimited_string()
 
     std::ranges::transform(std::views::split(strv, delimiter),
                            result.begin(),
-                           [](const auto &segment)
-                           { return std::string_view{segment.begin(), static_cast<std::size_t>(std::ranges::distance(segment))}; });
+                           [](const auto &segment) -> std::string_view
+                           {
+                               const auto length = static_cast<std::size_t>(std::ranges::distance(segment));
+                               return {segment.begin(), length};
+                           });
 
     return result;
 }
