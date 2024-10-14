@@ -5,6 +5,7 @@
 #include <array>
 #include <concepts>
 #include <cstddef>
+#include <ranges>
 #include <string_view>
 
 namespace CLArgs
@@ -123,23 +124,15 @@ CLArgs::array_from_delimited_string()
     constexpr char consecutive_delimiters[] = {delimiter, delimiter, '\0'};
     static_assert(strv.find(consecutive_delimiters) == std::string_view::npos, "consecutive delimiters are not allowed");
 
-    std::array<std::string_view, std::ranges::count(strv, delimiter) + 1> result{};
+    constexpr std::size_t                       segment_count = std::ranges::count(strv, delimiter) + 1;
+    std::array<std::string_view, segment_count> result{};
 
-    auto       start       = strv.begin();
-    const auto end         = strv.end();
-    auto       result_iter = result.begin();
-
-    for (auto iter = start; iter != end; ++iter)
-    {
-        if (const auto next = std::next(iter); *iter == delimiter || next == end)
-        {
-            const auto first = start;
-            const auto last  = (*iter == delimiter) ? iter : next;
-            *result_iter     = std::string_view{first, last};
-            start            = next;
-            result_iter += 1;
-        }
-    }
+    std::ranges::transform(std::views::split(strv, delimiter),
+                           result.begin(),
+                           [](const auto &segment)
+                           {
+                               return std::string_view{segment.data(), segment.size()};
+                           });
 
     return result;
 }
