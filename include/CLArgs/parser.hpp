@@ -35,11 +35,11 @@ namespace CLArgs
 
         template <CmdFlag Flag>
         [[nodiscard]] bool has_flag() const noexcept
-            requires IsPartOf<Flag, Parsables...>;
+            requires is_part_of_v<Flag, Parsables...>;
 
         template <CmdOption Option>
         [[nodiscard]] const std::optional<typename Option::ValueType> &get_option() const noexcept
-            requires IsPartOf<Option, Parsables...>;
+            requires is_part_of_v<Option, Parsables...>;
 
     private:
         void check_invariant() const;
@@ -169,7 +169,7 @@ template <CLArgs::Parsable... Parsables>
 template <CLArgs::CmdFlag Flag>
 bool
 CLArgs::Parser<Parsables...>::has_flag() const noexcept
-    requires IsPartOf<Flag, Parsables...>
+    requires is_part_of_v<Flag, Parsables...>
 {
     check_invariant();
     const auto opt    = values_.template get_value<Flag>();
@@ -181,7 +181,7 @@ template <CLArgs::Parsable... Parsables>
 template <CLArgs::CmdOption Option>
 const std::optional<typename Option::ValueType> &
 CLArgs::Parser<Parsables...>::get_option() const noexcept
-    requires IsPartOf<Option, Parsables...>
+    requires is_part_of_v<Option, Parsables...>
 {
     check_invariant();
     return values_.template get_value<Option>();

@@ -34,5 +34,10 @@ main(int argc, char **argv)
         std::cout << "No config file provided." << std::endl;
     }
 
+    using TupleType = std::tuple<int, float, char, bool>;
+    static_assert(CLArgs::is_part_of_tuple_v<float, TupleType>);
+    static_assert(CLArgs::is_part_of_tuple_v<bool, TupleType>);
+    static_assert(!CLArgs::is_part_of_tuple_v<double, TupleType>);
+
     return EXIT_SUCCESS;
 }
