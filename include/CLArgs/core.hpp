@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <ranges>
 #include <string_view>
+#include <tuple>
 
 namespace CLArgs
 {
@@ -60,11 +61,31 @@ namespace CLArgs
         static_assert(identifiers.size() >= 1, "Must have at least one identifier");
     };
 
+    template <CmdFlag... Flags>
+    using CmdFlagList = std::tuple<Flags...>;
+
+    template <CmdOption... Options>
+    using CmdOptionList = std::tuple<Options...>;
+
     template <typename T>
     concept Parsable = CmdFlag<T> || CmdOption<T>;
 
     template <typename T, typename... Ts>
-    concept IsPartOf = (std::is_same_v<T, Ts> || ...);
+    struct IsPartOf
+            : std::disjunction<std::is_same<T, Ts>...> {};
+
+    template <typename T, typename... Ts>
+    inline constexpr bool is_part_of_v = IsPartOf<T, Ts...>::value;
+
+    template <typename T, typename Tuple>
+    struct IsPartOfTuple;
+
+    template <typename T, typename... Ts>
+    struct IsPartOfTuple<T, std::tuple<Ts...>>
+            : std::disjunction<std::is_same<T, Ts>...> {};
+
+    template <typename T, typename Tuple>
+    inline constexpr bool is_part_of_tuple_v = IsPartOfTuple<T, Tuple>::value;
 
     template <typename...>
     struct AllUnique : std::true_type
@@ -72,7 +93,7 @@ namespace CLArgs
     };
 
     template <typename First, typename... Rest>
-    struct AllUnique<First, Rest...> : std::conditional_t<IsPartOf<First, Rest...>, std::false_type, AllUnique<Rest...>>
+    struct AllUnique<First, Rest...> : std::conditional_t<is_part_of_v<First, Rest...>, std::false_type, AllUnique<Rest...>>
     {
     };
 
