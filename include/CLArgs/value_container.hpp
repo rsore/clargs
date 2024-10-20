@@ -11,14 +11,18 @@
 
 namespace CLArgs
 {
+
+    template <typename... Parsables>
+    class ValueContainer;
+
     template <Parsable... Parsables>
-    class ValueContainer
+    class ValueContainer<Parsables...>
     {
     public:
         ValueContainer();
 
         template <Parsable T>
-        void set_value(const typename T::ValueType &);
+        void set_value(const typename T::ValueType &value);
 
         template <Parsable T>
         [[nodiscard]] const std::optional<typename T::ValueType> &get_value() const;
@@ -30,13 +34,22 @@ namespace CLArgs
         static consteval std::size_t index_of_type();
 
         using ValuesTuple = std::tuple<std::optional<typename Parsables::ValueType>...>;
-        static_assert(AllUnique_v<Parsables...>, "Duplicate template parameter types is not allowed in ValueContainer");
+        static_assert(all_unique_v<Parsables...>, "Duplicate template parameter types is not allowed in ValueContainer");
         ValuesTuple values_;
+    };
+
+    template <typename... Parsables>
+        requires(Parsable<Parsables> && ...)
+    class ValueContainer<std::tuple<Parsables...>> : public ValueContainer<Parsables...>
+    {
+    public:
+        using ValueContainer<Parsables...>::ValueContainer;
     };
 } // namespace CLArgs
 
 template <CLArgs::Parsable... Parsables>
-CLArgs::ValueContainer<Parsables...>::ValueContainer() : values_{std::make_tuple(std::optional<typename Parsables::ValueType>{}...)}
+CLArgs::ValueContainer<Parsables...>::ValueContainer()
+    : values_{std::make_tuple(std::optional<typename Parsables::ValueType>{}...)}
 {
 }
 
@@ -72,7 +85,7 @@ template <CLArgs::Parsable T>
 consteval std::size_t
 CLArgs::ValueContainer<Parsables...>::index_of_type()
 {
-    return TupleTypeIndex_v<T, std::tuple<Parsables...>>;
+    return tuple_type_index_v<T, std::tuple<Parsables...>>;
 }
 
 #endif
