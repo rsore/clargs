@@ -67,12 +67,61 @@ namespace CLArgs
     template <CmdOption... Options>
     using CmdOptionList = std::tuple<Options...>;
 
+    template <typename...>
+    struct AllFlags : std::true_type
+    {
+    };
+
+    template <typename First, typename... Rest>
+    struct AllFlags<First, Rest...> : std::bool_constant<CmdFlag<First> && !CmdOption<First> && AllFlags<Rest...>::value>
+    {
+    };
+
+    template <typename... Ts>
+    inline constexpr bool all_flags_v = AllFlags<Ts...>::value;
+
+    template <typename...>
+    struct AllOptions : std::true_type
+    {
+    };
+
+    template <typename First, typename... Rest>
+    struct AllOptions<First, Rest...> : std::bool_constant<CmdOption<First> && AllOptions<Rest...>::value>
+    {
+    };
+
+    template <typename... Ts>
+    inline constexpr bool all_options_v = AllOptions<Ts...>::value;
+
+    template <typename Tuple>
+    struct TupleContainsAllFlags;
+
+    template <typename... Ts>
+    struct TupleContainsAllFlags<std::tuple<Ts...>> : AllFlags<Ts...>
+    {
+    };
+
+    template <typename Tuple>
+    inline constexpr bool tuple_contains_all_flags_v = TupleContainsAllFlags<Tuple>::value;
+
+    template <typename Tuple>
+    struct TupleContainsAllOptions;
+
+    template <typename... Ts>
+    struct TupleContainsAllOptions<std::tuple<Ts...>> : AllOptions<Ts...>
+    {
+    };
+
+    template <typename Tuple>
+    inline constexpr bool tuple_contains_all_options_v = TupleContainsAllOptions<Tuple>::value;
+
     template <typename T>
     concept Parsable = CmdFlag<T> || CmdOption<T>;
 
     template <typename T, typename... Ts>
-    struct IsPartOf
-            : std::disjunction<std::is_same<T, Ts>...> {};
+    struct IsPartOf : std::disjunction<std::is_same<T, Ts>...>
+    {
+    };
 
     template <typename T, typename... Ts>
     inline constexpr bool is_part_of_v = IsPartOf<T, Ts...>::value;
@@ -81,8 +130,9 @@ namespace CLArgs
     struct IsPartOfTuple;
 
     template <typename T, typename... Ts>
-    struct IsPartOfTuple<T, std::tuple<Ts...>>
-            : std::disjunction<std::is_same<T, Ts>...> {};
+    struct IsPartOfTuple<T, std::tuple<Ts...>> : std::disjunction<std::is_same<T, Ts>...>
+    {
+    };
 
     template <typename T, typename Tuple>
     inline constexpr bool is_part_of_tuple_v = IsPartOfTuple<T, Tuple>::value;
@@ -117,6 +167,18 @@ namespace CLArgs
 
     template <typename T, typename Tuple>
     inline constexpr std::size_t TupleTypeIndex_v = TupleTypeIndex<T, Tuple>::value;
+
+    template <typename Tuple1, typename Tuple2>
+    struct ConcatTuples;
+
+    template <typename... Ts1, typename... Ts2>
+    struct ConcatTuples<std::tuple<Ts1...>, std::tuple<Ts2...>>
+    {
+        using Type = std::tuple<Ts1..., Ts2...>;
+    };
+
+    template <typename Tuple1, typename Tuple2>
+    using concat_tuples_t = typename ConcatTuples<Tuple1, Tuple2>::Type;
 
     template <Parsable Parsable>
     static consteval std::size_t identifier_list_length();
