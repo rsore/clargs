@@ -54,8 +54,6 @@ namespace CLArgs
         std::string_view                     program_;
         ValueContainer<Flags..., Options...> values_{};
 
-        bool has_successfully_parsed_args_{false};
-
         static constexpr std::size_t max_identifier_length_{max_identifier_list_length<Flags..., Options...>()};
     };
 } // namespace CLArgs
@@ -76,8 +74,6 @@ CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>,
     {
         parse_arg<Flags..., Options...>(remaining_args);
     }
-
-    has_successfully_parsed_args_ = true;
 }
 
 template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
@@ -205,7 +201,8 @@ CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>,
 template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
 template <CLArgs::Parsable This, CLArgs::Parsable... Rest>
 constexpr void
-CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::append_option_descriptions_to_usage(std::stringstream &ss)
+CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::append_option_descriptions_to_usage(
+    std::stringstream &ss)
 {
     constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_list_length<This>() + 4;
 
