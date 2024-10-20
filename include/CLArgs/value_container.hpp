@@ -11,14 +11,18 @@
 
 namespace CLArgs
 {
+
+    template <typename... Parsables>
+    class ValueContainer;
+
     template <Parsable... Parsables>
-    class ValueContainer
+    class ValueContainer<Parsables...>
     {
     public:
         ValueContainer();
 
         template <Parsable T>
-        void set_value(const typename T::ValueType &);
+        void set_value(const typename T::ValueType &value);
 
         template <Parsable T>
         [[nodiscard]] const std::optional<typename T::ValueType> &get_value() const;
@@ -32,6 +36,14 @@ namespace CLArgs
         using ValuesTuple = std::tuple<std::optional<typename Parsables::ValueType>...>;
         static_assert(all_unique_v<Parsables...>, "Duplicate template parameter types is not allowed in ValueContainer");
         ValuesTuple values_;
+    };
+
+    template <typename... Parsables>
+        requires(Parsable<Parsables> && ...)
+    class ValueContainer<std::tuple<Parsables...>> : public ValueContainer<Parsables...>
+    {
+    public:
+        using ValueContainer<Parsables...>::ValueContainer;
     };
 } // namespace CLArgs
 
