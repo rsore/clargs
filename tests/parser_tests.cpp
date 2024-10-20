@@ -14,7 +14,7 @@ TEST_CASE("Parse arguments", "[parse]")
     constexpr std::array args = {"program", "-v", "--config", "test.txt"};
     auto [argc, argv]         = CLArgs::Testing::create_argc_argv_from_array(args);
 
-    CLArgs::Parser<FlagList, OptionList> parser;
+    CLArgs::Parser<FlagList, OptionList, "Program description"> parser;
     REQUIRE_NOTHROW(parser.parse(argc, argv));
 
     REQUIRE(parser.has_flag<VerboseFlag>());
