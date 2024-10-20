@@ -6,12 +6,11 @@
 
 namespace CLArgs
 {
-    template <typename Flags = CmdFlagList<>, typename Options = CmdOptionList<>>
+    template <typename Flags = CmdFlagList<>, typename Options = CmdOptionList<>, StringLiteral ProgramDescription = "">
     class ParserBuilder;
 
-
-    template <CmdFlag... Flags, CmdOption... Options>
-    class ParserBuilder<CmdFlagList<Flags...>, CmdOptionList<Options...>>
+    template <CmdFlag... Flags, CmdOption... Options, StringLiteral ProgramDescription>
+    class ParserBuilder<CmdFlagList<Flags...>, CmdOptionList<Options...>, ProgramDescription>
     {
     public:
         template <CmdFlag NewFlag>
@@ -20,31 +19,42 @@ namespace CLArgs
         template <CmdOption NewOption>
         [[nodiscard]] consteval auto add_option();
 
+        template <StringLiteral NewProgramDescription>
+        [[nodiscard]] consteval auto add_program_description();
+
         [[nodiscard]] constexpr auto build();
     };
 } // namespace CLArgs
 
-template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
+template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
 template <CLArgs::CmdFlag NewFlag>
 consteval auto
-CLArgs::ParserBuilder<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::add_flag()
+CLArgs::ParserBuilder<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::add_flag()
 {
-    return ParserBuilder<CmdFlagList<Flags..., NewFlag>, CmdOptionList<Options...>>{};
+    return ParserBuilder<CmdFlagList<Flags..., NewFlag>, CmdOptionList<Options...>, ProgramDescription>{};
 }
 
-template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
+template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
 template <CLArgs::CmdOption NewOption>
 consteval auto
-CLArgs::ParserBuilder<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::add_option()
+CLArgs::ParserBuilder<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::add_option()
 {
-    return ParserBuilder<CmdFlagList<Flags...>, CmdOptionList<Options..., NewOption>>{};
+    return ParserBuilder<CmdFlagList<Flags...>, CmdOptionList<Options..., NewOption>, ProgramDescription>{};
 }
 
-template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
-constexpr auto
-CLArgs::ParserBuilder<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::build()
+template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
+template <CLArgs::StringLiteral NewProgramDescription>
+consteval auto
+CLArgs::ParserBuilder<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::add_program_description()
 {
-    return Parser<CmdFlagList<Flags...>, CmdOptionList<Options...>>{};
+    return ParserBuilder<CmdFlagList<Flags...>, CmdOptionList<Options...>, NewProgramDescription>{};
+}
+
+template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
+constexpr auto
+CLArgs::ParserBuilder<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::build()
+{
+    return Parser<CmdFlagList<Flags...>, CmdOptionList<Options...>, ProgramDescription>{};
 }
 
 #endif

@@ -13,11 +13,11 @@
 
 namespace CLArgs
 {
-    template <typename Flags, typename Options>
+    template <typename Flags, typename Options, StringLiteral ProgramDescription>
     class Parser;
 
-    template <CmdFlag... Flags, CmdOption... Options>
-    class Parser<CmdFlagList<Flags...>, CmdOptionList<Options...>>
+    template <CmdFlag... Flags, CmdOption... Options, StringLiteral ProgramDescription>
+    class Parser<CmdFlagList<Flags...>, CmdOptionList<Options...>, ProgramDescription>
     {
     public:
         Parser() noexcept = default;
@@ -59,9 +59,9 @@ namespace CLArgs
     };
 } // namespace CLArgs
 
-template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
+template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
 void
-CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::parse(int argc, char **argv)
+CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::parse(int argc, char **argv)
 {
     if (argv == nullptr || *argv == nullptr)
     {
@@ -79,10 +79,10 @@ CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>
     has_successfully_parsed_args_ = true;
 }
 
-template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
+template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
 template <CLArgs::Parsable This, CLArgs::Parsable... Rest>
 void
-CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::parse_arg(auto &remaining_args)
+CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::parse_arg(auto &remaining_args)
 {
     const auto arg = remaining_args.front();
 
@@ -145,11 +145,15 @@ CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>
     }
 }
 
-template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
+template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
 std::string
-CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::help() const noexcept
+CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::help() const noexcept
 {
     std::stringstream ss;
+    if constexpr (!std::string_view(ProgramDescription.value).empty())
+    {
+        ss << ProgramDescription.value << '\n';
+    }
     ss << "Usage: " << program_ << " [OPTIONS...]\n\n";
     ss << "Options:\n";
     append_option_descriptions_to_usage<Flags..., Options...>(ss);
@@ -157,17 +161,17 @@ CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>
     return ss.str();
 }
 
-template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
+template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
 std::string_view
-CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::program() const noexcept
+CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::program() const noexcept
 {
     return program_;
 }
 
-template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
+template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
 template <CLArgs::CmdFlag Flag>
 bool
-CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::has_flag() const noexcept
+CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::has_flag() const noexcept
     requires is_part_of_v<Flag, Flags...>
 {
     const auto opt    = values_.template get_value<Flag>();
@@ -175,19 +179,19 @@ CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>
     return result;
 }
 
-template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
+template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
 template <CLArgs::CmdOption Option>
 const std::optional<typename Option::ValueType> &
-CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::get_option() const noexcept
+CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::get_option() const noexcept
     requires is_part_of_v<Option, Options...>
 {
     return values_.template get_value<Option>();
 }
 
-template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
+template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
 template <CLArgs::Parsable This, CLArgs::Parsable... Rest>
 constexpr void
-CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::append_option_descriptions_to_usage(std::stringstream &ss)
+CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::append_option_descriptions_to_usage(std::stringstream &ss)
 {
     constexpr std::size_t calculated_padding = max_identifier_length_ - identifier_list_length<This>() + 4;
 
