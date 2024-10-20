@@ -31,6 +31,7 @@ namespace CLArgs
 
         void parse(int argc, char **argv);
 
+        [[nodiscard]] std::string usage() const noexcept;
         [[nodiscard]] std::string help() const noexcept;
 
         [[nodiscard]] std::string_view program() const noexcept;
@@ -147,14 +148,27 @@ CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>,
 
 template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
 std::string
+CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::usage() const noexcept
+{
+    std::stringstream ss;
+    ss << "Usage: " << program_;
+    if constexpr (sizeof...(Flags) > 0 || sizeof...(Options) > 0)
+    {
+        ss << " [OPTIONS...]";
+    }
+    return ss.str();
+}
+
+template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options, CLArgs::StringLiteral ProgramDescription>
+std::string
 CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::help() const noexcept
 {
     std::stringstream ss;
     if constexpr (!std::string_view(ProgramDescription.value).empty())
     {
-        ss << ProgramDescription.value << '\n';
+        ss << ProgramDescription.value << "\n\n";
     }
-    ss << "Usage: " << program_ << " [OPTIONS...]\n\n";
+    ss << usage() << "\n\n";
     ss << "Options:\n";
     append_option_descriptions_to_usage<Flags..., Options...>(ss);
 

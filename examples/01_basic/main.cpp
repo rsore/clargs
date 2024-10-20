@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <iostream>
 
+using HelpFlag      = CLArgs::Flag<"--help,-h", "Show help menu">;
 using VerboseFlag   = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
 using QuietFlag     = CLArgs::Flag<"--quiet,-q", "Enable quiet output">;
 using RecursiveFlag = CLArgs::Flag<"--recursive,-r", "Enable recursion">;
@@ -15,6 +16,7 @@ main(int argc, char **argv)
 {
     CLArgs::Parser parser = CLArgs::ParserBuilder{}
                                 .add_program_description<"Basic example program to showcase CLArgs library.">()
+                                .add_flag<HelpFlag>()
                                 .add_flag<VerboseFlag>()
                                 .add_flag<QuietFlag>()
                                 .add_flag<RecursiveFlag>()
@@ -28,8 +30,14 @@ main(int argc, char **argv)
     catch (std::exception &e)
     {
         std::cerr << "Error: " << e.what() << '\n';
-        std::cerr << parser.help() << std::endl;
+        std::cerr << parser.usage() << std::endl;
         return EXIT_FAILURE;
+    }
+
+    if (parser.has_flag<HelpFlag>())
+    {
+        std::cout << parser.help() << std::endl;
+        return EXIT_SUCCESS;
     }
 
     std::cout << "Program: " << parser.program() << std::endl;
