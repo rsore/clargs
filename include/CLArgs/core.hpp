@@ -166,7 +166,7 @@ namespace CLArgs
     };
 
     template <typename T, typename Tuple>
-    inline constexpr std::size_t TupleTypeIndex_v = TupleTypeIndex<T, Tuple>::value;
+    inline constexpr std::size_t tuple_type_index_v = TupleTypeIndex<T, Tuple>::value;
 
     template <typename Tuple1, typename Tuple2>
     struct ConcatTuples;

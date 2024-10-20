@@ -84,7 +84,7 @@ template <CLArgs::Parsable T>
 consteval std::size_t
 CLArgs::ValueContainer<Parsables...>::index_of_type()
 {
-    return TupleTypeIndex_v<T, std::tuple<Parsables...>>;
+    return tuple_type_index_v<T, std::tuple<Parsables...>>;
 }
 
 #endif
