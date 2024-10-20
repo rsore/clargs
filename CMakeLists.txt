@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(CLArgs INTERFACE
         include/CLArgs/parser.hpp
         include/CLArgs/core.hpp
-        include/CLArgs/singleton.hpp
         include/CLArgs/parse_value.hpp
         include/CLArgs/value_container.hpp
         include/CLArgs/parser_builder.hpp
