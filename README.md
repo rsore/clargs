@@ -1,6 +1,5 @@
 [![tests](https://github.com/rubensorensen/clargs/actions/workflows/tests.yml/badge.svg)](https://github.com/rubensorensen/clargs/actions/workflows/tests.yml)
 [![docs](https://github.com/rubensorensen/clargs/actions/workflows/docs.yml/badge.svg)](https://github.com/rubensorensen/clargs/actions/workflows/docs.yml)
-[![CodeQL](https://github.com/rsore/clargs/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/rsore/clargs/actions/workflows/github-code-scanning/codeql)
 [![formatting](https://github.com/rsore/clargs/actions/workflows/clang-format.yml/badge.svg)](https://github.com/rsore/clargs/actions/workflows/clang-format.yml)
 [![static-code-analysis](https://github.com/rsore/clargs/actions/workflows/clang-tidy-analysis.yml/badge.svg)](https://github.com/rsore/clargs/actions/workflows/clang-tidy-analysis.yml)
 
