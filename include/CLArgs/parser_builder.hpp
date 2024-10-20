@@ -31,6 +31,7 @@ template <CLArgs::CmdFlag NewFlag>
 consteval auto
 CLArgs::ParserBuilder<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::add_flag()
 {
+    static_assert(!is_part_of_v<NewFlag, Flags...>, "Flag has already been added to builder");
     return ParserBuilder<CmdFlagList<Flags..., NewFlag>, CmdOptionList<Options...>, ProgramDescription>{};
 }
 
@@ -39,6 +40,7 @@ template <CLArgs::CmdOption NewOption>
 consteval auto
 CLArgs::ParserBuilder<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>, ProgramDescription>::add_option()
 {
+    static_assert(!is_part_of_v<NewOption, Options...>, "Option has already been added to builder");
     return ParserBuilder<CmdFlagList<Flags...>, CmdOptionList<Options..., NewOption>, ProgramDescription>{};
 }
 
