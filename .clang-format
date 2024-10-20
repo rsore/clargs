@@ -37,11 +37,10 @@ BraceWrapping:
 BreakBeforeBraces: Custom
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeComma
-BreakConstructorInitializersBeforeComma: false
+BreakInheritanceList: BeforeComma
 ColumnLimit: 140
 CompactNamespaces: false
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
-ContinuationIndentWidth: 8
+ContinuationIndentWidth: 4
 EmptyLineAfterAccessModifier: Never
 EmptyLineBeforeAccessModifier: LogicalBlock
 IncludeBlocks: Preserve
