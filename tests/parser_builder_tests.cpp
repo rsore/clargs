@@ -3,6 +3,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <filesystem>
+#include <string>
+
 using VerboseFlag   = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
 using QuietFlag     = CLArgs::Flag<"--quiet,-q", "Enable quiet output">;
 using RecursiveFlag = CLArgs::Flag<"--recursive,-r", "Enable recursion">;
@@ -11,7 +14,6 @@ using NameOption    = CLArgs::Option<"--username,--user", "<username>", "Specify
 
 TEST_CASE("Parser builder", "[parser_builder]")
 {
-
     constexpr std::array args = {"program", "-v", "--config", "test.txt", "--recursive"};
     auto [argc, argv]         = CLArgs::Testing::create_argc_argv_from_array(args);
 
