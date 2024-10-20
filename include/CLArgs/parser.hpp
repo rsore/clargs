@@ -1,7 +1,6 @@
 #ifndef CLARGS_PARSER_HPP
 #define CLARGS_PARSER_HPP
 
-#include <CLArgs/assert.hpp>
 #include <CLArgs/core.hpp>
 #include <CLArgs/parse_value.hpp>
 #include <CLArgs/value_container.hpp>
@@ -45,8 +44,6 @@ namespace CLArgs
             requires is_part_of_v<Option, Options...>;
 
     private:
-        void check_invariant() const;
-
         template <Parsable This, Parsable... Rest>
         void parse_arg(auto &remaining_args);
 
@@ -164,7 +161,6 @@ template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
 std::string_view
 CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::program() const noexcept
 {
-    check_invariant();
     return program_;
 }
 
@@ -174,7 +170,6 @@ bool
 CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::has_flag() const noexcept
     requires is_part_of_v<Flag, Flags...>
 {
-    check_invariant();
     const auto opt    = values_.template get_value<Flag>();
     const bool result = opt.has_value() && (opt.value() == true);
     return result;
@@ -186,18 +181,7 @@ const std::optional<typename Option::ValueType> &
 CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::get_option() const noexcept
     requires is_part_of_v<Option, Options...>
 {
-    check_invariant();
     return values_.template get_value<Option>();
-}
-
-template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
-void
-CLArgs::Parser<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Options...>>::check_invariant() const
-{
-    CLArgs::_internal::debug_assert(has_successfully_parsed_args_,
-                                    "Have you called the parse() method yet? It must be called before any other method "
-                                    "to ensure proper behaviour. If you don't, I will crash your application until you "
-                                    "fix it.");
 }
 
 template <CLArgs::CmdFlag... Flags, CLArgs::CmdOption... Options>
