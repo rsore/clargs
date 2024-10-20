@@ -148,7 +148,7 @@ namespace CLArgs
     };
 
     template <typename... Ts>
-    inline constexpr bool AllUnique_v = AllUnique<Ts...>::value;
+    inline constexpr bool all_unique_v = AllUnique<Ts...>::value;
 
     template <typename T, typename Tuple>
     struct TupleTypeIndex;

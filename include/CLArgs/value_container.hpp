@@ -30,7 +30,7 @@ namespace CLArgs
         static consteval std::size_t index_of_type();
 
         using ValuesTuple = std::tuple<std::optional<typename Parsables::ValueType>...>;
-        static_assert(AllUnique_v<Parsables...>, "Duplicate template parameter types is not allowed in ValueContainer");
+        static_assert(all_unique_v<Parsables...>, "Duplicate template parameter types is not allowed in ValueContainer");
         ValuesTuple values_;
     };
 } // namespace CLArgs
