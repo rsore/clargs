@@ -3,13 +3,9 @@
 #include <filesystem>
 #include <iostream>
 
-using HelpFlag      = CLArgs::Flag<"--help,-h", "Show help menu">;
-using VerboseFlag   = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
-using QuietFlag     = CLArgs::Flag<"--quiet,-q", "Enable quiet output">;
-using RecursiveFlag = CLArgs::Flag<"--recursive,-r", "Enable recursion">;
-
+using HelpFlag     = CLArgs::Flag<"--help,-h", "Show help menu">;
+using VerboseFlag  = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
 using ConfigOption = CLArgs::Option<"--config,--configuration,-c", "<filepath>", "Specify config file", std::filesystem::path>;
-using NameOption   = CLArgs::Option<"--name,-n", "username", "Specify username", std::string>;
 
 int
 main(int argc, char **argv)
@@ -18,10 +14,7 @@ main(int argc, char **argv)
                                 .add_program_description<"Basic example program to showcase CLArgs library.">()
                                 .add_flag<HelpFlag>()
                                 .add_flag<VerboseFlag>()
-                                .add_flag<QuietFlag>()
-                                .add_flag<RecursiveFlag>()
                                 .add_option<ConfigOption>()
-                                .add_option<NameOption>()
                                 .build();
     try
     {
@@ -44,9 +37,6 @@ main(int argc, char **argv)
 
     const bool has_verbose = parser.has_flag<VerboseFlag>();
     std::cout << "Has verbose option: " << std::boolalpha << has_verbose << "\n";
-
-    const bool has_recursive = parser.has_flag<RecursiveFlag>();
-    std::cout << "Has recursive option: " << std::boolalpha << has_recursive << "\n";
 
     if (const auto config = parser.get_option<ConfigOption>(); config.has_value())
     {
