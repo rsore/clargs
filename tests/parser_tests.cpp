@@ -3,11 +3,11 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-using VerboseFlag   = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
-using FlagList = CLArgs::CmdFlagList<VerboseFlag>;
+using VerboseFlag = CLArgs::Flag<"--verbose,-v", "Enable verbose output">;
+using FlagList    = CLArgs::CmdFlagList<VerboseFlag>;
 
 using ConfigOption = CLArgs::Option<"--config,--configuration,-c", "<filepath>", "Specify config file", std::filesystem::path>;
-using OptionList = CLArgs::CmdOptionList<ConfigOption>;
+using OptionList   = CLArgs::CmdOptionList<ConfigOption>;
 
 TEST_CASE("Parse arguments", "[parse]")
 {

@@ -48,7 +48,8 @@ namespace CLArgs
 } // namespace CLArgs
 
 template <CLArgs::Parsable... Parsables>
-CLArgs::ValueContainer<Parsables...>::ValueContainer() : values_{std::make_tuple(std::optional<typename Parsables::ValueType>{}...)}
+CLArgs::ValueContainer<Parsables...>::ValueContainer()
+    : values_{std::make_tuple(std::optional<typename Parsables::ValueType>{}...)}
 {
 }
 
