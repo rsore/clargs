@@ -18,11 +18,11 @@ using ConfigOption  = CLArgs::Option<"--config,--configuration,-c", "<filepath>"
 int
 main(int argc, char **argv)
 {
-    CLArgs::Parser parser = CLArgs::ParserBuilder{}
-                                .add_program_description<"Example program.">()
-                                .add_flag<VerboseFlag>()
-                                .add_option<ConfigOption>()
-                                .build();
+    auto parser = CLArgs::ParserBuilder{}
+                      .add_program_description<"Example program.">()
+                      .add_flag<VerboseFlag>()
+                      .add_option<ConfigOption>()
+                      .build();
     try
     {
         parser.parse(argc, argv);

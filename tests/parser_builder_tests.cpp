@@ -17,13 +17,13 @@ TEST_CASE("Parser builder", "[parser_builder]")
     constexpr std::array args = {"program", "-v", "--config", "test.txt", "--recursive"};
     auto [argc, argv]         = CLArgs::Testing::create_argc_argv_from_array(args);
 
-    CLArgs::Parser parser = CLArgs::ParserBuilder{}
-                                .add_flag<VerboseFlag>()
-                                .add_flag<QuietFlag>()
-                                .add_flag<RecursiveFlag>()
-                                .add_option<ConfigOption>()
-                                .add_option<NameOption>()
-                                .build();
+    auto parser = CLArgs::ParserBuilder{}
+                      .add_flag<VerboseFlag>()
+                      .add_flag<QuietFlag>()
+                      .add_flag<RecursiveFlag>()
+                      .add_option<ConfigOption>()
+                      .add_option<NameOption>()
+                      .build();
 
     REQUIRE_FALSE(parser.has_flag<VerboseFlag>());
     REQUIRE_FALSE(parser.has_flag<QuietFlag>());
