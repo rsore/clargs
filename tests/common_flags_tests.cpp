@@ -14,7 +14,7 @@ template <CLArgs::CmdFlag Flag>
 constexpr void
 test_flag_not_passed()
 {
-    SECTION("Not passed")
+    SECTION("Flag not passed to parser")
     {
         FlagTesterParser<Flag> parser;
         constexpr std::array   args = {"program"};
@@ -28,7 +28,7 @@ template <CLArgs::CmdFlag Flag, CLArgs::StringLiteral Identifier, CLArgs::String
 constexpr void
 test_flag_passed()
 {
-    SECTION("Pass " + std::string(Identifier.value))
+    SECTION("Pass argument \"" + std::string(Identifier.value) + "\" to parser")
     {
         FlagTesterParser<Flag> parser;
         constexpr std::array   args = {"program", Identifier.value};
@@ -64,4 +64,49 @@ TEST_CASE("Parser with CommonFlags::Verbose", "[common_flags]")
 TEST_CASE("Parser with CommonFlags::Quiet", "[common_flags]")
 {
     test_flag<CLArgs::CommonFlags::Quiet, "--quiet", "-q">();
+}
+
+TEST_CASE("Parser with CommonFlags::Version", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Version, "--version">();
+}
+
+TEST_CASE("Parser with CommonFlags::Recursive", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Recursive, "--recursive", "-r">();
+}
+
+TEST_CASE("Parser with CommonFlags::All", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::All, "--all", "-a">();
+}
+
+TEST_CASE("Parser with CommonFlags::Force", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Force, "--force", "-f">();
+}
+
+TEST_CASE("Parser with CommonFlags::Parallel", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Parallel, "--parallel">();
+}
+
+TEST_CASE("Parser with CommonFlags::Experimental", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Experimental, "--experimental">();
+}
+
+TEST_CASE("Parser with CommonFlags::Profile", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Profile, "--profile">();
+}
+
+TEST_CASE("Parser with CommonFlags::Debug", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Debug, "--debug">();
+}
+
+TEST_CASE("Parser with CommonFlags::Overwrite", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Overwrite, "--overwrite">();
 }
