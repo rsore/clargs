@@ -5,7 +5,9 @@
 
 namespace CLArgs::CommonFlags
 {
+    using Help    = Flag<"--help,-h", "Show help menu">;
     using Verbose = Flag<"--verbose,-v", "Enable verbose output">;
-}
+    using Quiet   = Flag<"--quiet,-q", "Enable quiet output">;
+} // namespace CLArgs::CommonFlags
 
 #endif
