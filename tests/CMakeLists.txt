@@ -15,6 +15,7 @@ add_executable(CLArgsTests
         test_utils.hpp
         value_container_tests.cpp
         parser_builder_tests.cpp
+        common_flags_tests.cpp
 )
 
 target_compile_options(CLArgsTests PRIVATE

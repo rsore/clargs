@@ -11,6 +11,7 @@ add_library(CLArgs INTERFACE
         include/CLArgs/parse_value.hpp
         include/CLArgs/value_container.hpp
         include/CLArgs/parser_builder.hpp
+        include/CLArgs/common_flags.hpp
 )
 
 target_include_directories(CLArgs INTERFACE
