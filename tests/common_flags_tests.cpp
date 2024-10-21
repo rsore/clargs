@@ -9,7 +9,7 @@
 
 TEST_CASE("Parser with CommonFlags::Verbose", "[flag_parsing]")
 {
-    CLArgs::Parser parser = CLArgs::ParserBuilder{}.add_flag<CLArgs::CommonFlags::Verbose>().build();
+    auto parser = CLArgs::ParserBuilder{}.add_flag<CLArgs::CommonFlags::Verbose>().build();
 
     SECTION("Not passed")
     {
