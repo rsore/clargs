@@ -1,5 +1,4 @@
 #include <CLArgs/common_flags.hpp>
-#include <CLArgs/parser.hpp>
 #include <CLArgs/parser_builder.hpp>
 #include "test_utils.hpp"
 
@@ -51,54 +50,9 @@ test_flag()
     test_flag_passed<Flag, Identifiers...>();
 }
 
-TEST_CASE("Parser with CommonFlags::Help", "[common_flags]")
-{
-    test_flag<CLArgs::CommonFlags::Help, "--help", "-h">();
-}
-
-TEST_CASE("Parser with CommonFlags::Verbose", "[common_flags]")
-{
-    test_flag<CLArgs::CommonFlags::Verbose, "--verbose", "-v">();
-}
-
-TEST_CASE("Parser with CommonFlags::Quiet", "[common_flags]")
-{
-    test_flag<CLArgs::CommonFlags::Quiet, "--quiet", "-q">();
-}
-
-TEST_CASE("Parser with CommonFlags::Version", "[common_flags]")
-{
-    test_flag<CLArgs::CommonFlags::Version, "--version">();
-}
-
-TEST_CASE("Parser with CommonFlags::Recursive", "[common_flags]")
-{
-    test_flag<CLArgs::CommonFlags::Recursive, "--recursive", "-r">();
-}
-
 TEST_CASE("Parser with CommonFlags::All", "[common_flags]")
 {
     test_flag<CLArgs::CommonFlags::All, "--all", "-a">();
-}
-
-TEST_CASE("Parser with CommonFlags::Force", "[common_flags]")
-{
-    test_flag<CLArgs::CommonFlags::Force, "--force", "-f">();
-}
-
-TEST_CASE("Parser with CommonFlags::Parallel", "[common_flags]")
-{
-    test_flag<CLArgs::CommonFlags::Parallel, "--parallel">();
-}
-
-TEST_CASE("Parser with CommonFlags::Experimental", "[common_flags]")
-{
-    test_flag<CLArgs::CommonFlags::Experimental, "--experimental">();
-}
-
-TEST_CASE("Parser with CommonFlags::Profile", "[common_flags]")
-{
-    test_flag<CLArgs::CommonFlags::Profile, "--profile">();
 }
 
 TEST_CASE("Parser with CommonFlags::Debug", "[common_flags]")
@@ -106,7 +60,52 @@ TEST_CASE("Parser with CommonFlags::Debug", "[common_flags]")
     test_flag<CLArgs::CommonFlags::Debug, "--debug">();
 }
 
+TEST_CASE("Parser with CommonFlags::Experimental", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Experimental, "--experimental">();
+}
+
+TEST_CASE("Parser with CommonFlags::Force", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Force, "--force", "-f">();
+}
+
+TEST_CASE("Parser with CommonFlags::Help", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Help, "--help", "-h">();
+}
+
 TEST_CASE("Parser with CommonFlags::Overwrite", "[common_flags]")
 {
     test_flag<CLArgs::CommonFlags::Overwrite, "--overwrite">();
+}
+
+TEST_CASE("Parser with CommonFlags::Parallel", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Parallel, "--parallel">();
+}
+
+TEST_CASE("Parser with CommonFlags::Profile", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Profile, "--profile">();
+}
+
+TEST_CASE("Parser with CommonFlags::Quiet", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Quiet, "--quiet", "-q">();
+}
+
+TEST_CASE("Parser with CommonFlags::Recursive", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Recursive, "--recursive", "-r">();
+}
+
+TEST_CASE("Parser with CommonFlags::Verbose", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Verbose, "--verbose", "-v">();
+}
+
+TEST_CASE("Parser with CommonFlags::Version", "[common_flags]")
+{
+    test_flag<CLArgs::CommonFlags::Version, "--version">();
 }
