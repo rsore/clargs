@@ -10,7 +10,7 @@ template <CLArgs::CmdFlag Flag>
 using FlagTesterParser = decltype(CLArgs::ParserBuilder{}.add_flag<Flag>().build());
 
 template <CLArgs::CmdFlag Flag>
-constexpr void
+void
 test_flag_not_passed()
 {
     SECTION("Flag not passed to parser")
@@ -24,7 +24,7 @@ test_flag_not_passed()
 }
 
 template <CLArgs::CmdFlag Flag, CLArgs::StringLiteral Identifier, CLArgs::StringLiteral... Identifiers>
-constexpr void
+void
 test_flag_passed()
 {
     SECTION("Pass argument \"" + std::string(Identifier.value) + "\" to parser")
@@ -43,7 +43,7 @@ test_flag_passed()
 }
 
 template <CLArgs::CmdFlag Flag, CLArgs::StringLiteral... Identifiers>
-constexpr void
+void
 test_flag()
 {
     test_flag_not_passed<Flag>();

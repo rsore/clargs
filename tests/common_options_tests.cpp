@@ -10,7 +10,7 @@ template <CLArgs::CmdOption Option>
 using OptionTesterParser = decltype(CLArgs::ParserBuilder{}.add_option<Option>().build());
 
 template <CLArgs::CmdOption Option>
-constexpr void
+void
 test_option_not_passed()
 {
     SECTION("Flag not passed to parser")
@@ -24,7 +24,7 @@ test_option_not_passed()
 }
 
 template <CLArgs::CmdOption Option, CLArgs::StringLiteral Value, CLArgs::StringLiteral Identifier, CLArgs::StringLiteral... Identifiers>
-constexpr void
+void
 test_option_passed()
 {
     SECTION("Pass argument \"" + std::string(Identifier.value) + "\" to parser")
@@ -43,7 +43,7 @@ test_option_passed()
 }
 
 template <CLArgs::CmdOption Option, CLArgs::StringLiteral Value, CLArgs::StringLiteral... Identifiers>
-constexpr void
+void
 test_option()
 {
     test_option_not_passed<Option>();
