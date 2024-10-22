@@ -5,7 +5,6 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
-#include <string_view>
 
 template <CLArgs::CmdOption Option>
 using OptionTesterParser = decltype(CLArgs::ParserBuilder{}.add_option<Option>().build());
@@ -54,4 +53,49 @@ test_option()
 TEST_CASE("Parser with CommonOptions::Config", "[common_options]")
 {
     test_option<CLArgs::CommonOptions::Config, "conf.ini", "--configuration", "--config">();
+}
+
+TEST_CASE("Parser with CommonOptions::Output", "[common_options]")
+{
+    test_option<CLArgs::CommonOptions::Output, "out.txt", "--output", "-o">();
+}
+
+TEST_CASE("Parser with CommonOptions::Input", "[common_options]")
+{
+    test_option<CLArgs::CommonOptions::Input, "in.txt", "--input", "-i">();
+}
+
+TEST_CASE("Parser with CommonOptions::Timeout", "[common_options]")
+{
+    test_option<CLArgs::CommonOptions::Timeout, "10", "--timeout">();
+}
+
+TEST_CASE("Parser with CommonOptions::Ip", "[common_options]")
+{
+    test_option<CLArgs::CommonOptions::Ip, "127.0.0.1", "--ip", "--address">();
+}
+
+TEST_CASE("Parser with CommonOptions::Port", "[common_options]")
+{
+    test_option<CLArgs::CommonOptions::Port, "6969", "--port">();
+}
+
+TEST_CASE("Parser with CommonOptions::Threads", "[common_options]")
+{
+    test_option<CLArgs::CommonOptions::Threads, "12", "--threads">();
+}
+
+TEST_CASE("Parser with CommonOptions::Username", "[common_options]")
+{
+    test_option<CLArgs::CommonOptions::Username, "donald_duck", "--username", "--user">();
+}
+
+TEST_CASE("Parser with CommonOptions::Password", "[common_options]")
+{
+    test_option<CLArgs::CommonOptions::Password, "opensaysm3", "--password", "--pass">();
+}
+
+TEST_CASE("Parser with CommonOptions::MaxRetries", "[common_options]")
+{
+    test_option<CLArgs::CommonOptions::MaxRetries, "2000", "--max-retries">();
 }
