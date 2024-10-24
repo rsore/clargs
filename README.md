@@ -2,12 +2,15 @@
 [![docs](https://github.com/rubensorensen/clargs/actions/workflows/docs.yml/badge.svg)](https://github.com/rubensorensen/clargs/actions/workflows/docs.yml)
 [![formatting](https://github.com/rsore/clargs/actions/workflows/clang-format.yml/badge.svg)](https://github.com/rsore/clargs/actions/workflows/clang-format.yml)
 [![static-code-analysis](https://github.com/rsore/clargs/actions/workflows/clang-tidy-analysis.yml/badge.svg)](https://github.com/rsore/clargs/actions/workflows/clang-tidy-analysis.yml)
+![stability](https://img.shields.io/badge/stability-experimental-orange)
+
+> **Note**: This project is under active development, and its APIs are subject to change without notice.
 
 # CLArgs
 
-This library is a modern C++ (C++20) command-line argument parser designed with a focus on type safety, compile-time validation, and runtime performance. Unlike many other libraries, it avoids macros, dynamic allocation, type-erasure, and expensive runtime operations, ensuring a lightweight and efficient experience.
+This library is a modern C++ (C++20) command-line argument parser designed with a focus on type safety, compile-time validation, and runtime performance. Unlike many other libraries, it avoids macros, dynamic allocation, type-erasure, and expensive runtime operations.
 
-At its core, this parser ensures that all argument types are validated and parsed at compile-time, minimizing the chances of runtime errors. Once parsing is complete, retrieving values is as simple as a constant-time array lookup, meaning that all command-line options are available as strongly-typed values with zero overhead.
+At its core, this parser ensures that all argument types are validated at compile-time, minimizing the chances of runtime errors. Once parsing is complete, retrieving values is as simple as a constant-time array lookup, meaning that all command-line options are available as strongly-typed values with zero overhead.
 
 ## Example usage
 
@@ -47,6 +50,6 @@ main(int argc, char **argv)
 For full examples, see the examples/ directory
 
 ## Error handling
-Static type-checking ensures proper usage and prevents building with invalid or unsupported ValueTypes.
+Static type-checking ensures proper usage and prevents building with invalid or unsupported value types.
 
-All arguments are parsed, validated, cast, and stored during the parse method. This is the only potential point of failure, meaning that if the application makes it past that function call with no exceptions, everything should be fine.
+All arguments are parsed, validated and stored during the `parse` method. This is the only potential point of failure, meaning that if the application makes it past that function call with no exceptions, values can safely be retrieved at any time with no risk.
