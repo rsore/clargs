@@ -199,10 +199,12 @@ if __name__ == "__main__":
                         default="./LICENSE",
                         help="Specify path to license file",
                         type=pathlib.Path)
-    parser.add_argument("-o", "--output",
-                        default="./clargs.hpp",
-                        help="Specify filepath used to generate final header",
+    parser.add_argument("--output-dir",
+                        default="./",
+                        help="Specify path to target directory for amalgamated header",
                         type=pathlib.Path)
     args = parser.parse_args()
 
-    Amalgamator.amalgamate(args.header_dir, args.license, args.output)
+    os.makedirs(args.output_dir, exist_ok=True)
+
+    Amalgamator.amalgamate(args.header_dir, args.license, args.output_dir / "clargs.hpp")
