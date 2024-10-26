@@ -26,6 +26,7 @@ CLARGS_ASCII = """
 
 """
 
+
 class Amalgamator:
     @staticmethod
     def find_headers(header_dir):
@@ -108,30 +109,47 @@ class Amalgamator:
         return stripped_lines
 
     @staticmethod
-    def create_single_header(clargs_headers, order, system_headers, license_path, output_file):
-        with open(output_file, "w") as outfile:
-            outfile.write("#ifndef CLARGS_CLARGS_HPP\n#define CLARGS_CLARGS_HPP\n\n")
+    def format_content(content):
+        formatted_content = []
 
-            outfile.write("/**\n")
-            for line in CLARGS_ASCII.splitlines():
-                outfile.write(f" *  {line}\n")
-                
-            with open(license_path, "r") as license_file:
-                for line in license_file:
-                    outfile.write(f" *  {line}")
-            outfile.write(" */\n\n")
+        encountered_blank = False
+        for line in content:
+            if line == "" or line.isspace():
+                if encountered_blank:
+                    continue
+                encountered_blank = True
+                formatted_content.append("\n")
+                continue
+            encountered_blank = False
+            formatted_content.append(line)
 
-            for header in sorted(system_headers):
-                outfile.write(f'#include <{header}>\n')
-            outfile.write("\n")
+        return formatted_content
 
-            for file in order:
-                with open(clargs_headers[file], "r") as f:
-                    content = f.readlines()
-                    stripped_content = Amalgamator.strip_includes_and_include_guards(content)
-                    outfile.writelines(stripped_content)
-                    outfile.write("\n")
-            outfile.write("#endif // CLARGS_CLARGS_HPP\n")
+    @staticmethod
+    def create_single_header(clargs_headers, order, system_headers, license_path):
+        result = ["#ifndef CLARGS_CLARGS_HPP\n#define CLARGS_CLARGS_HPP\n\n", "/**\n"]
+
+        for line in CLARGS_ASCII.splitlines():
+            result.append(f" *  {line}\n")
+
+        with open(license_path, "r") as license_file:
+            for line in license_file:
+                result.append(f" *  {line}")
+        result.append(" */\n\n")
+
+        for header in sorted(system_headers):
+            result.append(f'#include <{header}>\n')
+        result.append("\n")
+
+        for file in order:
+            with open(clargs_headers[file], "r") as f:
+                content = f.readlines()
+                stripped_content = Amalgamator.strip_includes_and_include_guards(content)
+                result.extend(stripped_content)
+                result.append("\n")
+        result.append("#endif // CLARGS_CLARGS_HPP\n")
+
+        return result
 
     @staticmethod
     def amalgamate(header_dir, license_path, output_file):
@@ -164,7 +182,10 @@ class Amalgamator:
         print("")
 
         print(f"Creating amalgamated header file {output_file}...")
-        Amalgamator.create_single_header(headers, order, system_headers, license_path, output_file)
+        result = Amalgamator.create_single_header(headers, order, system_headers, license_path)
+        formatted = Amalgamator.format_content(result)
+        with open(output_file, "w") as f:
+            f.writelines(formatted)
         print(f"Successfully created {output_file}")
 
 
