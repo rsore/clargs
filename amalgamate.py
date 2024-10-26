@@ -5,6 +5,7 @@ import argparse
 import pathlib
 
 CLARGS_INCLUDE_PATTERN = re.compile(r'#include <CLArgs/(.+\.hpp)>')
+SYSTEM_INCLUDE_PATTERN = re.compile(r'#include <(.+?)>')
 CLARGS_GUARD_PATTERN = re.compile(r'#(ifndef|define|endif)')
 
 
@@ -21,7 +22,9 @@ class Amalgamator:
 
     @staticmethod
     def parse_dependencies(headers):
-        dependencies = defaultdict(set)
+        clargs_dependencies = defaultdict(set)
+        system_dependencies = set()
+
         for file, path in headers.items():
             with open(path, "r") as f:
                 for line in f:
@@ -29,8 +32,12 @@ class Amalgamator:
                     if match:
                         include_file = match.group(1)
                         if include_file in headers:
-                            dependencies[file].add(include_file)
-        return dependencies
+                            clargs_dependencies[file].add(include_file)
+                        continue
+                    match = SYSTEM_INCLUDE_PATTERN.search(line)
+                    if match:
+                        system_dependencies.add(match.group(1))
+        return clargs_dependencies, system_dependencies
 
     @staticmethod
     def resolve_order(headers, dependencies):
@@ -59,16 +66,24 @@ class Amalgamator:
     def strip_includes_and_include_guards(content):
         stripped_lines = []
         for line in content:
-            if not CLARGS_GUARD_PATTERN.search(line) and not CLARGS_INCLUDE_PATTERN.search(line):
+            is_include_guard = CLARGS_GUARD_PATTERN.search(line)
+            is_clargs_include = CLARGS_INCLUDE_PATTERN.search(line)
+            is_system_include = SYSTEM_INCLUDE_PATTERN.search(line)
+            if not is_include_guard and not is_clargs_include and not is_system_include:
                 stripped_lines.append(line)
         return stripped_lines
 
     @staticmethod
-    def create_single_header(headers, order, output_file):
+    def create_single_header(clargs_headers, order, system_headers, output_file):
         with open(output_file, "w") as outfile:
             outfile.write("#ifndef CLARGS_CLARGS_HPP\n#define CLARGS_CLARGS_HPP\n\n")
+
+            for header in sorted(system_headers):
+                outfile.write(f'#include <{header}>\n')
+            outfile.write("\n")
+
             for file in order:
-                with open(headers[file], "r") as f:
+                with open(clargs_headers[file], "r") as f:
                     content = f.readlines()
                     stripped_content = Amalgamator.strip_includes_and_include_guards(content)
                     outfile.writelines(stripped_content)
@@ -90,23 +105,23 @@ class Amalgamator:
         print("")
 
         print("Parsing header dependencies...")
-        header_dependencies = Amalgamator.parse_dependencies(headers)
+        clargs_header_dependencies, system_headers = Amalgamator.parse_dependencies(headers)
         print("Header dependencies detected:")
-        for header, dependencies in header_dependencies.items():
+        for header, dependencies in clargs_header_dependencies.items():
             print(f" - {header}")
             for dependency in dependencies:
                 print(f"    - {dependency}")
         print("")
 
         print("Resolving header order...")
-        order = Amalgamator.resolve_order(headers, header_dependencies)
+        order = Amalgamator.resolve_order(headers, clargs_header_dependencies)
         print("Header order:")
         for header in order:
             print(f" - {header}")
         print("")
 
         print(f"Creating amalgamated header file {output_file}...")
-        Amalgamator.create_single_header(headers, order, output_file)
+        Amalgamator.create_single_header(headers, order, system_headers, output_file)
         print(f"Successfully created {output_file}")
 
 
