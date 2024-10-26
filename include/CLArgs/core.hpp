@@ -250,4 +250,4 @@ CLArgs::max_identifier_list_length()
     return max_length;
 }
 
-#endif
+#endif // CLARGS_CORE_HPP
