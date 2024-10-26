@@ -65,12 +65,29 @@ class Amalgamator:
     @staticmethod
     def strip_includes_and_include_guards(content):
         stripped_lines = []
+        include_guard_pattern = re.compile(r'^\s*#(ifndef|define)\s+CLARGS_(\w+)_HPP\s*$')
+        close_guard_pattern = re.compile(r'^\s*#endif\s*//\s*CLARGS_(\w+)_HPP\s*$')
+        open_guard = None
+
         for line in content:
-            is_include_guard = CLARGS_GUARD_PATTERN.search(line)
-            is_clargs_include = CLARGS_INCLUDE_PATTERN.search(line)
-            is_system_include = SYSTEM_INCLUDE_PATTERN.search(line)
-            if not is_include_guard and not is_clargs_include and not is_system_include:
+            include_guard_match = include_guard_pattern.match(line)
+            if include_guard_match:
+                guard_type = include_guard_match.group(1)
+                if guard_type == 'ifndef':
+                    open_guard = line.strip()
+                elif guard_type == 'define' and open_guard:
+                    pass
+                continue
+
+            close_guard_match = close_guard_pattern.match(line)
+            if close_guard_match and open_guard:
+                if f"CLARGS_{close_guard_match.group(1)}_HPP" in open_guard:
+                    open_guard = None
+                continue
+
+            if not re.search(CLARGS_INCLUDE_PATTERN, line) and not re.search(SYSTEM_INCLUDE_PATTERN, line):
                 stripped_lines.append(line)
+
         return stripped_lines
 
     @staticmethod
@@ -88,7 +105,7 @@ class Amalgamator:
                     stripped_content = Amalgamator.strip_includes_and_include_guards(content)
                     outfile.writelines(stripped_content)
                     outfile.write("\n")
-            outfile.write("#endif\n")
+            outfile.write("#endif // CLARGS_CLARGS_HPP\n")
 
     @staticmethod
     def amalgamate(header_dir, output_file):
