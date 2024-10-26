@@ -91,9 +91,15 @@ class Amalgamator:
         return stripped_lines
 
     @staticmethod
-    def create_single_header(clargs_headers, order, system_headers, output_file):
+    def create_single_header(clargs_headers, order, system_headers, license_path, output_file):
         with open(output_file, "w") as outfile:
             outfile.write("#ifndef CLARGS_CLARGS_HPP\n#define CLARGS_CLARGS_HPP\n\n")
+
+            outfile.write("/**\n")
+            with open(license_path, "r") as license_file:
+                for line in license_file:
+                    outfile.write(f" *  {line}")
+            outfile.write(" */\n\n")
 
             for header in sorted(system_headers):
                 outfile.write(f'#include <{header}>\n')
@@ -108,7 +114,7 @@ class Amalgamator:
             outfile.write("#endif // CLARGS_CLARGS_HPP\n")
 
     @staticmethod
-    def amalgamate(header_dir, output_file):
+    def amalgamate(header_dir, license_path, output_file):
         print("Config:")
         print(f"  Header directory: {header_dir}")
         print(f"  Output file:      {output_file}")
@@ -138,7 +144,7 @@ class Amalgamator:
         print("")
 
         print(f"Creating amalgamated header file {output_file}...")
-        Amalgamator.create_single_header(headers, order, system_headers, output_file)
+        Amalgamator.create_single_header(headers, order, system_headers, license_path, output_file)
         print(f"Successfully created {output_file}")
 
 
@@ -148,10 +154,14 @@ if __name__ == "__main__":
                         default="./include/CLArgs",
                         help="Specify path to directory containing library headers",
                         type=pathlib.Path)
+    parser.add_argument("--license",
+                        default="./LICENSE",
+                        help="Specify path to license file",
+                        type=pathlib.Path)
     parser.add_argument("-o", "--output",
                         default="./clargs.hpp",
                         help="Specify filepath used to generate final header",
                         type=pathlib.Path)
     args = parser.parse_args()
 
-    Amalgamator.amalgamate(args.header_dir, args.output)
+    Amalgamator.amalgamate(args.header_dir, args.license, args.output)
