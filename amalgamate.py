@@ -9,20 +9,21 @@ SYSTEM_INCLUDE_PATTERN = re.compile(r'#include <(.+?)>')
 CLARGS_GUARD_PATTERN = re.compile(r'#(ifndef|define|endif)')
 
 CLARGS_ASCII = """
-/**
- *
- *           _____ _      ___
- *          /  __ \ |    / _ \\
- *          | /  \/ |   / /_\ \_ __ __ _ ___
- *          | |   | |   |  _  | '__/ _` / __|
- *          | \__/\ |___| | | | | | (_| \__ \\
- *           \____|_____|_| |_/_|  \__, |___/
- *                                  __/ |
- *                                 |___/
- *
- *                               Command-line argument parser
- *
- */
+
+
+          _____ _      ___
+         /  __ \ |    / _ \\
+         | /  \/ |   / /_\ \_ __ __ _ ___
+         | |   | |   |  _  | '__/ _` / __|
+         | \__/\ |___| | | | | | (_| \__ \\
+          \____|_____|_| |_/_|  \__, |___/
+                                 __/ |
+                                |___/
+
+                              Command-line argument parser
+
+
+
 """
 
 class Amalgamator:
@@ -111,9 +112,10 @@ class Amalgamator:
         with open(output_file, "w") as outfile:
             outfile.write("#ifndef CLARGS_CLARGS_HPP\n#define CLARGS_CLARGS_HPP\n\n")
 
-            outfile.write(CLARGS_ASCII)
-
-            outfile.write("\n\n/**\n")
+            outfile.write("/**\n")
+            for line in CLARGS_ASCII.splitlines():
+                outfile.write(f" *  {line}\n")
+                
             with open(license_path, "r") as license_file:
                 for line in license_file:
                     outfile.write(f" *  {line}")
