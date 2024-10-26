@@ -59,4 +59,4 @@ CLArgs::ParserBuilder<CLArgs::CmdFlagList<Flags...>, CLArgs::CmdOptionList<Optio
     return Parser<CmdFlagList<Flags...>, CmdOptionList<Options...>, ProgramDescription>{};
 }
 
-#endif
+#endif // CLARGS_PARSER_BUILDER_HPP

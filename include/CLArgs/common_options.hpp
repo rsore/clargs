@@ -22,4 +22,4 @@ namespace CLArgs::CommonOptions
     using MaxRetries = Option<"--max-retries", "<number>", "Specify the maximum number of retries", std::uint32_t>;
 } // namespace CLArgs::CommonOptions
 
-#endif
+#endif // CLARGS_COMMON_OPTIONS_HPP

@@ -425,4 +425,4 @@ CLArgs::pretty_string_of_type()
     }
 }
 
-#endif
+#endif // CLARGS_PARSE_VALUE_HPP

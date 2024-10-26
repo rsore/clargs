@@ -19,4 +19,4 @@ namespace CLArgs::CommonFlags
     using Version      = Flag<"--version", "Show program version">;
 } // namespace CLArgs::CommonFlags
 
-#endif
+#endif // CLARGS_COMMON_FLAGS_HPP
