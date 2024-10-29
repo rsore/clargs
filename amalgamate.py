@@ -26,90 +26,88 @@ CLARGS_ASCII_ART = r"""
 
 
 class Amalgamator:
-    @staticmethod
-    def find_headers(header_dir):
-        headers = {}
-        for root, _, files in os.walk(header_dir):
+    def __init__(self, header_dir, license_path, output_file):
+        self.__header_dir = header_dir
+        self.__license_path = license_path
+        self.__output_file: pathlib.Path = output_file
+        self.__headers = {}
+        self.__clargs_dependencies = defaultdict(set)
+        self.__system_dependencies = set()
+
+    def __find_headers(self):
+        for root, _, files in os.walk(self.__header_dir):
             for file in files:
                 if file.endswith(".hpp"):
                     path = os.path.join(root, file)
-                    headers[file] = path
-        return headers
+                    self.__headers[file] = path
 
-    @staticmethod
-    def parse_dependencies(headers):
-        clargs_dependencies = defaultdict(set)
-        system_dependencies = set()
-
-        for file, path in headers.items():
+    def __parse_dependencies(self):
+        for file, path in self.__headers.items():
             with open(path, "r") as f:
                 for line in f:
                     match = CLARGS_INCLUDE_PATTERN.search(line)
                     if match:
                         include_file = match.group(1)
-                        if include_file in headers:
-                            clargs_dependencies[file].add(include_file)
+                        if include_file in self.__headers:
+                            self.__clargs_dependencies[file].add(include_file)
                         continue
                     match = SYSTEM_INCLUDE_PATTERN.search(line)
                     if match:
-                        system_dependencies.add(match.group(1))
-        return clargs_dependencies, system_dependencies
+                        self.__system_dependencies.add(match.group(1))
 
-    @staticmethod
-    def resolve_order(headers, dependencies):
-        indegree = {file: 0 for file in headers}
-        for deps in dependencies.values():
+    def __resolve_order(self):
+        indegree = {file: 0 for file in self.__headers}
+        for deps in self.__clargs_dependencies.values():
             for dep in deps:
                 indegree[dep] += 1
 
-        queue = deque([file for file in headers if indegree[file] == 0])
+        queue = deque([file for file in self.__headers if indegree[file] == 0])
         ordered_files = []
 
         while queue:
             file = queue.popleft()
             ordered_files.append(file)
-            for dep in dependencies[file]:
+            for dep in self.__clargs_dependencies[file]:
                 indegree[dep] -= 1
                 if indegree[dep] == 0:
                     queue.append(dep)
+
+        if len(ordered_files) != len(self.__headers):
+            raise RuntimeError("Circular dependency detected among headers.")
+
         ordered_files.reverse()
 
-        if len(ordered_files) != len(headers):
-            raise RuntimeError("Circular dependency detected among headers.")
-        return ordered_files
+        self.__headers = {file: self.__headers[file] for file in ordered_files}
 
     @staticmethod
-    def strip_includes_and_include_guards(content):
-        stripped_lines = []
+    def __strip_header_includes(content):
+        result = []
+        for line in content:
+            if not re.search(CLARGS_INCLUDE_PATTERN, line) and not re.search(SYSTEM_INCLUDE_PATTERN, line):
+                result.append(line)
+        return result
+
+    @staticmethod
+    def __strip_include_guards(content):
+        result = []
         include_guard_pattern = re.compile(r'^\s*#(ifndef|define)\s+CLARGS_(\w+)_HPP\s*$')
         close_guard_pattern = re.compile(r'^\s*#endif\s*//\s*CLARGS_(\w+)_HPP\s*$')
         open_guard = None
 
         for line in content:
-            include_guard_match = include_guard_pattern.match(line)
-            if include_guard_match:
-                guard_type = include_guard_match.group(1)
-                if guard_type == 'ifndef':
-                    open_guard = line.strip()
-                elif guard_type == 'define' and open_guard:
-                    pass
+            if include_guard_pattern.match(line):
+                open_guard = True
                 continue
-
-            close_guard_match = close_guard_pattern.match(line)
-            if close_guard_match and open_guard:
-                if f"CLARGS_{close_guard_match.group(1)}_HPP" in open_guard:
-                    open_guard = None
+            if close_guard_pattern.match(line) and open_guard:
+                open_guard = None
                 continue
+            result.append(line)
 
-            if not re.search(CLARGS_INCLUDE_PATTERN, line) and not re.search(SYSTEM_INCLUDE_PATTERN, line):
-                stripped_lines.append(line)
-
-        return stripped_lines
+        return result
 
     @staticmethod
-    def format_content(content):
+    def __format_content(content):
         formatted_content = []
-
         encountered_blank = False
         for line in content:
             if line == "" or line.isspace():
@@ -120,71 +118,49 @@ class Amalgamator:
                 continue
             encountered_blank = False
             formatted_content.append(line)
-
         return formatted_content
 
-    @staticmethod
-    def create_single_header(clargs_headers, order, system_headers, license_path):
-        result = ["#ifndef CLARGS_CLARGS_HPP\n#define CLARGS_CLARGS_HPP\n\n", "/**\n"]
-
+    def __create_single_header(self):
+        header_guard = "CLARGS_" + self.__output_file.name.upper().replace(" ", "_").replace(".", "_")
+        result = [
+            f"#ifndef {header_guard}\n#define {header_guard}\n\n",
+            "/**\n"
+        ]
         for line in CLARGS_ASCII_ART.splitlines():
             result.append(f" *  {line}\n")
 
-        with open(license_path, "r") as license_file:
+        with open(self.__license_path, "r") as license_file:
             for line in license_file:
                 result.append(f" *  {line}")
         result.append(" */\n\n")
 
-        for header in sorted(system_headers):
+        for header in sorted(self.__system_dependencies):
             result.append(f'#include <{header}>\n')
         result.append("\n")
 
-        for file in order:
-            with open(clargs_headers[file], "r") as f:
+        for file, path in self.__headers.items():
+            with open(path, "r") as f:
                 content = f.readlines()
-                stripped_content = Amalgamator.strip_includes_and_include_guards(content)
-                result.extend(stripped_content)
+                content = self.__strip_include_guards(content)
+                content = self.__strip_header_includes(content)
+                result.extend(content)
                 result.append("\n")
-        result.append("#endif // CLARGS_CLARGS_HPP\n")
 
+        result.append(f"#endif // {header_guard}\n")
         return result
 
-    @staticmethod
-    def amalgamate(header_dir, license_path, output_file):
-        print("Config:")
-        print(f"  Header directory: {header_dir}")
-        print(f"  Output file:      {output_file}")
-        print("")
+    def __save_header(self, formatted_content):
+        with open(self.__output_file, "w", newline='\n') as f:
+            f.writelines(formatted_content)
+        print(f"Successfully created {self.__output_file}")
 
-        print("Detecting headers...")
-        headers = Amalgamator.find_headers(header_dir)
-        print("Headers detected:")
-        for header in headers:
-            print(f" - {header}")
-        print("")
-
-        print("Parsing header dependencies...")
-        clargs_header_dependencies, system_headers = Amalgamator.parse_dependencies(headers)
-        print("Header dependencies detected:")
-        for header, dependencies in clargs_header_dependencies.items():
-            print(f" - {header}")
-            for dependency in dependencies:
-                print(f"    - {dependency}")
-        print("")
-
-        print("Resolving header order...")
-        order = Amalgamator.resolve_order(headers, clargs_header_dependencies)
-        print("Header order:")
-        for header in order:
-            print(f" - {header}")
-        print("")
-
-        print(f"Creating amalgamated header file {output_file}...")
-        result = Amalgamator.create_single_header(headers, order, system_headers, license_path)
-        formatted = Amalgamator.format_content(result)
-        with open(output_file, "w", newline='\n') as f:
-            f.writelines(formatted)
-        print(f"Successfully created {output_file}")
+    def amalgamate(self):
+        self.__find_headers()
+        self.__parse_dependencies()
+        self.__resolve_order()
+        result = self.__create_single_header()
+        formatted_content = self.__format_content(result)
+        self.__save_header(formatted_content)
 
 
 if __name__ == "__main__":
@@ -205,4 +181,5 @@ if __name__ == "__main__":
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    Amalgamator.amalgamate(args.header_dir, args.license, args.output_dir / "clargs.hpp")
+    amalgamator = Amalgamator(args.header_dir, args.license, args.output_dir / "clargs.hpp")
+    amalgamator.amalgamate()
