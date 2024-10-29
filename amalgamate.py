@@ -8,20 +8,18 @@ CLARGS_INCLUDE_PATTERN = re.compile(r'#include <CLArgs/(.+\.hpp)>')
 SYSTEM_INCLUDE_PATTERN = re.compile(r'#include <(.+?)>')
 CLARGS_GUARD_PATTERN = re.compile(r'#(ifndef|define|endif)')
 
-CLARGS_ASCII = """
-
+CLARGS_ASCII_ART = r"""
 
           _____ _      ___
-         /  __ \ |    / _ \\
+         /  __ \ |    / _ \
          | /  \/ |   / /_\ \_ __ __ _ ___
          | |   | |   |  _  | '__/ _` / __|
-         | \__/\ |___| | | | | | (_| \__ \\
+         | \__/\ |___| | | | | | (_| \__ \
           \____|_____|_| |_/_|  \__, |___/
                                  __/ |
                                 |___/
 
                               Command-line argument parser
-
 
 
 """
@@ -59,20 +57,20 @@ class Amalgamator:
 
     @staticmethod
     def resolve_order(headers, dependencies):
-        in_degree = {file: 0 for file in headers}
+        indegree = {file: 0 for file in headers}
         for deps in dependencies.values():
             for dep in deps:
-                in_degree[dep] += 1
+                indegree[dep] += 1
 
-        queue = deque([file for file in headers if in_degree[file] == 0])
+        queue = deque([file for file in headers if indegree[file] == 0])
         ordered_files = []
 
         while queue:
             file = queue.popleft()
             ordered_files.append(file)
             for dep in dependencies[file]:
-                in_degree[dep] -= 1
-                if in_degree[dep] == 0:
+                indegree[dep] -= 1
+                if indegree[dep] == 0:
                     queue.append(dep)
         ordered_files.reverse()
 
@@ -129,7 +127,7 @@ class Amalgamator:
     def create_single_header(clargs_headers, order, system_headers, license_path):
         result = ["#ifndef CLARGS_CLARGS_HPP\n#define CLARGS_CLARGS_HPP\n\n", "/**\n"]
 
-        for line in CLARGS_ASCII.splitlines():
+        for line in CLARGS_ASCII_ART.splitlines():
             result.append(f" *  {line}\n")
 
         with open(license_path, "r") as license_file:
@@ -184,7 +182,7 @@ class Amalgamator:
         print(f"Creating amalgamated header file {output_file}...")
         result = Amalgamator.create_single_header(headers, order, system_headers, license_path)
         formatted = Amalgamator.format_content(result)
-        with open(output_file, "w") as f:
+        with open(output_file, "w", newline='\n') as f:
             f.writelines(formatted)
         print(f"Successfully created {output_file}")
 
