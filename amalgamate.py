@@ -4,7 +4,6 @@ from collections import defaultdict, deque
 import argparse
 import pathlib
 import sys
-from tabnanny import verbose
 
 CLARGS_INCLUDE_PATTERN = re.compile(r"#include <CLArgs/(\w+\.hpp)>")
 SYSTEM_INCLUDE_PATTERN = re.compile(r"#include <(.+?)>")
