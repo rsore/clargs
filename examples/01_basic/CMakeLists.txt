@@ -8,5 +8,5 @@ target_compile_options(CLArgsExample_01Basic PRIVATE
 )
 
 target_link_libraries(CLArgsExample_01Basic PUBLIC
-        CLArgs
+        CLArgs_single_header
 )

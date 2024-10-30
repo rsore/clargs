@@ -1,4 +1,4 @@
-#include <CLArgs/parser_builder.hpp>
+#include <CLArgs/clargs.hpp>
 
 #include <filesystem>
 #include <iostream>
@@ -36,7 +36,7 @@ main(int argc, char **argv)
     std::cout << "Program: " << parser.program() << std::endl;
 
     const bool has_verbose = parser.has_flag<VerboseFlag>();
-    std::cout << "Has verbose option: " << std::boolalpha << has_verbose << "\n";
+    std::cout << "Has verbose option: " << std::boolalpha << has_verbose << std::endl;
 
     if (const auto config = parser.get_option<ConfigOption>(); config.has_value())
     {
