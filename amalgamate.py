@@ -3,6 +3,8 @@ import re
 from collections import defaultdict, deque
 import argparse
 import pathlib
+import sys
+from tabnanny import verbose
 
 CLARGS_INCLUDE_PATTERN = re.compile(r"#include <CLArgs/(\w+\.hpp)>")
 SYSTEM_INCLUDE_PATTERN = re.compile(r"#include <(.+?)>")
@@ -23,14 +25,23 @@ CLARGS_ASCII_ART = r"""
 
 """
 
+VERBOSE = False
+
+
+def verbose_log(msg):
+    if VERBOSE:
+        print(msg)
+
 
 def find_headers(directory):
+    verbose_log(f"Discovering headers in directory '{directory}':")
     headers = {}
     for root, _, files in os.walk(directory):
         for file in files:
             if file.endswith(".hpp"):
                 path = os.path.join(root, file)
                 headers[file] = path
+                verbose_log(f" - {file}")
     return headers
 
 
@@ -39,22 +50,27 @@ def parse_dependencies(headers):
     system_dependencies = set()
 
     for file, path in headers.items():
+        verbose_log(f"Discovering dependencies for header '{file}':")
         with open(path, "r") as f:
             for line in f:
                 match = CLARGS_INCLUDE_PATTERN.search(line)
                 if match:
                     include_file = match.group(1)
                     if include_file in headers:
+                        verbose_log(f" - {include_file} (CLArgs dependency)")
                         clargs_dependencies[file].add(include_file)
                     continue
                 match = SYSTEM_INCLUDE_PATTERN.search(line)
                 if match:
-                    system_dependencies.add(match.group(1))
+                    include_file = match.group(1)
+                    verbose_log(f" - {include_file} (System dependency)")
+                    system_dependencies.add(include_file)
 
     return clargs_dependencies, system_dependencies
 
 
 def resolve_order(headers, clargs_dependencies):
+    verbose_log("Resolving topological ordering for headers:")
     indegree = {file: 0 for file in headers}
     for deps in clargs_dependencies.values():
         for dep in deps:
@@ -65,15 +81,19 @@ def resolve_order(headers, clargs_dependencies):
 
     while queue:
         file = queue.popleft()
+        verbose_log(f" - {file}")
         ordered_files.append(file)
         for dep in clargs_dependencies[file]:
             indegree[dep] -= 1
             if indegree[dep] == 0:
                 queue.append(dep)
 
+    verbose_log("Checking for circular dependencies...")
     if len(ordered_files) != len(headers):
         raise RuntimeError("Circular dependency detected among headers.")
+    verbose_log("No circular dependencies detected, continuing")
 
+    verbose_log("Reversing topological ordering")
     ordered_files.reverse()
     return {file: headers[file] for file in ordered_files}
 
@@ -104,37 +124,52 @@ def remove_consecutive_newlines(content):
 
 
 def create_single_header(headers, system_dependencies, license_path, output_file):
+    verbose_log("Creating amalgamated header:")
     header_guard = "CLARGS_" + output_file.name.upper().replace(" ", "_").replace(".", "_")
+    verbose_log(f" - Opening header guard '{header_guard}'")
     result = [
         f"#ifndef {header_guard}\n#define {header_guard}\n\n",
         "/**\n"
     ]
+
+    verbose_log(" - Adding ASCII art")
     for line in CLARGS_ASCII_ART.splitlines():
         result.append(f" *  {line}\n")
 
+    verbose_log(" - Adding license")
     with open(license_path, "r") as license_file:
         for line in license_file:
             result.append(f" *  {line}")
     result.append(" */\n\n")
 
+    verbose_log(" - Adding system includes")
     for header in sorted(system_dependencies):
         result.append(f"#include <{header}>\n")
     result.append("\n")
 
     for file, path in headers.items():
+        verbose_log(f" - Processing content of header '{file}':")
         with open(path, "r") as f:
+            verbose_log("   - Reading content")
             content = f.readlines()
+            verbose_log("   - Removing header guards")
             content = strip_include_guards(content)
+            verbose_log("   - Removing includes")
             content = strip_header_includes(content)
+            verbose_log("   - Adding to result")
             result.extend(content)
             result.append("\n")
 
+    verbose_log(f" - Closing header guard '{header_guard}'")
     result.append(f"#endif // {header_guard}\n")
 
+    verbose_log(" - Cleaning up newlines")
     result = remove_consecutive_newlines(result)
 
+    verbose_log(f" - Writing final result to file '{output_file}'")
     with open(output_file, "w", newline="\n") as f:
         f.writelines(result)
+    print(f"Successfully created file '{output_file}'")
 
 
 def amalgamate(header_dir, license_path, output_file):
@@ -154,12 +189,47 @@ if __name__ == "__main__":
                         default="./LICENSE",
                         help="Specify path to license file",
                         type=pathlib.Path)
-    parser.add_argument("--output-dir",
-                        default="./",
-                        help="Specify path to target directory for amalgamated header",
+    parser.add_argument("--output-file",
+                        default="./clargs.hpp",
+                        help="Specify path for file to output amalgamated header to",
                         type=pathlib.Path)
+    parser.add_argument("-f", "--force", action="store_true")
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
-    os.makedirs(args.output_dir, exist_ok=True)
+    if args.verbose:
+        VERBOSE = True
+        verbose_log("Verbose output is enabled")
 
-    amalgamate(args.header_dir, args.license, args.output_dir / "clargs.hpp")
+    if args.output_file.exists() and not args.force:
+        response = input(f"File '{args.output_file}' already exists. Overwrite it? (y/N) ")
+        if response.lower() != "y":
+            verbose_log(f"Response was '{response}', exiting...")
+            sys.exit(0)
+
+    output_file_dir = args.output_file.parent
+    if not output_file_dir.exists():
+        verbose_log(f"Directory '{output_file_dir}' does not exist, creating it...")
+        os.makedirs(output_file_dir, exist_ok=False)
+        verbose_log(f"Directory '{output_file_dir}' created")
+
+    verbose_log(f"Looking for license file {args.license}...")
+    if not args.license.exists():
+        print(f"Error: License file '{args.license}' does not exist", file=sys.stderr)
+        sys.exit(1)
+    verbose_log("License file found")
+
+    verbose_log(f"Looking for source header directory '{args.header_dir}'...")
+    if not args.header_dir.exists():
+        print(f"Error: Directory '{args.header_dir}' does not exist", file=sys.stderr)
+        sys.exit(1)
+    verbose_log("Source header directory found")
+
+    try:
+        verbose_log("Starting header amalgamation...")
+        amalgamate(args.header_dir, args.license, args.output_file)
+        sys.exit(0)
+    except RuntimeError as e:
+        print(f"Error: {e}", sys.stderr)
+        print("Aborting...", sys.stderr)
+        sys.exit(1)
