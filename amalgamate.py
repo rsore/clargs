@@ -4,8 +4,8 @@ from collections import defaultdict, deque
 import argparse
 import pathlib
 
-CLARGS_INCLUDE_PATTERN = re.compile(r'#include <CLArgs/(.+\.hpp)>')
-SYSTEM_INCLUDE_PATTERN = re.compile(r'#include <(.+?)>')
+CLARGS_INCLUDE_PATTERN = re.compile(r"#include <CLArgs/(\w+\.hpp)>")
+SYSTEM_INCLUDE_PATTERN = re.compile(r"#include <(.+?)>")
 
 CLARGS_ASCII_ART = r"""
 
@@ -79,44 +79,28 @@ def resolve_order(headers, clargs_dependencies):
 
 
 def strip_header_includes(content):
-    result = []
-    for line in content:
-        if not re.search(CLARGS_INCLUDE_PATTERN, line) and not re.search(SYSTEM_INCLUDE_PATTERN, line):
-            result.append(line)
-    return result
+    content_str = "".join(content)
+    cleaned_content = re.sub(r"#include <(?:CLArgs/\w+\.hpp|[\w/]+)>", "", content_str)
+    return cleaned_content.splitlines(keepends=True)
 
 
 def strip_include_guards(content):
-    result = []
-    include_guard_pattern = re.compile(r'^\s*#(ifndef|define)\s+CLARGS_(\w+)_HPP\s*$')
-    close_guard_pattern = re.compile(r'^\s*#endif\s*//\s*CLARGS_(\w+)_HPP\s*$')
-    open_guard = None
+    include_guard_pattern = re.compile(r"^\s*#(ifndef|define)\s+(CLARGS_[A-Z0-9_]+_HPP)\s*$")
+    close_guard_pattern = re.compile(r"^\s*#endif\s*//\s*(CLARGS_[A-Z0-9_]+_HPP)\s*$")
 
+    result = []
     for line in content:
-        if include_guard_pattern.match(line):
-            open_guard = True
-            continue
-        if close_guard_pattern.match(line) and open_guard:
-            open_guard = None
+        if include_guard_pattern.match(line) or close_guard_pattern.match(line):
             continue
         result.append(line)
 
     return result
 
 
-def format_content(content):
-    formatted_content = []
-    encountered_blank = False
-    for line in content:
-        if line == "" or line.isspace():
-            if encountered_blank:
-                continue
-            encountered_blank = True
-            formatted_content.append("\n")
-            continue
-        encountered_blank = False
-        formatted_content.append(line)
-    return formatted_content
+def remove_consecutive_newlines(content):
+    content_str = "".join(content)
+    formatted_content = re.sub(r"\n{2,}", "\n\n", content_str)
+    return formatted_content.splitlines(keepends=True)
 
 
 def create_single_header(headers, system_dependencies, license_path, output_file):
@@ -134,7 +118,7 @@ def create_single_header(headers, system_dependencies, license_path, output_file
     result.append(" */\n\n")
 
     for header in sorted(system_dependencies):
-        result.append(f'#include <{header}>\n')
+        result.append(f"#include <{header}>\n")
     result.append("\n")
 
     for file, path in headers.items():
@@ -147,9 +131,9 @@ def create_single_header(headers, system_dependencies, license_path, output_file
 
     result.append(f"#endif // {header_guard}\n")
 
-    result = format_content(result)
+    result = remove_consecutive_newlines(result)
 
-    with open(output_file, "w", newline='\n') as f:
+    with open(output_file, "w", newline="\n") as f:
         f.writelines(result)
 
 
@@ -161,7 +145,7 @@ def amalgamate(header_dir, license_path, output_file):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Amalgamate all headers to a single library header')
+    parser = argparse.ArgumentParser(description="Amalgamate all headers to a single library header")
     parser.add_argument("--header-dir",
                         default="./include/CLArgs",
                         help="Specify path to directory containing library headers",
