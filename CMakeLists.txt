@@ -22,32 +22,36 @@ target_include_directories(CLArgs_source INTERFACE
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(CLARGS_GENERATED_INCLUDE_DIR "${CMAKE_BINARY_DIR}/clargs/include/")
-set(AMALGAMATED_OUTPUT_DIR "${CLARGS_GENERATED_INCLUDE_DIR}/CLArgs")
-set(AMALGAMATED_HEADER "${AMALGAMATED_OUTPUT_DIR}/clargs.hpp")
-file(MAKE_DIRECTORY ${AMALGAMATED_OUTPUT_DIR})
+set(CLARGS_AMALGAMATED_OUTPUT_DIR "${CLARGS_GENERATED_INCLUDE_DIR}/CLArgs")
+set(CLARGS_AMALGAMATED_HEADER "${CLARGS_AMALGAMATED_OUTPUT_DIR}/clargs.hpp")
+file(MAKE_DIRECTORY ${CLARGS_AMALGAMATED_OUTPUT_DIR})
 
+message("CLArgs: Amalgamating headers...")
 execute_process(
         COMMAND ${CMAKE_COMMAND} -E env ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/amalgamate.py
         --header-dir ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs
         --license ${CMAKE_CURRENT_LIST_DIR}/LICENSE
-        --output-file ${AMALGAMATED_HEADER}
+        --output-file ${CLARGS_AMALGAMATED_HEADER}
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-        RESULT_VARIABLE AMALGAMATION_RESULT
-        OUTPUT_VARIABLE AMALGAMATION_OUTPUT
-        ERROR_VARIABLE AMALGAMATION_ERROR
+        RESULT_VARIABLE CLARGS_AMALGAMATION_RESULT
+        OUTPUT_VARIABLE CLARGS_AMALGAMATION_OUTPUT
+        ERROR_VARIABLE CLARGS_AMALGAMATION_ERROR
 )
-if (NOT AMALGAMATION_RESULT EQUAL "0")
-    message(FATAL_ERROR "Amalgamation failed: ${AMALGAMATION_ERROR}")
+if (NOT CLARGS_AMALGAMATION_RESULT EQUAL "0")
+    message(FATAL_ERROR "CLArgs: Amalgamation failed: ${CLARGS_AMALGAMATION_ERROR}")
 endif ()
+message("CLArgs: Amalgamated header '${CLARGS_AMALGAMATED_HEADER}' created")
 
 add_library(CLArgs_amalgamated INTERFACE)
 target_include_directories(CLArgs_amalgamated INTERFACE ${CLARGS_GENERATED_INCLUDE_DIR})
 
 option(CLARGS_USE_AMALGAMATED "Use the amalgamated single-header file for CLArgs" ON)
 if (CLARGS_USE_AMALGAMATED)
+    message("CLArgs: CLArgs target using amalgamated header")
     add_library(CLArgs INTERFACE IMPORTED)
     set_target_properties(CLArgs PROPERTIES INTERFACE_LINK_LIBRARIES CLArgs_amalgamated)
 else ()
+    message("CLArgs: CLArgs target using source headers")
     add_library(CLArgs INTERFACE IMPORTED)
     set_target_properties(CLArgs PROPERTIES INTERFACE_LINK_LIBRARIES CLArgs_source)
 endif ()
