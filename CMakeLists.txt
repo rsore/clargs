@@ -46,20 +46,14 @@ message("CLArgs: Amalgamated header '${CLARGS_AMALGAMATED_HEADER}' created")
 add_library(CLArgs_amalgamated INTERFACE)
 target_include_directories(CLArgs_amalgamated INTERFACE ${CLARGS_GENERATED_INCLUDE_DIR})
 
-add_library(CLArgs INTERFACE IMPORTED)
+add_library(CLArgs INTERFACE)
 option(CLARGS_USE_AMALGAMATED "Use the amalgamated single-header file for CLArgs" ON)
 if (CLARGS_USE_AMALGAMATED)
     message("CLArgs: CLArgs target using amalgamated header")
-    set_target_properties(CLArgs PROPERTIES
-            INTERFACE_LINK_LIBRARIES CLArgs_amalgamated
-            INTERFACE_INCLUDE_DIRECTORIES ${CLARGS_GENERATED_INCLUDE_DIR}
-    )
+    target_link_libraries(CLArgs INTERFACE CLArgs_amalgamated)
 else ()
     message("CLArgs: CLArgs target using source headers")
-    set_target_properties(CLArgs PROPERTIES
-            INTERFACE_LINK_LIBRARIES CLArgs_source
-            INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_LIST_DIR}/include/
-    )
+    target_link_libraries(CLArgs INTERFACE CLArgs_source)
 endif ()
 
 option(CLARGS_BUILD_EXAMPLES "Build CLArgs examples" OFF)
