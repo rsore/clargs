@@ -56,8 +56,8 @@ else ()
     set_target_properties(CLArgs PROPERTIES INTERFACE_LINK_LIBRARIES CLArgs_source)
 endif ()
 
-option(CLARGS_BUILD_EXAMPLES "Build CLArgs examples" ON)
-option(CLARGS_BUILD_TESTS "Build CLArgs tests" ON)
+option(CLARGS_BUILD_EXAMPLES "Build CLArgs examples" OFF)
+option(CLARGS_BUILD_TESTS "Build CLArgs tests" OFF)
 
 if (${CLARGS_BUILD_EXAMPLES})
     add_subdirectory(examples)
