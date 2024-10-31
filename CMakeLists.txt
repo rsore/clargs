@@ -1,23 +1,29 @@
+# CLArgs can be used as a single-header (amalgamated) library,
+# or by using the source headers directly.
+#
+# To configure the build, you can set the following options:
+#
+# 1. Use the amalgamated single-header file:
+#    set(CLARGS_USE_AMALGAMATED OFF CACHE BOOL "Use the amalgamated single-header file for CLArgs")
+#
+#    Default: ON
+#
+# 2. Build examples:
+#    set(CLARGS_BUILD_EXAMPLES ON CACHE BOOL "Build examples for CLArgs")
+#
+#    Default: OFF
+#
+# 3. Build tests:
+#    set(CLARGS_BUILD_TESTS ON CACHE BOOL "Build tests for CLArgs")
+#
+#    Default: OFF
+
 cmake_minimum_required(VERSION 3.20)
 
 project(CLArgs)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-add_library(CLArgs_source INTERFACE
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/core.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parse_value.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/value_container.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser_builder.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_flags.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_options.hpp
-)
-
-target_include_directories(CLArgs_source INTERFACE
-        ${CMAKE_CURRENT_LIST_DIR}/include/
-)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
@@ -43,10 +49,27 @@ if (NOT CLARGS_AMALGAMATION_RESULT EQUAL "0")
 endif ()
 message("CLArgs: Amalgamated header '${CLARGS_AMALGAMATED_HEADER}' created")
 
+add_library(CLArgs_source INTERFACE
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/core.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parse_value.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/value_container.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser_builder.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_flags.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_options.hpp
+)
+
+target_include_directories(CLArgs_source INTERFACE
+        ${CMAKE_CURRENT_LIST_DIR}/include/
+)
+
 add_library(CLArgs_amalgamated INTERFACE)
-target_include_directories(CLArgs_amalgamated INTERFACE ${CLARGS_GENERATED_INCLUDE_DIR})
+target_include_directories(CLArgs_amalgamated INTERFACE
+        ${CLARGS_GENERATED_INCLUDE_DIR}
+)
 
 add_library(CLArgs INTERFACE)
+
 option(CLARGS_USE_AMALGAMATED "Use the amalgamated single-header file for CLArgs" ON)
 if (CLARGS_USE_AMALGAMATED)
     message("CLArgs: CLArgs target using amalgamated header")
