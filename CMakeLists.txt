@@ -6,17 +6,17 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(CLArgs_source INTERFACE
-        include/CLArgs/parser.hpp
-        include/CLArgs/core.hpp
-        include/CLArgs/parse_value.hpp
-        include/CLArgs/value_container.hpp
-        include/CLArgs/parser_builder.hpp
-        include/CLArgs/common_flags.hpp
-        include/CLArgs/common_options.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/core.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parse_value.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/value_container.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser_builder.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_flags.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_options.hpp
 )
 
 target_include_directories(CLArgs_source INTERFACE
-        include/
+        ${CMAKE_CURRENT_LIST_DIR}/include/
 )
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
@@ -32,6 +32,7 @@ execute_process(
         --header-dir ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs
         --license ${CMAKE_CURRENT_LIST_DIR}/LICENSE
         --output-file ${CLARGS_AMALGAMATED_HEADER}
+        --force
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
         RESULT_VARIABLE CLARGS_AMALGAMATION_RESULT
         OUTPUT_VARIABLE CLARGS_AMALGAMATION_OUTPUT
@@ -45,15 +46,20 @@ message("CLArgs: Amalgamated header '${CLARGS_AMALGAMATED_HEADER}' created")
 add_library(CLArgs_amalgamated INTERFACE)
 target_include_directories(CLArgs_amalgamated INTERFACE ${CLARGS_GENERATED_INCLUDE_DIR})
 
+add_library(CLArgs INTERFACE IMPORTED)
 option(CLARGS_USE_AMALGAMATED "Use the amalgamated single-header file for CLArgs" ON)
 if (CLARGS_USE_AMALGAMATED)
     message("CLArgs: CLArgs target using amalgamated header")
-    add_library(CLArgs INTERFACE IMPORTED)
-    set_target_properties(CLArgs PROPERTIES INTERFACE_LINK_LIBRARIES CLArgs_amalgamated)
+    set_target_properties(CLArgs PROPERTIES
+            INTERFACE_LINK_LIBRARIES CLArgs_amalgamated
+            INTERFACE_INCLUDE_DIRECTORIES ${CLARGS_GENERATED_INCLUDE_DIR}
+    )
 else ()
     message("CLArgs: CLArgs target using source headers")
-    add_library(CLArgs INTERFACE IMPORTED)
-    set_target_properties(CLArgs PROPERTIES INTERFACE_LINK_LIBRARIES CLArgs_source)
+    set_target_properties(CLArgs PROPERTIES
+            INTERFACE_LINK_LIBRARIES CLArgs_source
+            INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_LIST_DIR}/include/
+    )
 endif ()
 
 option(CLARGS_BUILD_EXAMPLES "Build CLArgs examples" OFF)
