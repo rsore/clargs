@@ -24,6 +24,15 @@ CLARGS_ASCII_ART = r"""
 
 """
 
+CLARGS_GENERATED_FILE_WARNING = r"""
+============================================================================
+WARNING: This file is auto-generated from multiple source headers.
+Any changes made directly to this file may be overwritten.
+For persistent modifications, please edit the original source headers and
+re-run the amalgamation script to regenerate this file.
+============================================================================
+""".lstrip('\n')
+
 VERBOSE = False
 
 
@@ -122,14 +131,19 @@ def remove_consecutive_newlines(content):
     return formatted_content.splitlines(keepends=True)
 
 
-def create_single_header(headers, system_dependencies, license_path, output_file):
+def create_single_header(headers, system_dependencies, license_path, add_warning, output_file):
     verbose_log("Creating amalgamated header:")
     header_guard = "CLARGS_" + output_file.name.upper().replace(" ", "_").replace(".", "_")
+    result = []
+
+    if add_warning:
+        verbose_log(" - Adding generated file warning")
+        for line in CLARGS_GENERATED_FILE_WARNING.splitlines():
+            result.append(f"// {line}\n")
+
     verbose_log(f" - Opening header guard '{header_guard}'")
-    result = [
-        f"#ifndef {header_guard}\n#define {header_guard}\n\n",
-        "/**\n"
-    ]
+    result.extend([f"#ifndef {header_guard}\n#define {header_guard}\n\n",
+                   "/**\n"])
 
     verbose_log(" - Adding ASCII art")
     for line in CLARGS_ASCII_ART.splitlines():
@@ -171,11 +185,11 @@ def create_single_header(headers, system_dependencies, license_path, output_file
     print(f"Successfully created file '{output_file}'")
 
 
-def amalgamate(header_dir, license_path, output_file):
+def amalgamate(header_dir, license_path, add_warning, output_file):
     headers = find_headers(header_dir)
     clargs_dependencies, system_dependencies = parse_dependencies(headers)
     ordered_headers = resolve_order(headers, clargs_dependencies)
-    create_single_header(ordered_headers, system_dependencies, license_path, output_file)
+    create_single_header(ordered_headers, system_dependencies, license_path, add_warning, output_file)
 
 
 if __name__ == "__main__":
@@ -194,6 +208,8 @@ if __name__ == "__main__":
                         type=pathlib.Path)
     parser.add_argument("-f", "--force", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("--no-generated-file-warning",
+                        action="store_true")
     args = parser.parse_args()
 
     if args.verbose:
@@ -226,7 +242,7 @@ if __name__ == "__main__":
 
     try:
         verbose_log("Starting header amalgamation...")
-        amalgamate(args.header_dir, args.license, args.output_file)
+        amalgamate(args.header_dir, args.license, not args.no_generated_file_warning, args.output_file)
         sys.exit(0)
     except RuntimeError as e:
         print(f"Error: {e}", sys.stderr)
