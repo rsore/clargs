@@ -7,32 +7,47 @@ import re
 import zipfile
 import os
 
-RELEASE_VERBOSE = False
 
+class Logger:
+    def __init__(self, verbose=False):
+        self.verbose = verbose
 
-def release_verbose_log(msg):
-    if RELEASE_VERBOSE:
+    def log(self, msg: str):
         print(msg)
+
+    def verbose_log(self, msg: str):
+        if self.verbose:
+            print(msg)
+
+
+logger = Logger()
 
 
 def validate_version(version: str):
     version_pattern = r'^[0-9]+\.[0-9]+\.[0-9]+$'
 
+    logger.verbose_log("Validating version...")
     if not re.match(version_pattern, version):
         raise ValueError(f"Invalid version format: '{version}'. Must match pattern '[0-9]+.[0-9]+.[0-9]+'")
-    else:
-        release_verbose_log(f"Version '{version}' is valid")
+    logger.verbose_log(f"Version '{version}' is valid")
 
-def create_release_dir(output_dir, version, source_headers_dir, license_path, readme_path):
-    release_dir = Path(output_dir) / f"CLArgs-{version}"
+
+def create_release_dir(output_dir: Path, version: str, source_headers_dir: Path, license_path: Path, readme_path: Path):
+    release_dir = output_dir / f"CLArgs-{version}"
+    logger.verbose_log(f"Creating release directory {release_dir}")
     release_dir.mkdir(parents=True, exist_ok=True)
 
     header_dest = release_dir / "include" / "CLArgs"
+    logger.verbose_log(f"Creating header destination directory {header_dest}")
     header_dest.mkdir(parents=True, exist_ok=True)
 
-    shutil.copy(license_path, release_dir / "LICENSE")
+    dest_license_path = release_dir / "LICENSE"
+    logger.verbose_log(f"Copying license file '{license_path}' -> '{dest_license_path}'")
+    shutil.copy(license_path, dest_license_path)
 
-    shutil.copy(readme_path, release_dir / "README.md")
+    dest_readme_path = release_dir / "README.md"
+    logger.verbose_log(f"Copying README file '{readme_path}' -> '{dest_readme_path}'")
+    shutil.copy(readme_path, dest_readme_path)
 
     cmake_lists = f"""cmake_minimum_required(VERSION 3.20)
 
@@ -46,26 +61,32 @@ target_include_directories(CLArgs INTERFACE
 )
 """
 
-    with open(release_dir / 'CMakeLists.txt', 'w', newline="\n") as f:
+    cmake_lists_file = release_dir / "CMakeLists.txt"
+    logger.verbose_log(f"Creating cmake lists file '{cmake_lists_file}'")
+    with open(cmake_lists_file, 'w', newline="\n") as f:
         f.write(cmake_lists)
 
-    amalgamate(source_headers_dir, license_path, False, release_dir / "include" / "CLArgs" / "clargs.hpp")
+    dest_clargs_file = release_dir / "include" / "CLArgs" / "clargs.hpp"
+    logger.verbose_log(f"Creating header file '{dest_clargs_file}'")
+    amalgamate(source_headers_dir, license_path, False, dest_clargs_file)
 
     return release_dir
 
-def create_zip_archive(output_dir, version, release_dir):
-    zip_filename = f"{output_dir}/CLArgs-{version}.zip"
-    release_verbose_log(f"Creating zip archive: {zip_filename}")
 
-    with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+def create_zip_archive(output_dir: Path, version: str, release_dir: Path):
+    zip_file = output_dir / f"CLArgs-{version}.zip"
+    logger.verbose_log(f"Creating zip archive: {zip_file}")
+
+    with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(release_dir):
             for file in files:
                 zipf.write(str(os.path.join(root, file)),
                            os.path.relpath(str(os.path.join(root, file)), release_dir))
 
-    print(f"Release package created: {zip_filename}")
+    return zip_file
 
-if __name__ == "__main__":
+
+def main():
     parser = argparse.ArgumentParser(description="Release script for CLArgs")
     parser.add_argument("--version", required=True,
                         help="The version of the release")
@@ -89,15 +110,19 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
-    if args.verbose:
-        RELEASE_VERBOSE = True
-        release_verbose_log("Verbose output is enabled")
+    logger.verbose = args.verbose
+    logger.verbose_log("Verbose output is enabled")
 
     validate_version(args.version)
 
     if not args.output_dir.exists():
-        release_verbose_log(f"Creating output directory {args.output_dir}")
+        logger.verbose_log(f"Creating output directory {args.output_dir}")
         args.output_dir.mkdir(parents=True, exist_ok=True)
 
     release_dir = create_release_dir(args.output_dir, args.version, args.header_dir, args.license, args.readme)
-    create_zip_archive(args.output_dir, args.version, release_dir)
+    zip_file = create_zip_archive(args.output_dir, args.version, release_dir)
+    logger.log(f"Successfully created release zip file '{zip_file}'")
+
+
+if __name__ == "__main__":
+    main()
