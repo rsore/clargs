@@ -22,7 +22,7 @@ file(MAKE_DIRECTORY ${CLARGS_AMALGAMATED_OUTPUT_DIR})
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 message(STATUS "CLArgs: Amalgamating headers...")
 execute_process(
-        COMMAND ${CMAKE_COMMAND} -E env ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/amalgamate.py
+        COMMAND ${CMAKE_COMMAND} -E env ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/scripts/amalgamate.py
         --header-dir ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs
         --license ${CMAKE_CURRENT_LIST_DIR}/LICENSE
         --output-file ${CLARGS_AMALGAMATED_HEADER}
