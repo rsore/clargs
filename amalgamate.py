@@ -112,13 +112,13 @@ def strip_header_includes(content):
     return cleaned_content.splitlines(keepends=True)
 
 
-def strip_include_guards(content):
-    include_guard_pattern = re.compile(r"^\s*#(ifndef|define)\s+(CLARGS_[A-Z0-9_]+_HPP)\s*$")
+def strip_header_guards(content):
+    header_guard_pattern = re.compile(r"^\s*#(ifndef|define)\s+(CLARGS_[A-Z0-9_]+_HPP)\s*$")
     close_guard_pattern = re.compile(r"^\s*#endif\s*//\s*(CLARGS_[A-Z0-9_]+_HPP)\s*$")
 
     result = []
     for line in content:
-        if include_guard_pattern.match(line) or close_guard_pattern.match(line):
+        if header_guard_pattern.match(line) or close_guard_pattern.match(line):
             continue
         result.append(line)
 
@@ -166,7 +166,7 @@ def create_single_header(headers, system_dependencies, license_path, add_warning
             verbose_log("   - Reading content")
             content = f.readlines()
             verbose_log("   - Removing header guards")
-            content = strip_include_guards(content)
+            content = strip_header_guards(content)
             verbose_log("   - Removing includes")
             content = strip_header_includes(content)
             verbose_log("   - Adding to result")
