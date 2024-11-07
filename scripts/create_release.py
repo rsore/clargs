@@ -42,6 +42,7 @@ project(CLArgs VERSION {version})
 add_library(CLArgs INTERFACE
     ${{CMAKE_CURRENT_LIST_DIR}}/include/CLArgs/clargs.hpp
 )
+
 target_include_directories(CLArgs INTERFACE 
     ${{CMAKE_CURRENT_LIST_DIR}}/include
 )
