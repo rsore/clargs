@@ -51,7 +51,9 @@ target_include_directories(CLArgs_source INTERFACE
         ${CMAKE_CURRENT_LIST_DIR}/include/
 )
 
-add_library(CLArgs_amalgamated INTERFACE)
+add_library(CLArgs_amalgamated INTERFACE
+        ${CLARGS_AMALGAMATED_HEADER}
+)
 target_include_directories(CLArgs_amalgamated INTERFACE
         ${CLARGS_GENERATED_INCLUDE_DIR}
 )
