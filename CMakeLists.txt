@@ -20,6 +20,8 @@ set(CLARGS_AMALGAMATED_HEADER "${CLARGS_AMALGAMATED_OUTPUT_DIR}/clargs.hpp")
 file(MAKE_DIRECTORY ${CLARGS_AMALGAMATED_OUTPUT_DIR})
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+
 message(STATUS "CLArgs: Amalgamating headers...")
 execute_process(
         COMMAND ${CMAKE_COMMAND} -E env ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/scripts/amalgamate.py
@@ -36,6 +38,29 @@ if (NOT CLARGS_AMALGAMATION_RESULT EQUAL "0")
     message(FATAL_ERROR "CLArgs: Amalgamation failed: ${CLARGS_AMALGAMATION_ERROR}")
 endif ()
 message(STATUS "CLArgs: Amalgamated header '${CLARGS_AMALGAMATED_HEADER}' created")
+
+add_custom_command(
+        OUTPUT ${CLARGS_AMALGAMATED_HEADER}
+        COMMAND ${CMAKE_COMMAND} -E env ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/scripts/amalgamate.py
+        --header-dir ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs
+        --license ${CMAKE_CURRENT_LIST_DIR}/LICENSE
+        --output-file ${CLARGS_AMALGAMATED_HEADER}
+        --force
+        DEPENDS
+        ${CMAKE_CURRENT_LIST_DIR}/scripts/amalgamate.py
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/core.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parse_value.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/value_container.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser_builder.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_flags.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_options.hpp
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+        COMMENT "CLArgs: Amalgamating headers..."
+)
+add_custom_target(CLArgs_generate_amalgamated_header
+        DEPENDS ${CLARGS_AMALGAMATED_HEADER}
+)
 
 add_library(CLArgs_source INTERFACE
         ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser.hpp
@@ -57,6 +82,7 @@ add_library(CLArgs_amalgamated INTERFACE
 target_include_directories(CLArgs_amalgamated INTERFACE
         ${CLARGS_GENERATED_INCLUDE_DIR}
 )
+add_dependencies(CLArgs_amalgamated CLArgs_generate_amalgamated_header)
 
 add_library(CLArgs INTERFACE)
 if (CLARGS_SINGLE_HEADER)
