@@ -14,13 +14,6 @@ message(STATUS "CLArgs: Option CLARGS_BUILD_EXAMPLES: ${CLARGS_BUILD_EXAMPLES}")
 option(CLARGS_BUILD_TESTS "Build CLArgs tests" OFF)
 message(STATUS "CLArgs: Option CLARGS_BUILD_TESTS: ${CLARGS_BUILD_TESTS}")
 
-set(CLARGS_GENERATED_INCLUDE_DIR "${CMAKE_BINARY_DIR}/clargs/include/")
-set(CLARGS_AMALGAMATED_OUTPUT_DIR "${CLARGS_GENERATED_INCLUDE_DIR}/CLArgs")
-set(CLARGS_AMALGAMATED_HEADER "${CLARGS_AMALGAMATED_OUTPUT_DIR}/clargs.hpp")
-file(MAKE_DIRECTORY ${CLARGS_AMALGAMATED_OUTPUT_DIR})
-
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
-
 set(CLARGS_HEADERS
         ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_flags.hpp
         ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_options.hpp
@@ -31,14 +24,26 @@ set(CLARGS_HEADERS
         ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/value_container.hpp
 )
 
-# Generate initial amalgamated header during CMake configuration
-message(STATUS "CLArgs: Amalgamating headers...")
-execute_process(
-        COMMAND ${CMAKE_COMMAND} -E env ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/scripts/amalgamate.py
+set(CLARGS_AMALGAMATE_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/scripts/amalgamate.py")
+set(CLARGS_GENERATED_INCLUDE_DIR "${CMAKE_BINARY_DIR}/clargs/include/")
+set(CLARGS_AMALGAMATED_OUTPUT_DIR "${CLARGS_GENERATED_INCLUDE_DIR}/CLArgs")
+set(CLARGS_AMALGAMATED_HEADER "${CLARGS_AMALGAMATED_OUTPUT_DIR}/clargs.hpp")
+file(MAKE_DIRECTORY ${CLARGS_AMALGAMATED_OUTPUT_DIR})
+
+set(CLARGS_AMALGAMATE_SCRIPT_WITH_ARGS
+        ${CLARGS_AMALGAMATE_SCRIPT}
         --header-dir ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs
         --license ${CMAKE_CURRENT_LIST_DIR}/LICENSE
         --output-file ${CLARGS_AMALGAMATED_HEADER}
         --force
+)
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+# Generate initial amalgamated header during CMake configuration
+message(STATUS "CLArgs: Amalgamating headers...")
+execute_process(
+        COMMAND ${CMAKE_COMMAND} -E env ${Python3_EXECUTABLE} ${CLARGS_AMALGAMATE_SCRIPT_WITH_ARGS}
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
         RESULT_VARIABLE CLARGS_AMALGAMATION_RESULT
         OUTPUT_VARIABLE CLARGS_AMALGAMATION_OUTPUT
@@ -54,14 +59,8 @@ message(STATUS "CLArgs: Amalgamated header '${CLARGS_AMALGAMATED_HEADER}' create
 # has been modified
 add_custom_command(
         OUTPUT ${CLARGS_AMALGAMATED_HEADER}
-        COMMAND ${CMAKE_COMMAND} -E env ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/scripts/amalgamate.py
-        --header-dir ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs
-        --license ${CMAKE_CURRENT_LIST_DIR}/LICENSE
-        --output-file ${CLARGS_AMALGAMATED_HEADER}
-        --force
-        DEPENDS
-        ${CMAKE_CURRENT_LIST_DIR}/scripts/amalgamate.py
-        ${CLARGS_HEADERS}
+        COMMAND ${CMAKE_COMMAND} -E env ${Python3_EXECUTABLE} ${CLARGS_AMALGAMATE_SCRIPT_WITH_ARGS}
+        DEPENDS  ${CLARGS_HEADERS} ${CLARGS_AMALGAMATE_SCRIPT}
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
         COMMENT "CLArgs: Re-generating '${CLARGS_AMALGAMATED_HEADER}'"
 )
@@ -87,10 +86,12 @@ else ()
     target_link_libraries(CLArgs INTERFACE CLArgs_source)
 endif ()
 
+# Conditionally add example targets
 if (${CLARGS_BUILD_EXAMPLES})
     add_subdirectory(examples)
 endif ()
 
+# Conditionally add test targets
 if (${CLARGS_BUILD_TESTS})
     add_subdirectory(tests/)
 endif ()
