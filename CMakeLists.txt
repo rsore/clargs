@@ -22,15 +22,16 @@ file(MAKE_DIRECTORY ${CLARGS_AMALGAMATED_OUTPUT_DIR})
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(CLARGS_HEADERS
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/core.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parse_value.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/value_container.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser_builder.hpp
         ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_flags.hpp
         ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_options.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/core.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser_builder.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parse_value.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/value_container.hpp
 )
 
+# Generate initial amalgamated header during CMake configuration
 message(STATUS "CLArgs: Amalgamating headers...")
 execute_process(
         COMMAND ${CMAKE_COMMAND} -E env ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/scripts/amalgamate.py
@@ -48,6 +49,9 @@ if (NOT CLARGS_AMALGAMATION_RESULT EQUAL "0")
 endif ()
 message(STATUS "CLArgs: Amalgamated header '${CLARGS_AMALGAMATED_HEADER}' created")
 
+# Add custom command and target, so amalgamated header can be automatically
+# re-generated when building if source headers or amalgamation script
+# has been modified
 add_custom_command(
         OUTPUT ${CLARGS_AMALGAMATED_HEADER}
         COMMAND ${CMAKE_COMMAND} -E env ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/scripts/amalgamate.py
@@ -61,25 +65,17 @@ add_custom_command(
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
         COMMENT "CLArgs: Re-generating '${CLARGS_AMALGAMATED_HEADER}'"
 )
+add_custom_target(CLArgs_generate_amalgamated_header DEPENDS ${CLARGS_AMALGAMATED_HEADER})
 
-add_custom_target(CLArgs_generate_amalgamated_header
-        DEPENDS ${CLARGS_AMALGAMATED_HEADER}
-)
+# Below we define three targets: CLArgs_source, CLArgs_amalgamated and CLArgs. It is
+# recommended to only link with target CLArgs, and choose the amalgamated or source
+# version using the option CLARGS_SINGLE_HEADER.
 
-add_library(CLArgs_source INTERFACE
-        ${CLARGS_HEADERS}
-)
+add_library(CLArgs_source INTERFACE ${CLARGS_HEADERS})
+target_include_directories(CLArgs_source INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include/)
 
-target_include_directories(CLArgs_source INTERFACE
-        ${CMAKE_CURRENT_LIST_DIR}/include/
-)
-
-add_library(CLArgs_amalgamated INTERFACE
-        ${CLARGS_AMALGAMATED_HEADER}
-)
-target_include_directories(CLArgs_amalgamated INTERFACE
-        ${CLARGS_GENERATED_INCLUDE_DIR}
-)
+add_library(CLArgs_amalgamated INTERFACE ${CLARGS_AMALGAMATED_HEADER})
+target_include_directories(CLArgs_amalgamated INTERFACE ${CLARGS_GENERATED_INCLUDE_DIR})
 add_dependencies(CLArgs_amalgamated CLArgs_generate_amalgamated_header)
 
 add_library(CLArgs INTERFACE)
