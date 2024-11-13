@@ -21,6 +21,15 @@ file(MAKE_DIRECTORY ${CLARGS_AMALGAMATED_OUTPUT_DIR})
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
+set(CLARGS_HEADERS
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/core.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parse_value.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/value_container.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser_builder.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_flags.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_options.hpp
+)
 
 message(STATUS "CLArgs: Amalgamating headers...")
 execute_process(
@@ -48,28 +57,17 @@ add_custom_command(
         --force
         DEPENDS
         ${CMAKE_CURRENT_LIST_DIR}/scripts/amalgamate.py
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/core.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parse_value.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/value_container.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser_builder.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_flags.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_options.hpp
+        ${CLARGS_HEADERS}
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-        COMMENT "CLArgs: Amalgamating headers..."
+        COMMENT "CLArgs: Re-generating '${CLARGS_AMALGAMATED_HEADER}'"
 )
+
 add_custom_target(CLArgs_generate_amalgamated_header
         DEPENDS ${CLARGS_AMALGAMATED_HEADER}
 )
 
 add_library(CLArgs_source INTERFACE
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/core.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parse_value.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/value_container.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/parser_builder.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_flags.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/include/CLArgs/common_options.hpp
+        ${CLARGS_HEADERS}
 )
 
 target_include_directories(CLArgs_source INTERFACE
