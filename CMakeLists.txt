@@ -8,10 +8,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(CLARGS_SINGLE_HEADER "Use CLArgs as a single-header library" ON)
 message(STATUS "CLArgs: Option CLARGS_SINGLE_HEADER: ${CLARGS_SINGLE_HEADER}")
 
+# Options CLARGS_BUILD_EXAMPLES and CLARGS_BUILD_TESTS can be used to enable/disable
+# test example and test targets respectively. For client libraries they are both
+# disabled by default
 option(CLARGS_BUILD_EXAMPLES "Build CLArgs examples" OFF)
-message(STATUS "CLArgs: Option CLARGS_BUILD_EXAMPLES: ${CLARGS_BUILD_EXAMPLES}")
-
 option(CLARGS_BUILD_TESTS "Build CLArgs tests" OFF)
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_LIST_DIR)
+    set(CLARGS_BUILD_EXAMPLES ON CACHE BOOL "Build CLArgs examples" FORCE)
+    set(CLARGS_BUILD_TESTS ON CACHE BOOL "Build CLArgs tests" FORCE)
+endif ()
+message(STATUS "CLArgs: Option CLARGS_BUILD_EXAMPLES: ${CLARGS_BUILD_EXAMPLES}")
 message(STATUS "CLArgs: Option CLARGS_BUILD_TESTS: ${CLARGS_BUILD_TESTS}")
 
 set(CLARGS_HEADERS
