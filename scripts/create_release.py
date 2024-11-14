@@ -35,7 +35,8 @@ def create_release_dir(output_dir: Path, version: str, source_headers_dir: Path,
     logger.verbose_log(f"Copying README file '{readme_path}' -> '{dest_readme_path}'")
     shutil.copy(readme_path, dest_readme_path)
 
-    cmake_lists = f"""cmake_minimum_required(VERSION 3.20)
+    cmake_lists = f"""
+cmake_minimum_required(VERSION 3.20)
 
 project(CLArgs VERSION {version})
 
@@ -46,7 +47,7 @@ add_library(CLArgs INTERFACE
 target_include_directories(CLArgs INTERFACE 
     ${{CMAKE_CURRENT_LIST_DIR}}/include
 )
-"""
+""".lstrip('\n')
 
     cmake_lists_file = release_dir / "CMakeLists.txt"
     logger.verbose_log(f"Creating cmake lists file '{cmake_lists_file}'")
