@@ -28,7 +28,7 @@ and options we want. We also add a program description which is added as part of
 ## Code example
 
 ```cpp
-#include <CLArgs/parser_builder.hpp>
+#include <CLArgs/clargs.hpp>
 #include <filesystem>
 #include <iostream>
 
