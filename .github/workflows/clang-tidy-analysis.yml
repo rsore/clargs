@@ -22,7 +22,7 @@ jobs:
             -DCLARGS_BUILD_EXAMPLES=ON 
             -DCLARGS_BUILD_TESTS=ON
           buildWithCMakeArgs: >-
-            --target CLArgs
+            --target CLArgs_internal_source
 
       - name: Run clang-tidy
         uses: ZedThree/clang-tidy-review@v0.19.0
