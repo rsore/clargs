@@ -19,6 +19,8 @@ jobs:
           cmakeAppendedArgs: >-
             -G Ninja
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+            -DCLARGS_BUILD_EXAMPLES=ON 
+            -DCLARGS_BUILD_TESTS=ON
           buildWithCMakeArgs: >-
             --target CLArgs
 
