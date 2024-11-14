@@ -31,7 +31,8 @@
 #
 # - To use the CLArgs library in your project, simply link to the `CLArgs` target:
 #
-#   `target_link_libraries(your_target PRIVATE CLArgs)`
+#     add_executable(my_exe main.cpp)
+#     target_link_libraries(my_exe PUBLIC CLArgs)
 #
 ####################################################################################################
 cmake_minimum_required(VERSION 3.20)
