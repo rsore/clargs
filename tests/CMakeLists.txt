@@ -26,6 +26,6 @@ target_compile_options(CLArgsTests PRIVATE
 
 
 target_link_libraries(CLArgsTests PRIVATE
-        CLArgs_source
+        CLArgs_internal_source
         Catch2::Catch2WithMain
 )
