@@ -23,7 +23,7 @@ jobs:
         sudo apt install -y gcc-14 g++-14 libpcre3 liblapack-dev
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 60 --slave /usr/bin/g++ g++ /usr/bin/g++-14
     - name: configure
-      run: mkdir build && cmake -Bbuild -S. -DCMAKE_BUILD_TYPE=Debug
+      run: mkdir build && cmake -Bbuild -S. -DCMAKE_BUILD_TYPE=Debug -DCLARGS_BUILD_EXAMPLES=ON -DCLARGS_BUILD_TESTS=ON
     - name: make
       run: cmake --build build --target CLArgsTests -j${{ runner.cpu }}
     - name: run tests
