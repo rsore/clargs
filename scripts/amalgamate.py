@@ -153,7 +153,7 @@ def create_single_header(headers, system_dependencies, license_path, add_warning
         logger.verbose_log(" - Adding timestamp")
         result.append(f" *  Generated: {datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}\n") # ISO 8601
 
-    result.append(" *\n *\n")
+    result.append(" *\n *  ---\n *\n")
 
     logger.verbose_log(" - Adding license")
     with open(license_path, "r") as license_file:
