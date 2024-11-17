@@ -6,6 +6,7 @@ from collections import defaultdict, deque
 import argparse
 from pathlib import Path
 import sys
+from datetime import datetime, timezone
 
 CLARGS_INCLUDE_PATTERN = re.compile(r"#include <CLArgs/(\w+\.hpp)>")
 SYSTEM_INCLUDE_PATTERN = re.compile(r"#include <(.+?)>")
@@ -123,7 +124,8 @@ def remove_consecutive_newlines(content):
     return formatted_content.splitlines(keepends=True)
 
 
-def create_single_header(headers, system_dependencies, license_path, add_warning, output_file, version=None):
+def create_single_header(headers, system_dependencies, license_path, add_warning, output_file, with_timestamp,
+                         version=None):
     logger.verbose_log("Creating amalgamated header:")
     header_guard = "CLARGS_" + output_file.name.upper().replace(" ", "_").replace(".", "_")
     result = []
@@ -147,6 +149,9 @@ def create_single_header(headers, system_dependencies, license_path, add_warning
     if version is not None:
         logger.verbose_log(" - Adding version")
         result.append(f" *  Version: {version}\n")
+    if with_timestamp:
+        logger.verbose_log(" - Adding timestamp")
+        result.append(f" *  Generated: {datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}\n") # ISO 8601
 
     result.append(" *\n *\n")
 
@@ -186,11 +191,12 @@ def create_single_header(headers, system_dependencies, license_path, add_warning
     print(f"Successfully created file '{output_file}'")
 
 
-def amalgamate(header_dir, license_path, add_warning, output_file, version=None):
+def amalgamate(header_dir, license_path, add_warning, output_file, with_timestamp=True, version=None):
     headers = find_headers(header_dir)
     clargs_dependencies, system_dependencies = parse_dependencies(headers)
     ordered_headers = resolve_order(headers, clargs_dependencies)
-    create_single_header(ordered_headers, system_dependencies, license_path, add_warning, output_file, version)
+    create_single_header(ordered_headers, system_dependencies, license_path, add_warning, output_file, with_timestamp,
+                         version)
 
 
 def main():
@@ -213,6 +219,8 @@ def main():
     parser.add_argument("-f", "--force", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("--no-generated-file-warning",
+                        action="store_true")
+    parser.add_argument("--omit-timestamp",
                         action="store_true")
     args = parser.parse_args()
 
@@ -245,7 +253,8 @@ def main():
 
     try:
         logger.verbose_log("Starting header amalgamation...")
-        amalgamate(args.header_dir, args.license, not args.no_generated_file_warning, args.output_file, args.version)
+        amalgamate(args.header_dir, args.license, not args.no_generated_file_warning, args.output_file,
+                   not args.omit_timestamp, args.version)
         sys.exit(0)
     except RuntimeError as e:
         print(f"Error: {e}", sys.stderr)

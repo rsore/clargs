@@ -56,7 +56,7 @@ target_include_directories(CLArgs INTERFACE
 
     dest_clargs_file = release_dir / "include" / "CLArgs" / "clargs.hpp"
     logger.verbose_log(f"Creating header file '{dest_clargs_file}'")
-    amalgamate(source_headers_dir, license_path, False, dest_clargs_file, version)
+    amalgamate(source_headers_dir, license_path, False, dest_clargs_file, False, version)
 
     return release_dir
 
