@@ -17,25 +17,16 @@ def validate_version(version: str):
         raise ValueError(f"Invalid version format: '{version}'. Must match pattern '[0-9]+.[0-9]+.[0-9]+'")
     logger.verbose_log(f"Version '{version}' is valid")
 
+def copy_file(source: Path, dest: Path):
+    logger.verbose_log(f"Copying file '{source}' -> '{dest}'")
+    shutil.copy(source, dest)
 
-def create_release_dir(output_dir: Path, version: str, source_headers_dir: Path, license_path: Path, readme_path: Path):
-    release_dir = output_dir / f"CLArgs-{version}"
-    logger.verbose_log(f"Creating release directory {release_dir}")
-    release_dir.mkdir(parents=True, exist_ok=True)
+def mkdir(directory: Path):
+    logger.verbose_log(f"Creating directory {directory}")
+    directory.mkdir(parents=True, exist_ok=True)
 
-    header_dest = release_dir / "include" / "CLArgs"
-    logger.verbose_log(f"Creating header destination directory {header_dest}")
-    header_dest.mkdir(parents=True, exist_ok=True)
-
-    dest_license_path = release_dir / "LICENSE"
-    logger.verbose_log(f"Copying license file '{license_path}' -> '{dest_license_path}'")
-    shutil.copy(license_path, dest_license_path)
-
-    dest_readme_path = release_dir / "README.md"
-    logger.verbose_log(f"Copying README file '{readme_path}' -> '{dest_readme_path}'")
-    shutil.copy(readme_path, dest_readme_path)
-
-    cmake_lists = f"""
+def get_cmake_list_content(version: str):
+    return f"""
 cmake_minimum_required(VERSION 3.20)
 
 project(CLArgs VERSION {version})
@@ -49,10 +40,22 @@ target_include_directories(CLArgs INTERFACE
 )
 """.lstrip('\n')
 
-    cmake_lists_file = release_dir / "CMakeLists.txt"
-    logger.verbose_log(f"Creating cmake lists file '{cmake_lists_file}'")
-    with open(cmake_lists_file, 'w', newline="\n") as f:
-        f.write(cmake_lists)
+def write_file(dest: Path, content: str):
+    logger.verbose_log(f"Creating file '{dest}'")
+    with open(dest, 'w', newline="\n") as f:
+        f.write(content)
+
+def create_release_dir(output_dir: Path, version: str, source_headers_dir: Path, license_path: Path, readme_path: Path):
+    release_dir = output_dir / f"CLArgs-{version}"
+    mkdir(release_dir)
+
+    header_dest = release_dir / "include" / "CLArgs"
+    mkdir(header_dest)
+
+    copy_file(license_path, release_dir / "LICENSE")
+    copy_file(readme_path, release_dir / "README.md")
+
+    write_file(release_dir / "CMakeLists.txt", get_cmake_list_content(version))
 
     dest_clargs_file = release_dir / "include" / "CLArgs" / "clargs.hpp"
     logger.verbose_log(f"Creating header file '{dest_clargs_file}'")
