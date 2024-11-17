@@ -11,7 +11,6 @@ CLARGS_INCLUDE_PATTERN = re.compile(r"#include <CLArgs/(\w+\.hpp)>")
 SYSTEM_INCLUDE_PATTERN = re.compile(r"#include <(.+?)>")
 
 CLARGS_ASCII_ART = r"""
-
           _____ _      ___
          /  __ \ |    / _ \
          | /  \/ |   / /_\ \_ __ __ _ ___
@@ -22,9 +21,7 @@ CLARGS_ASCII_ART = r"""
                                 |___/
 
                               Command-line argument parser
-
-
-"""
+""".lstrip('\n')
 
 CLARGS_GENERATED_FILE_WARNING = r"""
 ============================================================================
@@ -126,7 +123,7 @@ def remove_consecutive_newlines(content):
     return formatted_content.splitlines(keepends=True)
 
 
-def create_single_header(headers, system_dependencies, license_path, add_warning, output_file):
+def create_single_header(headers, system_dependencies, license_path, add_warning, output_file, version=None):
     logger.verbose_log("Creating amalgamated header:")
     header_guard = "CLARGS_" + output_file.name.upper().replace(" ", "_").replace(".", "_")
     result = []
@@ -137,12 +134,21 @@ def create_single_header(headers, system_dependencies, license_path, add_warning
             result.append(f"// {line}\n")
 
     logger.verbose_log(f" - Opening header guard '{header_guard}'")
-    result.extend([f"#ifndef {header_guard}\n#define {header_guard}\n\n",
+    result.extend([f"#ifndef {header_guard}\n",
+                   f"#define {header_guard}\n\n",
                    "/**\n"])
 
     logger.verbose_log(" - Adding ASCII art")
     for line in CLARGS_ASCII_ART.splitlines():
         result.append(f" *  {line}\n")
+
+    result.append(" *\n")
+
+    if version is not None:
+        logger.verbose_log(" - Adding version")
+        result.append(f" *  Version: {version}\n")
+
+    result.append(" *\n *\n")
 
     logger.verbose_log(" - Adding license")
     with open(license_path, "r") as license_file:
@@ -180,11 +186,11 @@ def create_single_header(headers, system_dependencies, license_path, add_warning
     print(f"Successfully created file '{output_file}'")
 
 
-def amalgamate(header_dir, license_path, add_warning, output_file):
+def amalgamate(header_dir, license_path, add_warning, output_file, version=None):
     headers = find_headers(header_dir)
     clargs_dependencies, system_dependencies = parse_dependencies(headers)
     ordered_headers = resolve_order(headers, clargs_dependencies)
-    create_single_header(ordered_headers, system_dependencies, license_path, add_warning, output_file)
+    create_single_header(ordered_headers, system_dependencies, license_path, add_warning, output_file, version)
 
 
 def main():
@@ -201,6 +207,9 @@ def main():
                         default="./clargs.hpp",
                         help="Specify path for file to output amalgamated header to",
                         type=Path)
+    parser.add_argument("--version",
+                        default=None,
+                        help="Specify CLArgs library version, which will be embedded in comment header of output file")
     parser.add_argument("-f", "--force", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("--no-generated-file-warning",
@@ -236,7 +245,7 @@ def main():
 
     try:
         logger.verbose_log("Starting header amalgamation...")
-        amalgamate(args.header_dir, args.license, not args.no_generated_file_warning, args.output_file)
+        amalgamate(args.header_dir, args.license, not args.no_generated_file_warning, args.output_file, args.version)
         sys.exit(0)
     except RuntimeError as e:
         print(f"Error: {e}", sys.stderr)

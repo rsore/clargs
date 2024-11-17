@@ -56,7 +56,7 @@ target_include_directories(CLArgs INTERFACE
 
     dest_clargs_file = release_dir / "include" / "CLArgs" / "clargs.hpp"
     logger.verbose_log(f"Creating header file '{dest_clargs_file}'")
-    amalgamate(source_headers_dir, license_path, False, dest_clargs_file)
+    amalgamate(source_headers_dir, license_path, False, dest_clargs_file, version)
 
     return release_dir
 
@@ -76,7 +76,8 @@ def create_zip_archive(output_dir: Path, version: str, release_dir: Path):
 
 def main():
     parser = argparse.ArgumentParser(description="Release script for CLArgs")
-    parser.add_argument("--version", required=True,
+    parser.add_argument("--version",
+                        required=True,
                         help="The version of the release")
     parser.add_argument("--header-dir",
                         default="./include/CLArgs",
