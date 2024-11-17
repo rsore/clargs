@@ -18,7 +18,7 @@ namespace CLArgs
     class ValueContainer<Parsables...>
     {
     public:
-        ValueContainer();
+        ValueContainer() noexcept;
 
         template <Parsable T>
         void set_value(const typename T::ValueType &value);
@@ -47,7 +47,7 @@ namespace CLArgs
 } // namespace CLArgs
 
 template <CLArgs::Parsable... Parsables>
-CLArgs::ValueContainer<Parsables...>::ValueContainer()
+CLArgs::ValueContainer<Parsables...>::ValueContainer() noexcept
     : values_{std::make_tuple(std::optional<typename Parsables::ValueType>{}...)}
 {
 }
